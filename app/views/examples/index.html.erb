@@ -1,0 +1,8 @@
+<p>
+  HELLO <%= @current_user.name %>
+  (<%= link_to 'logout', session_path, method: :delete %>)
+</p>
+
+<ul>
+  <li><%= link_to 'channels', channels_path %></li>
+</ul>
