@@ -1,6 +1,7 @@
 class Channel < ActiveRecord::Base
   belongs_to :user
   has_many :comments
+  has_many :videos
 
   before_save :update_slug
   
