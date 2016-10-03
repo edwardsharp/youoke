@@ -2,6 +2,7 @@ class SessionsController < ApplicationController
   skip_before_action :ensure_authenticated_user, only: %i( new create )
 
   def new
+    unauthenticate_user
   end
 
   def create

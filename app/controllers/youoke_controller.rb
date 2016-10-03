@@ -1,4 +1,4 @@
-class ExamplesController < ApplicationController
+class YouokeController < ApplicationController
   def index
     @channels = Channel.all
   end

@@ -1,10 +1,11 @@
 Rails.application.routes.draw do
   resource  :session
-  resources :examples
+  resources :youoke
 
   resources :channels do
     resources :comments
+    resources :videos
   end
 
-  root 'examples#index'
+  root 'youoke#index'
 end
