@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   resources :channels do
     resources :comments
     resources :videos
+    post 'search', to: 'qs#search', as: :qs
   end
 
   root 'youoke#index'

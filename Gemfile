@@ -20,6 +20,8 @@ gem 'turbolinks', git: "https://github.com/rails/turbolinks.git"
 gem 'jbuilder', '~> 2.0'
 
 gem 'foreman'
+gem 'yt'
+gem 'dotenv-rails'
 
 group :development, :test do
   gem 'byebug'
