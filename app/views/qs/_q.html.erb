@@ -1,9 +1,17 @@
 <% unless q.videos.blank? %>
 
-	<% q.videos.each do |v| %>
+  <% q.videos.each do |v| %>
 
-		<%= v.id %>
+    <%= "<b>Currently Playing:".html_safe if v == q.videos.first %>
 
-	<% end -%>
+    <%= "<i>".html_safe if v.file_path.nil? %>
+    <small><%= v.position unless v == q.videos.first %></small> <%= v.id %> 
+    <%= "</i>".html_safe if v.file_path.nil? %>
+    
+    <%= "</b>".html_safe if v == q.videos.first %>
+      
+
+    <br>
+  <% end -%>
 
 <% end -%>

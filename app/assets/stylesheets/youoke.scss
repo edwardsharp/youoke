@@ -1,3 +1,59 @@
 // Place all the styles related to the Examples controller here.
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
+
+html, body{
+  margin: 0;
+  padding: 0;
+}
+body {
+  background-color: black;
+  color: white;
+}
+
+a,a:visited {
+  color: #ccc;
+}
+a:hover{
+  color: #ff6600;
+}
+
+video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-height:100vh;
+  max-width: 80vw;
+}
+
+#qs {
+  position:absolute;
+  top: 0;
+  right: 0;
+  width: 20vw;
+  height: 80vh;
+
+  margin: auto;
+  overflow: hidden;
+}
+
+#channelContent {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20vw;
+  height: 20vh;
+
+  margin: auto;
+  overflow: hidden;
+}
+
+#comments {
+  position: absolute;
+  bottom: 0;
+  width: 100vw;
+  max-height: 10vh;
+
+  margin: auto;
+  overflow: hidden;
+}

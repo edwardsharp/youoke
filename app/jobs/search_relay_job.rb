@@ -16,9 +16,10 @@ class SearchRelayJob < ApplicationJob
     end
 
     videos = Yt::Collections::Videos.new
-    videos.where(q: q, safe_search: 'none').take(10) 
-
-    search = videos.map{|v| {id: v.id, title: v.title, description: v.description, thumbnail_url: v.thumbnail_url }}
+    videos.where(q: q, safe_search: 'none') 
+    # videos.where(q: q, safe_search: 'none', video_duration: 'short').where(q: q, safe_search: 'none', video_duration: 'short')
+    
+    search = videos.take(10).map{|v| {id: v.id, title: v.title, description: v.description, thumbnail_url: v.thumbnail_url, duration: v.duration }}
 
     ActionCable.server.broadcast "channels:#{user_id}:search",
       search: QsController.render(partial: 'qs/result', locals: { search: search, channel: channel })

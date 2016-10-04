@@ -17,9 +17,7 @@ class QsController < ApplicationController
     else
       @video = Video.create id: params[:yt_id], title: params[:yt_title], q: @channel.q, user: @current_user
     end
-    
 
-    head :no_content
 
   end
 

@@ -3,10 +3,12 @@
   <% search.each do |s| %>
     <li>
 
-    <%= link_to 'Q', channel_add_video_to_q_path(channel, yt_id: s[:id], yt_title: s[:title]), { method: :post, remote: true} %>
-
+    <div id="<%= "q-#{s[:id]}" %>">
+      <%= link_to 'Q', channel_add_video_to_q_path(channel, yt_id: s[:id], yt_title: s[:title]), { method: :post, remote: true} %>
+    </div>
 
     <img src="<%= s[:thumbnail_url] %>" border="0" />
+    <b><%= Time.at(s[:duration].to_i).utc.strftime("%M:%S") rescue '' %></b>
     <%= s[:title] %>
     <small><%= s[:description] %> </small>
 

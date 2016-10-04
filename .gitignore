@@ -41,3 +41,4 @@ bower.json
 .byebug_history
 /dump.rdb
 /public/assets
+/public/videos

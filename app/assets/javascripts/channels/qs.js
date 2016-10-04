@@ -12,6 +12,7 @@
       })(this), 1000);
     },
     received: function(data) {
+      console.log('qs got data:',data.q);
       // if (this.userIsCurrentUser(data.q)) {
         return this.collection().html(data.q);
       // }

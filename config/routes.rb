@@ -3,6 +3,7 @@ Rails.application.routes.draw do
   resources :youoke
 
   resources :channels do
+    get 'player', to: 'channels#player', as: :player
     resources :comments
     resources :videos
     post 'search', to: 'qs#search', as: :qs

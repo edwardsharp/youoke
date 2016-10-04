@@ -2,6 +2,9 @@
 
 <p><%= @channel.content %></p>
 
+<p><%= link_to 'player', channel_player_path(@channel) %></p>
+
+
 <%= render 'qs/qs', channel: @channel %>
 
 <%= render 'qs/search', channel: @channel, current_user: @current_user %>

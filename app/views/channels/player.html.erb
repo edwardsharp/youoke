@@ -1,0 +1,12 @@
+<%= video_tag(File.basename(@channel.q.currently_playing.file_path), controls: true, autoplay: true) rescue 'Nothing to play yet...'%>
+
+
+<%= render 'qs/qs', channel: @channel %>
+
+
+<div id="channelContent"><%= @channel.content %></div>
+
+<%= render 'comments/player_comments', channel: @channel %>
+
+
+
