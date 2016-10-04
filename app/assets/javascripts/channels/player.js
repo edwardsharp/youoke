@@ -1,7 +1,10 @@
 (function() {
-  App.qs = App.cable.subscriptions.create("QsChannel", {
+  App.player = App.cable.subscriptions.create("PlayerChannel", {
     collection: function() {
-      return $("[data-channel='qs']");
+      return $("[data-channel='player']");
+    },
+    videoPlayer: function() {
+      return document.getElementsByTagName("video")[0];
     },
     connected: function() {
       return setTimeout((function(_this) {
@@ -12,18 +15,21 @@
       })(this), 1000);
     },
     received: function(data) {
-      // console.log('qs got data:',data.q);
-      // if (this.userIsCurrentUser(data.q)) {
-        return this.collection().html(data.q);
-      // }
+      // console.log('player got data:',data.player);
+      if (this.channelIsCurrentChannel(data.player)) {
+        this.collection().html(data.player);
+        return this.videoPlayer().play();
+      }else{
+        // console.log('channel is not current channel!');
+      }
     },
-    // userIsCurrentUser: function(q) {
-    //   return $(q).attr('data-user-id') === $('meta[name=current-user]').attr('id');
-    // },
+    channelIsCurrentChannel: function(player) {
+      return $(player).attr('data-channel-id') === $('section[data-channel=qs]').attr('channel-id');
+    },
     followCurrentChannel: function() {
       var channelId;
       if (channelId = this.collection().data('channel-id')) {
-        // console.log('following Qs channel!');
+        // console.log('following Player channel!');
         return this.perform('follow', {
           channel_id: channelId
         });
@@ -35,7 +41,7 @@
       if (!this.installedPageChangeCallback) {
         this.installedPageChangeCallback = true;
         return $(document).on('page:change', function() {
-          return App.qs.followCurrentChannel();
+          return App.player.followCurrentChannel();
         });
       }
     }

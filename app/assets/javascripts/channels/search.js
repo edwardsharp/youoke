@@ -12,7 +12,7 @@
       })(this), 1000);
     },
     received: function(data) {
-      console.log('search data received:',data);
+      // console.log('search data received:',data);
       // if (this.userIsCurrentUser(data.search)) {
         return this.collection().html(data.search);
       // }
@@ -37,12 +37,12 @@
 
       var userId;
       if (userId = this.collection().data('user-id')) {
-        console.log("following search channel!");
+        // console.log("following search channel!");
         return this.perform('follow', {
           user_id: userId
         });
       } else {
-        console.log('unfollowing search channel! this.collection():',this.collection());
+        // console.log('unfollowing search channel! this.collection():',this.collection());
         return this.perform('unfollow');
       }
 

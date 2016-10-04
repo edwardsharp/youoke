@@ -1,0 +1,1 @@
+<%= video_tag(File.basename(channel.q.currently_playing.file_path), controls: true, preload: 'auto') rescue 'Nothing to play yet...'%>
