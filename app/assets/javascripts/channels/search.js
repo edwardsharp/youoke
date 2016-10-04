@@ -14,7 +14,7 @@
     received: function(data) {
       console.log('search data received:',data);
       // if (this.userIsCurrentUser(data.search)) {
-        return this.collection().append(data.search);
+        return this.collection().html(data.search);
       // }
     },
     userIsCurrentUser: function(search) {
@@ -45,7 +45,7 @@
         console.log('unfollowing search channel! this.collection():',this.collection());
         return this.perform('unfollow');
       }
-      
+
     },
     installPageChangeCallback: function() {
       if (!this.installedPageChangeCallback) {

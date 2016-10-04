@@ -2,6 +2,8 @@
 
 <p><%= @channel.content %></p>
 
+<%= render 'qs/qs', channel: @channel %>
+
 <%= render 'qs/search', channel: @channel, current_user: @current_user %>
 
 <%= render 'comments/comments', channel: @channel %>

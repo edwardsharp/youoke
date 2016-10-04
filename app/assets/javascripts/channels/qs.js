@@ -13,7 +13,7 @@
     },
     received: function(data) {
       // if (this.userIsCurrentUser(data.q)) {
-        return this.collection().append(data.q);
+        return this.collection().html(data.q);
       // }
     },
     // userIsCurrentUser: function(q) {
@@ -22,6 +22,7 @@
     followCurrentChannel: function() {
       var channelId;
       if (channelId = this.collection().data('channel-id')) {
+        console.log('following Qs channel!');
         return this.perform('follow', {
           channel_id: channelId
         });

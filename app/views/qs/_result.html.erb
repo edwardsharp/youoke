@@ -1,3 +1,16 @@
+<% unless search.nil? %>
+  <ul>
+  <% search.each do |s| %>
+    <li>
+
+    <%= link_to 'Q', channel_add_video_to_q_path(channel, yt_id: s[:id], yt_title: s[:title]), { method: :post, remote: true} %>
 
 
-<%= search.inspect %>
+    <img src="<%= s[:thumbnail_url] %>" border="0" />
+    <%= s[:title] %>
+    <small><%= s[:description] %> </small>
+
+    </li>
+  <% end -%>
+  </ul>
+<% end -%>

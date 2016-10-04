@@ -1,5 +1,10 @@
-<section id="search" data-channel="search" data-user-id="<%= current_user.id %>">
-  <%= render 'qs/result', search: nil %>
-</section>
+<%= form_for [ channel, Q.new ], remote: true do |form| %>
+  <%= form.text_field :q %><br>
+  <%= form.submit 'Search' %>
+<% end %>
 
-<%= render 'qs/new', channel: channel %>
+<section id="search" data-channel="search" data-user-id="<%= current_user.id %>">
+
+		<%= render 'qs/result', search: nil, channel: channel %>
+
+</section>

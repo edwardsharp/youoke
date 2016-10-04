@@ -4,7 +4,7 @@ class CreateQs < ActiveRecord::Migration[5.0]
       t.references :channel, index: true, foreign_key: true
 
       t.string :q
-      t.integer :position
+      
 
       t.timestamps
     end

@@ -1,1 +1,9 @@
-<%= q.inspect %>
+<% unless q.videos.blank? %>
+
+	<% q.videos.each do |v| %>
+
+		<%= v.id %>
+
+	<% end -%>
+
+<% end -%>

@@ -6,6 +6,7 @@ Rails.application.routes.draw do
     resources :comments
     resources :videos
     post 'search', to: 'qs#search', as: :qs
+    post 'add_video_to_q', to: 'qs#add_video_to_q', as: :add_video_to_q
   end
 
   root 'youoke#index'

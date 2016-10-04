@@ -35,7 +35,6 @@ ActiveRecord::Schema.define(version: 20161003192810) do
   create_table "qs", force: :cascade do |t|
     t.integer  "channel_id"
     t.string   "q"
-    t.integer  "position"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["channel_id"], name: "index_qs_on_channel_id"
@@ -48,14 +47,14 @@ ActiveRecord::Schema.define(version: 20161003192810) do
   end
 
   create_table "videos", id: :string, force: :cascade do |t|
-    t.integer  "channel_id"
     t.integer  "user_id"
     t.integer  "q_id"
     t.string   "title"
+    t.string   "description"
     t.integer  "plays"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["channel_id"], name: "index_videos_on_channel_id"
+    t.integer  "position"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
     t.index ["id"], name: "index_videos_on_id", unique: true
     t.index ["id"], name: "sqlite_autoindex_videos_1", unique: true
     t.index ["q_id"], name: "index_videos_on_q_id"
