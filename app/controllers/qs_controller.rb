@@ -10,8 +10,14 @@ class QsController < ApplicationController
   def add_video_to_q
     
     Rails.logger.debug "\n\n #{params.inspect} \n\n"
-    #@video = 
-    Video.create! id: params[:yt_id], title: params[:yt_title], q: @channel.q, user: @current_user
+    @video = Video.find_by id: params[:yt_id]
+    
+    if @video
+      QRelayJob.perform_later(@video)
+    else
+      @video = Video.create id: params[:yt_id], title: params[:yt_title], q: @channel.q, user: @current_user
+    end
+    
 
     head :no_content
 

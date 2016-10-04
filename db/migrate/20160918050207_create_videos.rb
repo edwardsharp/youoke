@@ -7,7 +7,7 @@ class CreateVideos < ActiveRecord::Migration[5.0]
       t.string :title
       t.string :description
 
-      t.integer :plays
+      t.string :file_path
       t.integer :position
 
       t.timestamps

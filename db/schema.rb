@@ -51,7 +51,7 @@ ActiveRecord::Schema.define(version: 20161003192810) do
     t.integer  "q_id"
     t.string   "title"
     t.string   "description"
-    t.integer  "plays"
+    t.string   "file_path"
     t.integer  "position"
     t.datetime "created_at",  null: false
     t.datetime "updated_at",  null: false
