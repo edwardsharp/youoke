@@ -75,14 +75,16 @@
       console.log('setupPlayerEventHandlers!');
 
       //attempt to sync time 3-times over 3 seconds
-      for (var i = 1; i < 4; i++) {
-        setTimeout(function(){
-          console.log('needstime!');
-          App.player.playerChange({player_event: 'needstime'});
-        }, i * 1000);
+      // for (var i = 1; i < 4; i++) {
+      //   setTimeout(function(){
+      //     console.log('needstime!');
+      //     App.player.playerChange({player_event: 'needstime'});
+      //   }, i * 1000);
         
-      }
+      // }
       
+      console.log('needstime!');
+      App.player.playerChange({player_event: 'needstime'});
 
       this.videoPlayer().addEventListener('play', function(){
         console.log('player play!');
