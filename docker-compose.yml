@@ -1,0 +1,12 @@
+version: "2"
+services:
+  rails:
+    image: youoke
+    ports:
+      - "3000:3000"
+    links:
+      - redis:redis
+  redis:
+    image: redis
+    ports:
+      - "6379"

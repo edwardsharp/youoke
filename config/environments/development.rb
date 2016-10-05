@@ -41,4 +41,7 @@ Rails.application.configure do
 
   # Set Action Cable server url for consumer connection
   config.action_cable.url = 'ws://localhost:28080'
+
+  config.action_cable.allowed_request_origins = ['http://localhost:3001','http://localhost:3000']
+
 end

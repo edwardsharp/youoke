@@ -11,11 +11,12 @@ class PlayerChannel < ApplicationCable::Channel
 
   def player_change(data)
     Rails.logger.debug "\n\n PlayerChannel player_change data: #{data.inspect}\n\n"
-    if data['player_event'] == 'canplay'
+    case data['eventData']['player_event']
+    when 'canplay'
       broadcast_player_event data['channel_id'], 'play'
-    elsif data['player_event'] == 'play'
+    when 'play'
       broadcast_player_event data['channel_id'], 'play'
-    elsif data['player_event'] == 'pause'
+    when 'pause'
       broadcast_player_event data['channel_id'], 'pause'
     end
     
@@ -24,7 +25,7 @@ class PlayerChannel < ApplicationCable::Channel
   private
   def broadcast_player_event(channel_id, player_event)
     ActionCable.server.broadcast(
-        "channels:#{data['channel_id']}:player", 
+        "channels:#{channel_id}:player", 
         { channel_id: channel_id, 
           player_event: player_event
         }

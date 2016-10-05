@@ -18,7 +18,7 @@
       })(this), 1000);
     },
     received: function(data) {
-      console.log('player got data:',data);
+      // console.log('player got data:',data);
       if(data.player != undefined){
         if (this.channelIsCurrentChannel(data.player)) {
           this.videoPlayer().removeAttribute("src");
@@ -26,10 +26,10 @@
           this.collection().html(data.player);
           return this.eventHandersTimeout();
         }else{
-          console.log('channel is not current channel!');
+          // console.log('channel is not current channel!');
         }
       }else if(data.player_event != undefined){
-        if(this.channelId === data.channel_id){
+        if(this.channelId() === data.channel_id){
           switch(data.player_event){
             case 'needstime':
               this.playerChange({player_event: 'needstime', current_time: this.videoPlayer().played.end(0)});
@@ -60,20 +60,23 @@
       })(this), 1000);
     },
     setupPlayerEventHandlers: function(){
+      if(this.videoPlayer() == undefined){
+        return;
+      }
       this.videoPlayer().addEventListener('play', function(){
-        console.log('player play!');
+        // console.log('player play!');
         return App.player.playerChange({player_event: 'play'});
       });
       this.videoPlayer().addEventListener('pause', function(){
-        console.log('player pause!');
+        // console.log('player pause!');
         return App.player.playerChange({player_event: 'pause'});
       });
       this.videoPlayer().addEventListener('ended', function(){
-        console.log('player ended!');
+        // console.log('player ended!');
         return App.player.playerChange({player_event: 'ended'});
       });
       this.videoPlayer().addEventListener('click', function(){
-        console.log('player onclick!');
+        // console.log('player onclick!');
         return App.player.videoPlayer().paused ? App.player.videoPlayer().play() : App.player.videoPlayer().pause();
       });
     },
@@ -85,7 +88,7 @@
     },
     followCurrentChannel: function() {
       if (this.channelId()) {
-        console.log('following Player channel ',this.channelId());
+        // console.log('following Player channel ',this.channelId());
         return this.perform('follow', {
           channel_id: this.channelId()
         });
@@ -96,8 +99,8 @@
     installPageChangeCallback: function() {
       if (!this.installedPageChangeCallback) {
         this.installedPageChangeCallback = true;
-        this.eventHandersTimeout();
         return $(document).on('page:change', function() {
+          App.player.eventHandersTimeout();
           return App.player.followCurrentChannel();
         });
       }

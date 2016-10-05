@@ -14,3 +14,7 @@ run:
 2. `foreman start`
 4. check out `http://localhost:3000`
 
+### docker notes
+
+`docker build -t youoke .`
+
