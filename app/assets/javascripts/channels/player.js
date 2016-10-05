@@ -58,7 +58,7 @@
                   this.videoPlayer().currentTime = parseFloat(data.event_data.current_time);
                   setTimeout(function(){
                     App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
-                  }, 200);
+                  }, 1000);
                   this.videoPlayer().play();
                 }
               }
@@ -123,7 +123,7 @@
           App.player.playerChange({player_event: 'timeupdate', player_token: playerToken, current_time: App.player.videoPlayer().currentTime});
           setTimeout(function(){
             App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
-          }, 500);
+          }, 1000);
         }catch(err){
           //o noz!
           console.log('o noz! seekedEventListener err',err);

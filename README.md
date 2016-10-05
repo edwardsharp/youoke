@@ -16,8 +16,14 @@ run:
 
 ### docker notes
 
-`docker build -t youoke .`
-
 dev
 
+`docker build -f Dockerfile.dev -t youoke .`
+
 `docker run -p 3001:3001 -p 28080:28080 -v /Users/edward/src/tower/youoke:/root/youoke youoke sh -c 'cd youoke && foreman start'`
+
+not-dev
+
+`docker build -t hub.sked.site:5000/youoke .`
+`docker push hub.sked.site:5000/youoke`
+`docker run -p 3001:3001 -p 28080:28080 hub.sked.site:5000/youoke sh -c 'rm -f tmp/pids/server.pid && foreman start'`
