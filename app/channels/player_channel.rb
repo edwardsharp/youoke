@@ -10,7 +10,7 @@ class PlayerChannel < ApplicationCable::Channel
   end
 
   def player_change(data)
-    # Rails.logger.debug "\n\n PlayerChannel player_change data: #{data.inspect}\n\n"
+    Rails.logger.debug "\n\n PlayerChannel player_change data: #{data.inspect}\n\n"
     case data['event_data']['player_event']
     when 'canplay'
       broadcast_player_event data['channel_id'], {player_event: 'play'}
@@ -22,6 +22,8 @@ class PlayerChannel < ApplicationCable::Channel
       broadcast_player_event data['channel_id'], {player_event: 'needstime'}
     when 'timeupdate'
       broadcast_player_event data['channel_id'], data['event_data']
+    when 'ended'
+      Channel.find_by(id: data['channel_id']).try(:q).try(:next_video)
     end
     
   end

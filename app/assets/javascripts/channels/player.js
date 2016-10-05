@@ -1,4 +1,5 @@
 (function() {
+  var playerToken = Math.random();
   App.player = App.cable.subscriptions.create("PlayerChannel", {
     collection: function() {
       return $("[data-channel='player']");
@@ -33,11 +34,12 @@
           switch(data.event_data.player_event){
             case 'needstime':
               try {
-                this.playerChange({player_event: 'timeupdate', current_time: this.videoPlayer().played.end(0)});
+                this.playerChange({player_event: 'timeupdate', current_time: this.videoPlayer().currentTime});
               }
               catch(err) {
                 //o noz!
               }
+              
               return;
             case 'play':
               this.videoPlayer().play();
@@ -46,11 +48,19 @@
               this.videoPlayer().pause();
               return;
             case 'timeupdate':
-              console.log('timeupdate!');
-              if(!isNaN(parseFloat(data.event_data.current_time))){
-                console.log('timeupdate to', parseFloat(data.event_data.current_time));
-                this.videoPlayer().currentTime = parseFloat(data.event_data.current_time);
-                this.videoPlayer().play();
+              if(data.event_data.player_token == playerToken){
+                console.log('player tokenz match, bail!');
+              }else{
+                console.log('timeupdate!');
+                if(!isNaN(parseFloat(data.event_data.current_time))){
+                  console.log('timeupdate to', parseFloat(data.event_data.current_time));
+                  this.videoPlayer().removeEventListener('seeked', App.player.seekedEventListener);
+                  this.videoPlayer().currentTime = parseFloat(data.event_data.current_time);
+                  setTimeout(function(){
+                    App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
+                  }, 200);
+                  this.videoPlayer().play();
+                }
               }
               return;
           }
@@ -98,10 +108,28 @@
         console.log('player ended!');
         return App.player.playerChange({player_event: 'ended'});
       });
+      
+      this.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
+
       this.videoPlayer().addEventListener('click', function(){
         console.log('player onclick!');
         return App.player.videoPlayer().paused ? App.player.videoPlayer().play() : App.player.videoPlayer().pause();
       });
+    },
+    seekedEventListener: function(){
+      console.log('player seeked!');
+        try{
+          App.player.videoPlayer().removeEventListener('seeked', App.player.seekedEventListener);
+          App.player.playerChange({player_event: 'timeupdate', player_token: playerToken, current_time: App.player.videoPlayer().currentTime});
+          setTimeout(function(){
+            App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
+          }, 500);
+        }catch(err){
+          //o noz!
+          console.log('o noz! seekedEventListener err',err);
+        }finally{
+          return;
+        }
     },
     playerChange: function(event_data) {
       return this.perform('player_change', {channel_id: this.channelId(), event_data});

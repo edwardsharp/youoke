@@ -20,4 +20,4 @@ run:
 
 dev
 
-`docker run -p 3001:3001 -p 28080:28080 -v /Users/edward/src/tower/youoke:/root/youoke youoke`
+`docker run -p 3001:3001 -p 28080:28080 -v /Users/edward/src/tower/youoke:/root/youoke youoke sh -c 'cd youoke && foreman start'`

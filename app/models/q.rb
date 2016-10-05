@@ -8,12 +8,41 @@ class Q < ApplicationRecord
     video_queue.first
   end
 
+  def next_video
+
+    currently_playing.update_column :position, nil
+
+    broadcast_new_queue_and_player
+
+  end
+
+  def skip(video_id)
+    
+    v = videos.find_by id: video_id
+
+    unless v.nil?
+      v.update_column :position, nil
+
+      broadcast_new_queue_and_player
+    end
+    
+  end
+
   def video_queue
     videos.where.not(position: nil).sort_by(&:position)
   end
 
   def q_length
     video_queue.size
+  end
+
+  private
+  def broadcast_new_queue_and_player
+    ActionCable.server.broadcast "channels:#{channel.id}:qs", 
+      q: QsController.render(partial: 'qs/q', locals: { q: self })
+
+    ActionCable.server.broadcast "channels:#{channel.id}:player",
+      player: ChannelsController.render(partial: 'channels/player', locals: { channel: channel })
   end
 
 end

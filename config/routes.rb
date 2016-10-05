@@ -8,6 +8,7 @@ Rails.application.routes.draw do
     resources :videos
     post 'search', to: 'qs#search', as: :qs
     post 'add_video_to_q', to: 'qs#add_video_to_q', as: :add_video_to_q
+    get 'skip/:video_id', to: 'qs#skip', as: :skip
   end
 
   root 'youoke#index'

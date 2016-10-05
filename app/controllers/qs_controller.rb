@@ -21,6 +21,12 @@ class QsController < ApplicationController
 
   end
 
+  def skip
+    @channel.q.skip(params[:video_id])
+
+    head :ok
+  end
+
   private
     def set_channel
       @channel = Channel.find_by slug: params[:channel_id]
