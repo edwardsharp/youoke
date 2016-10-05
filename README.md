@@ -18,3 +18,6 @@ run:
 
 `docker build -t youoke .`
 
+dev
+
+`docker run -p 3001:3001 -p 28080:28080 -v /Users/edward/src/tower/youoke:/root/youoke youoke`

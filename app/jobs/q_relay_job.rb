@@ -17,6 +17,8 @@ class QRelayJob < ApplicationJob
     
     if !file_path.nil? and File.file?(file_path)
       video.update_column :file_path, file_path
+    else
+      #destroy this video record?
     end
 
     ActionCable.server.broadcast "channels:#{video.q.channel_id}:qs",
