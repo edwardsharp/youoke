@@ -2,18 +2,20 @@
   <% first_video = q.video_queue.first %>
   <% q.video_queue.each do |v| %>
 
-    <%= "<b>Currently Playing:".html_safe if v == first_video %>
+    <%= "<b>Currently Playing:<br>".html_safe if v == first_video %>
 
     <%= "<i>".html_safe if v.file_path.nil? %>
-    <small><%= v.position unless v == first_video %></small> <%= v.id %> 
+    
+    <%= v.title[0..50] %> <br>
+    <%= v.user.name %>
+
     <%= "</i>".html_safe if v.file_path.nil? %>
     
     <%= "</b>".html_safe if v == first_video %>
-  
          
-    <%= link_to 'skip', channel_skip_path(q.channel, v.id), remote: true %>
+    <%= link_to 'skip', channel_skip_path(q.channel, v.id), remote: true, data: { disable_with: "xxxx" }, data: { confirm: 'r u sure?' } unless v.file_path.nil? %>
 
-    <br>
+    <hr>
   <% end -%>
 
 <% end -%>

@@ -9,6 +9,8 @@ class SearchRelayJob < ApplicationJob
         else
           QRelayJob.perform_later(Video.find_by(id: video.id))
         end
+        ActionCable.server.broadcast "channels:#{user_id}:search",
+          search: QsController.render(partial: 'qs/result', locals: { search: nil, channel: channel })
         return
       end
     rescue Yt::Errors::NoItems => e

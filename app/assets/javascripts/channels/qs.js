@@ -14,10 +14,12 @@
     received: function(data) {
       console.log('qs got data:');
       // if (this.userIsCurrentUser(data.q)) {
-      if($('#player h1').html() == "Nothing to play yet..."){
-        console.log('Noting to play yet... needsplayerload!!');
-        App.player.playerChange({player_event: 'needsplayerload'});
-      }
+      setTimeout(function(){
+        if($('#player h1').html() == "Nothing to play yet..."){
+          console.log('Nothing to play yet... needsplayerload!!');
+          App.player.playerChange({player_event: 'needsplayerload'});
+        }
+      }, 1000);
       return this.collection().html(data.q);
       // }
     },

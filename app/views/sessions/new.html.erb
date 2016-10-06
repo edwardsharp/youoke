@@ -1,6 +1,21 @@
-<h1>wutz yr internet handle?</h1>
 
-<%= form_for User.new, url: session_path do |f| %>
-  <%= f.text_field :name %><br>
-  <%= f.submit 'submit' %>
+<div class="container center-align">
+<h1>youoke</h1>
+<br>
+<br>
+
+<%= form_for User.new, url: session_path, class: 'col s12' do |f| %>
+  <div class="row">
+	  <div class="input-field col s9 m10">
+	    <%= f.text_field :name %>
+	    <label for="name" class="text-grey">wutz yr internet handle?</label>
+	  </div>
+
+  	<div class="input-field col s2 m2">
+      <button class="btn waves-effect waves-light grey btn-block" type="submit" name="commit">
+        <i class="material-icons">sentiment_very_satisfied</i>
+      </button>
+    </div>
+  </div>
 <% end %>
+</div>

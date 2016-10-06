@@ -23,12 +23,12 @@ ENV RAILS_ENV production
 ENV RACK_ENV production 
 
 WORKDIR /youoke
-RUN bundle
+RUN bundle --without development test
 
 EXPOSE 3001
 EXPOSE 28080
 
 COPY . /youoke
-RUN bundle
+RUN bundle --without development test
 
 CMD tail -f /youoke/log/development.log

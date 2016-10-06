@@ -1,12 +1,11 @@
-<h1><%= @channel.title %></h1>
-
-<p><%= @channel.content %></p>
-
-<p><%= link_to 'player', channel_player_path(@channel) %></p>
-
-
 <%= render 'qs/qs', channel: @channel %>
 
 <%= render 'qs/search', channel: @channel, current_user: @current_user %>
 
 <%= render 'comments/comments', channel: @channel %>
+
+<div id="channelContent">
+  <%= link_to 'player', channel_player_path(@channel) %><br>
+  <%= @channel.title %><br>
+  <%= @channel.content %>
+</div>

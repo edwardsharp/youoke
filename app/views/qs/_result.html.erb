@@ -1,18 +1,35 @@
+<script>
+$(function() {
+  $('#searchPreloader').addClass('hidden');
+  $('#q_q').blur();
+  $('.modal-trigger').leanModal({ending_top: '0%'});
+});
+</script>
+<div class="leftCol">
 <% unless search.nil? %>
-  <ul>
+  <ul class="collection">
   <% search.each do |s| %>
-    <li>
+    <li class="collection-item avatar">
 
-    <div id="<%= "q-#{s[:id]}" %>">
-      <%= link_to 'Q', channel_add_video_to_q_path(channel, yt_id: s[:id], yt_title: s[:title]), { method: :post, remote: true} %>
-    </div>
+      <img src="<%= s[:thumbnail_url] %>" border="0" class="circle">
+      
 
-    <img src="<%= s[:thumbnail_url] %>" border="0" />
-    <b><%= Time.at(s[:duration].to_i).utc.strftime("%M:%S") rescue '' %></b>
-    <%= s[:title] %>
-    <small><%= s[:description] %> </small>
+      <span class="title">
+        <b><%= Time.at(s[:duration].to_i).utc.strftime("%M:%S") rescue '' %></b>
+        <%= s[:title] %>
+      </span>
+      <p>
+        <%= s[:description] %> <br>
+        <%= render 'qs/preview_modal', id: s[:id] %>
+      </p>
 
+      <span id="<%= "q-#{s[:id]}" %>">
+        <%= link_to channel_add_video_to_q_path(channel, yt_id: s[:id], yt_title: s[:title]), { method: :post, remote: true, class: 'waves-effect waves-light btn-floating secondary-content grey'} do %>
+          <i class="material-icons">add</i>
+        <% end -%>
+      </span>
     </li>
   <% end -%>
   </ul>
 <% end -%>
+</div>

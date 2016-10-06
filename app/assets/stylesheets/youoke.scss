@@ -9,6 +9,7 @@ html, body{
 body {
   background-color: black;
   color: white;
+  font-family: sans-serif;
 }
 
 a,a:visited {
@@ -58,3 +59,50 @@ video {
   overflow: hidden;
 }
 
+hr {
+  border: thin solid rgba(255,255,255,0.3);
+}
+
+#new_comment {
+  display: none;
+}
+
+.leftCol{
+  width: 80vw;
+}
+
+.collection, .collection-item {
+  border: thin solid rgba(255,255,255,0.3) !important;
+}
+
+.hidden {
+  display: none;
+}
+
+.modal {
+  max-height: 100% !important; 
+}
+.modal, .modal-footer {
+  background-color: rgba(0,0,0,0.7) !important;
+}
+
+
+/* label focus color */
+.input-field input[type=text]:focus + label {
+ color: gray;
+}
+/* label underline focus color */
+.input-field input[type=text]:focus {
+ border-bottom: 1px solid gray;
+ box-shadow: 0 1px 0 0 gray;
+}
+
+/* icon prefix focus color */
+.input-field .prefix.active {
+ color: gray;
+}
+
+.btn-block {
+  display:block;
+  width: 100%;
+}

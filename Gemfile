@@ -24,6 +24,7 @@ gem 'jbuilder', '~> 2.0'
 gem 'foreman'
 gem 'yt'
 gem 'dotenv-rails'
+gem 'materialize-sass'
 
 group :development, :test do
   gem 'byebug'

@@ -8,7 +8,7 @@ services:
     links:
       - pg:pg
     restart: always
-    command: sh -c 'rm -f dump.rdb && rm -f tmp/pids/server.pid && ./init_youoke.sh && foreman start'
+    command: sh -c 'rm -f dump.rdb && rm -rf tmp/*.pid && rm -f tmp/pids/*.pid && ./init_youoke.sh && foreman start'
   pg:
     restart: always
     image: postgres:9.6
