@@ -7,6 +7,11 @@ class QsController < ApplicationController
 
   end
 
+  #get
+  def preview
+    @sId = params[:sid]
+  end
+
   def add_video_to_q
     
     Rails.logger.debug "\n\n #{params.inspect} \n\n"

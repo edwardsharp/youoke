@@ -3,6 +3,7 @@ Rails.application.routes.draw do
   resources :youoke
 
   post 'join_channel', to: 'channels#join', as: :join_channel
+  get 'preview/:sid', to: 'qs#preview', as: :preview
 
   resources :channels do
     get 'player', to: 'channels#player', as: :player

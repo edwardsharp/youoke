@@ -2,7 +2,6 @@
 $(function() {
   $('#searchPreloader').addClass('hidden');
   $('#q_q').blur();
-  $('.modal-trigger').leanModal({ending_top: '0%'});
 });
 </script>
 <div class="leftCol">
@@ -20,7 +19,10 @@ $(function() {
       </span>
       <p>
         <%= s[:description] %> <br>
-        <%= render 'qs/preview_modal', id: s[:id] %>
+        <!-- Modal Trigger -->
+        <%= link_to preview_path(s[:id]), remote: true, class: 'btn-floating waves-effect waves-light black' do %>
+          <i class="material-icons">live_tv</i>
+        <% end -%>
       </p>
 
       <span id="<%= "q-#{s[:id]}" %>">
@@ -33,3 +35,4 @@ $(function() {
   </ul>
 <% end -%>
 </div>
+<div id="modalContainer"></div>

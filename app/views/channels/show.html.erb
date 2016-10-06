@@ -1,5 +1,5 @@
 <div class="right-align channel-user">
-   HELLO <%= @current_user.name %>
+   <span class="hide-on-med-and-down">HELLO <%= @current_user.name %></span>
    (<%= link_to 'logout', session_path, method: :delete %>)
 </div>
 

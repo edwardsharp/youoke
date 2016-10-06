@@ -114,26 +114,41 @@ form#new_q {
   background-color: rgba(0,0,0,0.7) !important;
 }
 
+.btn-block {
+  display:block;
+  width: 100%;
+}
 
+input {
+  border-bottom: 1px solid #ff6600!important;
+}
 /* label focus color */
 .input-field input[type=text]:focus + label {
  color: gray;
 }
 /* label underline focus color */
 .input-field input[type=text]:focus {
- border-bottom: 1px solid gray;
- box-shadow: 0 1px 0 0 gray;
+ border-bottom: 1px solid #ff6600;
+ box-shadow: 0 1px 0 0 #ff6600;
 }
 
-/* icon prefix focus color */
-.input-field .prefix.active {
- color: gray;
+/* valid color */
+.input-field input[type=text].valid {
+ border-bottom: 1px solid #ff6600;
+ box-shadow: 0 1px 0 0 #ff6600;
+}
+/* invalid color */
+.input-field input[type=text].invalid {
+ border-bottom: 1px solid red;
+ box-shadow: 0 1px 0 0 red;
+}
+/* label underline focus color */
+.input-field input[type=text]:focus {
+ border-bottom: 1px solid #ff6600;
+ box-shadow: 0 1px 0 0 #ff6600;
 }
 
-.btn-block {
-  display:block;
-  width: 100%;
-}
+
 
 /* this is annoying */
 input:-webkit-autofill,

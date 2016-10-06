@@ -1,0 +1,10 @@
+$('#modalContainer').html('<%= j render "qs/preview_modal", id: @sId %>');
+var leanModelOptz = {
+  ending_top: '0%',
+  complete: function() { 
+    $('#<%= @sId %> iframe').attr('src', '');
+    $('.lean-overlay').remove();
+    $('#modalContainer').html('');
+  }
+};
+$('#<%= @sId %>').leanModal(leanModelOptz).openModal(leanModelOptz);
