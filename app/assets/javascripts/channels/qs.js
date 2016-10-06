@@ -12,9 +12,13 @@
       })(this), 1000);
     },
     received: function(data) {
-      // console.log('qs got data:',data.q);
+      console.log('qs got data:');
       // if (this.userIsCurrentUser(data.q)) {
-        return this.collection().html(data.q);
+      if($('#player h1').html() == "Nothing to play yet..."){
+        console.log('Noting to play yet... needsplayerload!!');
+        App.player.playerChange({player_event: 'needsplayerload'});
+      }
+      return this.collection().html(data.q);
       // }
     },
     // userIsCurrentUser: function(q) {

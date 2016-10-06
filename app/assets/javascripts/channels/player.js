@@ -58,7 +58,7 @@
                   this.videoPlayer().currentTime = parseFloat(data.event_data.current_time);
                   setTimeout(function(){
                     App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
-                  }, 1000);
+                  }, 5000);
                   this.videoPlayer().play();
                 }
               }
@@ -123,7 +123,7 @@
           App.player.playerChange({player_event: 'timeupdate', player_token: playerToken, current_time: App.player.videoPlayer().currentTime});
           setTimeout(function(){
             App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
-          }, 1000);
+          }, 5000);
         }catch(err){
           //o noz!
           console.log('o noz! seekedEventListener err',err);
@@ -132,7 +132,7 @@
         }
     },
     playerChange: function(event_data) {
-      return this.perform('player_change', {channel_id: this.channelId(), event_data});
+      return this.perform('player_change', {channel_id: this.channelId(), event_data: event_data});
     },
     channelIsCurrentChannel: function(player) {
       return $(player).attr('data-channel-id') === $('section[data-channel=qs]').attr('channel-id');

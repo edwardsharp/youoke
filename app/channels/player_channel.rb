@@ -24,6 +24,9 @@ class PlayerChannel < ApplicationCable::Channel
       broadcast_player_event data['channel_id'], data['event_data']
     when 'ended'
       Channel.find_by(id: data['channel_id']).try(:q).try(:next_video)
+    when 'needsplayerload'
+      ActionCable.server.broadcast "channels:#{data['channel_id']}:player",
+        player: ChannelsController.render(partial: 'channels/player', locals: { channel: Channel.find_by(id: data['channel_id']) })
     end
     
   end

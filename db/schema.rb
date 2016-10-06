@@ -12,6 +12,9 @@
 
 ActiveRecord::Schema.define(version: 20161003192810) do
 
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
+
   create_table "channels", force: :cascade do |t|
     t.integer  "user_id"
     t.string   "title"
@@ -19,7 +22,7 @@ ActiveRecord::Schema.define(version: 20161003192810) do
     t.text     "content"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.index ["user_id"], name: "index_channels_on_user_id"
+    t.index ["user_id"], name: "index_channels_on_user_id", using: :btree
   end
 
   create_table "comments", force: :cascade do |t|
@@ -28,8 +31,8 @@ ActiveRecord::Schema.define(version: 20161003192810) do
     t.text     "content"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.index ["channel_id"], name: "index_comments_on_channel_id"
-    t.index ["user_id"], name: "index_comments_on_user_id"
+    t.index ["channel_id"], name: "index_comments_on_channel_id", using: :btree
+    t.index ["user_id"], name: "index_comments_on_user_id", using: :btree
   end
 
   create_table "qs", force: :cascade do |t|
@@ -37,7 +40,7 @@ ActiveRecord::Schema.define(version: 20161003192810) do
     t.string   "q"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["channel_id"], name: "index_qs_on_channel_id"
+    t.index ["channel_id"], name: "index_qs_on_channel_id", using: :btree
   end
 
   create_table "users", force: :cascade do |t|
@@ -55,10 +58,15 @@ ActiveRecord::Schema.define(version: 20161003192810) do
     t.integer  "position"
     t.datetime "created_at",  null: false
     t.datetime "updated_at",  null: false
-    t.index ["id"], name: "index_videos_on_id", unique: true
-    t.index ["id"], name: "sqlite_autoindex_videos_1", unique: true
-    t.index ["q_id"], name: "index_videos_on_q_id"
-    t.index ["user_id"], name: "index_videos_on_user_id"
+    t.index ["id"], name: "index_videos_on_id", unique: true, using: :btree
+    t.index ["q_id"], name: "index_videos_on_q_id", using: :btree
+    t.index ["user_id"], name: "index_videos_on_user_id", using: :btree
   end
 
+  add_foreign_key "channels", "users"
+  add_foreign_key "comments", "channels"
+  add_foreign_key "comments", "users"
+  add_foreign_key "qs", "channels"
+  add_foreign_key "videos", "qs"
+  add_foreign_key "videos", "users"
 end

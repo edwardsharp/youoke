@@ -1,12 +1,14 @@
 version: "2"
 services:
-  rails:
-    image: youoke
+  web:
+    image: hub.sked.site:5000/youoke
     ports:
-      - "3000:3000"
+      - "3001:3001"
+      - "28080:28080"
     links:
-      - redis:redis
-  redis:
-    image: redis
-    ports:
-      - "6379"
+      - pg:pg
+    restart: always
+    command: sh -c 'rm -f dump.rdb && rm -f tmp/pids/server.pid && ./init_youoke.sh && foreman start'
+  pg:
+    restart: always
+    image: postgres:9.6

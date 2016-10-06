@@ -16,7 +16,8 @@ Rails.application.configure do
 
   # Disable serving static files from the `/public` folder by default since
   # Apache or NGINX already handles this.
-  config.serve_static_files = ENV['RAILS_SERVE_STATIC_FILES'].present?
+  # config.serve_static_files = ENV['RAILS_SERVE_STATIC_FILES'].present?
+  config.public_file_server.enabled = false
 
   # Compress JavaScripts and CSS.
   config.assets.js_compressor = :uglifier
@@ -77,4 +78,8 @@ Rails.application.configure do
 
   # Set Action Cable server url for consumer connection
   # config.action_cable.url = 'ws://cable.example.com:28080'
+
+  config.action_cable.url = 'ws://localhost:28080' #ws://lacuna.club:28080
+
+  config.action_cable.allowed_request_origins = ['http://localhost:3001','http://lacuna.club']
 end

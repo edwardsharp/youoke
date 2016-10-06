@@ -1,1 +1,6 @@
-<%= video_tag(File.basename(channel.q.currently_playing.file_path), controls: true, autoplay: true, preload: 'auto') rescue 'Nothing to play yet...'%>
+<% begin %>
+<%= video_tag(File.basename(channel.q.currently_playing.file_path), controls: true, autoplay: true, preload: 'auto') %>
+<% rescue %>
+<%= video_tag('', controls: true) %>
+<h1>Nothing to play yet...</h1>
+<% end -%>

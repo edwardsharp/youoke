@@ -7,9 +7,11 @@ source 'https://rubygems.org'
 gem 'rails', '5.0.0.1'
 gem 'sprockets-rails', git: "https://github.com/rails/sprockets-rails.git"
 
-gem 'sqlite3'
+# gem 'sqlite3'
+gem 'pg'
 gem 'redis'
 gem 'puma'
+gem 'unicorn'
 
 gem 'sass-rails', '~> 5.0'
 gem 'uglifier', '>= 1.3.0'

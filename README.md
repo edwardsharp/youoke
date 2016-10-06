@@ -22,8 +22,22 @@ dev
 
 `docker run -p 3001:3001 -p 28080:28080 -v /Users/edward/src/tower/youoke:/root/youoke youoke sh -c 'cd youoke && foreman start'`
 
-not-dev
+#### not-dev
+
+build
 
 `docker build -t hub.sked.site:5000/youoke .`
+
 `docker push hub.sked.site:5000/youoke`
-`docker run -p 3001:3001 -p 28080:28080 hub.sked.site:5000/youoke sh -c 'rm -f tmp/pids/server.pid && foreman start'`
+
+run
+
+`docker run -p 3001:3001 -p 28080:28080 hub.sked.site:5000/youoke sh -c 'rm -f dump.rdb && rm -f tmp/pids/server.pid && ./init_youoke.sh && foreman start'`
+
+-or-
+
+`docker-compose up`
+
+debug
+
+`bash -c "clear && docker exec -it youoke_web_1 /bin/bash"`

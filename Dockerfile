@@ -3,24 +3,32 @@ MAINTAINER edward@edwardsharp.net
 
 RUN apt-get update && apt-get upgrade -y
 
-RUN apt-get install -y nodejs redis-server
+RUN apt-get install -y nodejs redis-server nginx postgresql-client vim
+
+RUN echo "\ndaemon off;" >> /etc/nginx/nginx.conf
+RUN chown -R www-data:www-data /var/lib/nginx
+ADD nginx-default.conf /etc/nginx/sites-enabled/default
 
 RUN gem update bundler
 
-COPY . /root/youoke
-#COPY Gemfile /root
+RUN curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
+RUN chmod a+rx /usr/local/bin/youtube-dl
+
+RUN mkdir /youoke
+
+COPY Gemfile /youoke
 
 ENV NOKOGIRI_USE_SYSTEM_LIBRARIES 1
-ENV RAILS_ENV development
+ENV RAILS_ENV production
+ENV RACK_ENV production 
 
-WORKDIR /root/youoke
+WORKDIR /youoke
 RUN bundle
-
-RUN rake db:create
-RUN rake db:migrate
-RUN rake db:seed
 
 EXPOSE 3001
 EXPOSE 28080
 
-CMD tail -f /root/youoke/log/development.log
+COPY . /youoke
+RUN bundle
+
+CMD tail -f /youoke/log/development.log
