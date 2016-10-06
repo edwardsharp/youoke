@@ -27,13 +27,23 @@ video {
   width: 80vw;
 }
 
-#qs {
+.channel-user{
   position:absolute;
   top: 0;
   right: 0;
   width: 20vw;
-  height: 80vh;
+  height: 1.5em;
 
+  margin: auto;
+  overflow: hidden;
+}
+
+#qs {
+  position:absolute;
+  top: 1.5em;
+  right: 0;
+  width: 20vw;
+  height: 80vh;
   margin: auto;
   overflow: hidden;
 }
@@ -71,8 +81,26 @@ hr {
   width: 80vw;
 }
 
+form {
+  background-color: rgba(255,255,255,0.1)!important;
+  padding-left: 1em;
+  padding-right: 1em;
+  border-radius: 5px;
+}
+
+form#new_q {
+  border-top-right-radius: 0; 
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 5px;
+}
+
 .collection, .collection-item {
   border: thin solid rgba(255,255,255,0.3) !important;
+}
+
+.collection-item {
+  padding-right: 50px!important;
 }
 
 .hidden {
@@ -105,4 +133,12 @@ hr {
 .btn-block {
   display:block;
   width: 100%;
+}
+
+/* this is annoying */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+transition: background-color 50000s ease-in-out 0s, color 5000s ease-in-out 0s;
 }

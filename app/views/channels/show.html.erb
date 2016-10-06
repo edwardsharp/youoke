@@ -1,3 +1,8 @@
+<div class="right-align channel-user">
+   HELLO <%= @current_user.name %>
+   (<%= link_to 'logout', session_path, method: :delete %>)
+</div>
+
 <%= render 'qs/qs', channel: @channel %>
 
 <%= render 'qs/search', channel: @channel, current_user: @current_user %>

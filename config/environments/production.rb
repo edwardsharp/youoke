@@ -79,7 +79,8 @@ Rails.application.configure do
   # Set Action Cable server url for consumer connection
   # config.action_cable.url = 'ws://cable.example.com:28080'
 
-  config.action_cable.url = 'ws://localhost:28080' #ws://lacuna.club:28080
+  config.action_cable.url = ENV['ACTION_CABLE_URL'].blank? ? 'ws://localhost:28080' : ENV['ACTION_CABLE_URL'] #ws://lacuna.club:28080
 
-  config.action_cable.allowed_request_origins = ['http://localhost:3001','http://lacuna.club']
+  config.action_cable.allowed_request_origins = ENV['ACTION_CABLE_ALLOWED_ORIGIN'].blank? ? ['http://localhost:3001','http://lacuna.club'] : ['http://localhost:3001','http://lacuna.club', 'http://lacuna.club:3001', ENV['ACTION_CABLE_ALLOWED_ORIGIN']] 
+
 end

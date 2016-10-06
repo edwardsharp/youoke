@@ -32,6 +32,10 @@ build
 
 run
 
+`foreman start -f Procfile.dev`
+
+-or-
+
 `docker run -p 3001:3001 -p 28080:28080 hub.sked.site:5000/youoke sh -c 'rm -f dump.rdb && rm -f tmp/pids/server.pid && ./init_youoke.sh && foreman start'`
 
 -or-

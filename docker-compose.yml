@@ -8,6 +8,9 @@ services:
     links:
       - pg:pg
     restart: always
+    environment:
+      - ACTION_CABLE_URL=ws://localhost:28080
+      - ACTION_CABLE_ALLOWED_ORIGIN=https://lacuna.club
     command: sh -c 'rm -f dump.rdb && rm -rf tmp/*.pid && rm -f tmp/pids/*.pid && ./init_youoke.sh && foreman start'
   pg:
     restart: always

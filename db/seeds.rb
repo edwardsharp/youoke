@@ -8,14 +8,14 @@ foma = User.where(name: 'Foma Fomitch').first_or_create do |user|
   user.name = 'Foma Fomitch'
 end
 
-Channel.where(title: 'Tha Corinthians').first_or_create do |chan|
-  chan.title = 'Tha Corinthians'
-  chan.content = 'If I lack awareness, then why should I care what happens to me when I am dead?'
+Channel.where(title: 'karaopy').first_or_create do |chan|
+  chan.title = 'karaopy'
+  chan.content = 'wifi: lacuna  passwd: karaopy'
   chan.user = dio
 end
 
-Channel.where(title: 'Cynicism').first_or_create do |chan|
-  chan.title = 'Cynicism'
-  chan.content = 'I am a citizen of the world (cosmopolites)'
+Channel.where(title: 'cynicism').first_or_create do |chan|
+  chan.title = 'cynicism'
+  chan.content = 'i am a citizen of the world (cosmopolites)'
   chan.user = foma
 end

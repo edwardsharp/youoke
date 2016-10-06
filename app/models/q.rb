@@ -10,8 +10,10 @@ class Q < ApplicationRecord
 
   def next_video
 
-    currently_playing.update_column :position, nil
-
+    if Time.now.utc - updated_at > 10 #10sec throttle
+      currently_playing.update_column :position, nil
+      currently_playing.update_column :updated_at, Time.now.utc
+    end
     broadcast_new_queue_and_player
 
   end

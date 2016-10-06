@@ -2,6 +2,8 @@ Rails.application.routes.draw do
   resource  :session
   resources :youoke
 
+  post 'join_channel', to: 'channels#join', as: :join_channel
+
   resources :channels do
     get 'player', to: 'channels#player', as: :player
     resources :comments

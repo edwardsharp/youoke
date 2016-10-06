@@ -1,12 +1,35 @@
 <div class="row">
-<div class="col s8 offset-s2 center-align">
-  <h1>channels</h1>
-
-  <div class="collection">
-  <% @channels.each do |channel| %>
-    <%= link_to channel.title, channel, class: 'collection-item' %>
-  <% end %>
+  <div class="col s12 right-align">
+  
+     HELLO <%= @current_user.name %>
+     (<%= link_to 'logout', session_path, method: :delete %>)
+  
   </div>
-
 </div>
+
+<div class="container center-align">
+  <h1>join a channel</h1>
+  <p>hint: this is on the screen/projector.</p>
+  <br>
+
+  <%= form_for Channel.new, url: join_channel_path, remote: true, class: 'col s12' do |f| %>
+  <div class="row">
+    <div class="input-field col s9 m10">
+      <%= f.text_field :title %>
+      <label for="name" class="text-grey">wut channel?</label>
+    </div>
+
+    <div class="input-field col s2 m2">
+      <button class="btn waves-effect waves-light grey btn-block" type="submit" name="commit">
+        <i class="material-icons">change_history</i>
+      </button>
+    </div>
+  </div>
+  <% end %>
+
+
+
+
+
+
 </div>
