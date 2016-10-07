@@ -6,6 +6,6 @@
 <%= render 'qs/qs', channel: @channel %>
 
 
-<div id="channelContent"><%= @channel.content %></div>
+<div id="channelContent"><%= @channel.title %><br><%= @channel.content %></div>
 
 <%= render 'comments/player_comments', channel: @channel %>

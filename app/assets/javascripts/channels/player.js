@@ -1,5 +1,6 @@
 (function() {
   var playerToken = Math.random();
+  var catchPauseBeforeEnd = false;
   App.player = App.cable.subscriptions.create("PlayerChannel", {
     collection: function() {
       return $("[data-channel='player']");
@@ -23,16 +24,26 @@
       if(data.player != undefined){
         if (this.channelIsCurrentChannel(data.player)) {
           console.log('TRYING TO DESTROY EXISTING VIDEO!');
-          this.videoPlayer().removeEventListener('pause', App.player.pauseEventListener);
-          this.videoPlayer().removeEventListener('play', App.player.pauseEventListener);
-          this.videoPlayer().pause();
-          this.videoPlayer().src = '';
+          App.player.removePlayerEventHandlers();
+          App.player.videoPlayer().pause();
+          App.player.videoPlayer().src = '';
           console.log('src???: ',this.videoPlayer().src);
-          this.videoPlayer().load();
+          // App.player.videoPlayer().load();
+
           setTimeout(function(){
             App.player.collection().html(data.player);
-            App.player.setupPlayerEventHandlers();
           }, 500);
+          
+          setTimeout(function(){
+            if(App.player.videoPlayer().dataset.intermission =! undefined && App.player.videoPlayer().dataset.intermission === 'true'){
+              console.log("INTERMISSION!");
+              App.player.videoPlayer().volume = 0.5;
+              App.player.videoPlayer().play();
+            }else{
+              App.player.videoPlayer().play();
+              App.player.setupPlayerEventHandlers();
+            }
+          }, 700);
         }else{
           console.log('channel is not current channel!');
         }
@@ -44,7 +55,7 @@
                 this.playerChange({player_event: 'timeupdate', current_time: this.videoPlayer().currentTime});
               }
               catch(err) {
-                //o noz!
+                console.log('O NOZ!! timeupdate err:',err);
               }
               break;
             case 'play':
@@ -56,15 +67,17 @@
             case 'timeupdate':
               if(data.event_data.player_token == playerToken){
                 console.log('player tokenz match, bail!');
+                if(App.player.videoPlayer().paused){
+                  App.player.videoPlayer().removeEventListener('play', App.player.playEventListener);
+                  App.player.videoPlayer().play();
+                  App.player.videoPlayer().addEventListener('play', App.player.playEventListener);
+                }
               }else{
                 console.log('timeupdate!');
                 if(!isNaN(parseFloat(data.event_data.current_time))){
                   console.log('timeupdate to', parseFloat(data.event_data.current_time));
                   // this.videoPlayer().removeEventListener('seeked', App.player.seekedEventListener);
                   this.videoPlayer().currentTime = parseFloat(data.event_data.current_time);
-                  setTimeout(function(){
-                    // App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
-                  }, 5000);
                   this.videoPlayer().play();
                 }
               }
@@ -77,7 +90,7 @@
       
     },
     setupPlayerEventHandlers: function(){
-      console.log('setupPlayerEventHandlers!');
+      console.log('setupPlayerEventHandlers!, needstime!');
 
       //attempt to sync time 3-times over 3 seconds
       // for (var i = 1; i < 4; i++) {
@@ -87,24 +100,24 @@
       //   }, i * 1000);
         
       // }
-      
-      console.log('needstime!');
+
+      App.player.removePlayerEventHandlers();
+
       App.player.playerChange({player_event: 'needstime'});
-
-      this.videoPlayer().removeEventListener('play', App.player.playEventListener);
-      this.videoPlayer().addEventListener('play', App.player.playEventListener);
-
-      this.videoPlayer().removeEventListener('pause', App.player.pauseEventListener);
-      this.videoPlayer().addEventListener('pause', App.player.pauseEventListener);
       
-      this.videoPlayer().removeEventListener('ended', App.player.endedEventListener);
-      this.videoPlayer().addEventListener('ended', App.player.endedEventListener);
-      
-      this.videoPlayer().removeEventListener('seeked', App.player.seekedEventListener);
-      this.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
-
-      this.videoPlayer().removeEventListener('click', App.player.clickEventListener);
-      this.videoPlayer().addEventListener('click', App.player.clickEventListener);
+      App.player.videoPlayer().addEventListener('play', App.player.playEventListener);
+      App.player.videoPlayer().addEventListener('pause', App.player.pauseEventListener);
+      App.player.videoPlayer().addEventListener('ended', App.player.endedEventListener);
+      App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
+      App.player.videoPlayer().addEventListener('click', App.player.clickEventListener);
+    },
+    removePlayerEventHandlers: function(){
+      console.log('removePlayerEventHandlers!');
+      App.player.videoPlayer().removeEventListener('play', App.player.playEventListener);
+      App.player.videoPlayer().removeEventListener('pause', App.player.pauseEventListener);
+      App.player.videoPlayer().removeEventListener('ended', App.player.endedEventListener);
+      App.player.videoPlayer().removeEventListener('seeked', App.player.seekedEventListener);
+      App.player.videoPlayer().removeEventListener('click', App.player.clickEventListener);
     },
     seekedEventListener: function(){
       console.log('player seeked!');
@@ -139,11 +152,14 @@
     pauseEventListener: function(){
       console.log('player pause!');
       try{
+        catchPauseBeforeEnd = true;
         App.player.videoPlayer().removeEventListener('pause', App.player.pauseEventListener);
-        App.player.playerChange({player_event: 'pause'});
         setTimeout(function(){
+          if(catchPauseBeforeEnd){
+            App.player.playerChange({player_event: 'pause'});
+          }
           App.player.videoPlayer().addEventListener('pause', App.player.pauseEventListener);
-        }, 5000);
+        }, 1000);
       }catch(err){
         //o noz!
         console.log('o noz! pauseEventListener err',err);
@@ -154,6 +170,7 @@
     endedEventListener: function(){
       console.log('player ended!');
       try{
+        catchPauseBeforeEnd = false;
         App.player.videoPlayer().removeEventListener('ended', App.player.endedEventListener);
         App.player.playerChange({player_event: 'ended'});
         setTimeout(function(){

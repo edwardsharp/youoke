@@ -9,9 +9,10 @@ $(function() {
   <ul class="collection">
   <% search.each do |s| %>
     <li class="collection-item avatar">
-
-      <img src="<%= s[:thumbnail_url] %>" border="0" class="circle">
-      
+      <!-- Modal Trigger -->
+      <%= link_to preview_path(s[:id]), remote: true, class: 'circle btn-floating waves-effect waves-light black z-depth-2' do %>
+        <img src="<%= s[:thumbnail_url] %>" border="0">
+      <% end -%>
 
       <span class="title">
         <b><%= Time.at(s[:duration].to_i).utc.strftime("%M:%S") rescue '' %></b>
@@ -19,14 +20,11 @@ $(function() {
       </span>
       <p>
         <%= s[:description] %> <br>
-        <!-- Modal Trigger -->
-        <%= link_to preview_path(s[:id]), remote: true, class: 'btn-floating waves-effect waves-light black' do %>
-          <i class="material-icons">live_tv</i>
-        <% end -%>
+        
       </p>
 
       <span id="<%= "q-#{s[:id]}" %>">
-        <%= link_to channel_add_video_to_q_path(channel, yt_id: s[:id], yt_title: s[:title]), { method: :post, remote: true, class: 'waves-effect waves-light btn-floating secondary-content grey'} do %>
+        <%= link_to channel_add_video_to_q_path(channel, yt_id: s[:id], yt_title: s[:title]), { method: :post, remote: true, class: 'waves-effect waves-light btn-floating btn-large secondary-content orange z-depth-2'} do %>
           <i class="material-icons">add</i>
         <% end -%>
       </span>

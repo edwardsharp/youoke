@@ -19,12 +19,30 @@ a:hover{
   color: #ff6600;
 }
 
-video {
+video,#intermission {
   position: absolute;
   top: 0;
   left: 0;
   height:100vh;
   width: 80vw;
+}
+.rainbow-text {                                                                                                                                                                           
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-image: -webkit-gradient(linear,  left top,  left bottom, 
+      color-stop(0.00, red), 
+      color-stop(16%, orange),
+      color-stop(32%, yellow),
+      color-stop(48%, green),
+      color-stop(60%, blue),
+      color-stop(76%, indigo),
+      color-stop(1.00, violet));
+}
+
+#intermission{
+  z-index: 666;
+  padding: 2em;
+  background-color: rgba(0,0,0,0.5);
 }
 
 .channel-user{
@@ -89,10 +107,7 @@ form {
 }
 
 form#new_q {
-  border-top-right-radius: 0; 
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 5px;
+  border-radius: 0;
 }
 
 .collection, .collection-item {
@@ -100,7 +115,8 @@ form#new_q {
 }
 
 .collection-item {
-  padding-right: 50px!important;
+  padding-right: 80px !important;
+
 }
 
 .hidden {

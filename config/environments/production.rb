@@ -81,6 +81,6 @@ Rails.application.configure do
 
   config.action_cable.url = ENV['ACTION_CABLE_URL'].blank? ? 'ws://localhost:28080' : ENV['ACTION_CABLE_URL'] #ws://lacuna.club:28080
 
-  config.action_cable.allowed_request_origins = ENV['ACTION_CABLE_ALLOWED_ORIGIN'].blank? ? ['http://localhost:3001','http://lacuna.club'] : ['http://localhost:3001','http://lacuna.club', 'http://lacuna.club:3001', ENV['ACTION_CABLE_ALLOWED_ORIGIN']] 
+  config.action_cable.allowed_request_origins = ENV['ACTION_CABLE_ALLOWED_ORIGIN'].blank? ? ['http://localhost:3000','http://localhost:3001','http://lacuna.club'] : ['http://localhost:3000','http://localhost:3001','http://lacuna.club', 'http://lacuna.club:3001', ENV['ACTION_CABLE_ALLOWED_ORIGIN']] 
 
 end

@@ -1,0 +1,38 @@
+<script>
+$(function() {
+var step = 4, // colorChage step, use negative value to change direction
+    ms   = 10,  // loop every
+    $uni = $('.rainbow'),
+    txt  = $uni.text(),
+    len  = txt.length,
+    lev  = 360/len,
+    newCont = "",
+    itv;
+
+for(var i=0; i<len; i++)newCont += "<span style='color:hsla("+ i*lev +", 100%, 50%, 1)'>"+ txt.charAt(i) +"</span>";
+
+$uni.html(newCont); // Replace with new content
+var $ch = $uni.find('span'); // character
+
+function anim(){
+  itv = setInterval(function(){
+    $ch.each(function(){
+      var h = +$(this).attr('style').split(',')[0].split('(')[1]-step % 360;
+      $(this).attr({style:"color:hsla("+ h +", 100%, 50%, 1)"});
+    });
+  }, ms); 
+}
+
+anim();
+  
+});
+
+</script>
+
+<div id="intermission" class="center">
+  <h1 class="rainbow">
+    Next: <%= channel.q.currently_playing.title rescue '' %><br>
+    Requested by: <%= channel.q.currently_playing.user.name rescue '' %>
+  </h1>
+</div>
+<%= video_tag(File.basename(channel.q.intermission.file_path), controls: false, loop: true, 'data-intermission': 'true') %>

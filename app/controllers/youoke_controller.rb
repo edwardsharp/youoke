@@ -1,5 +1,5 @@
 class YouokeController < ApplicationController
   def index
-    @channels = Channel.all
+    #@channels = Channel.all
   end
 end
