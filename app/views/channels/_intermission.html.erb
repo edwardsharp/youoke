@@ -38,4 +38,5 @@ anim();
     Requested by: <%= channel.q.currently_playing.user.name rescue '' %>
   </h1>
 </div>
-<%# video_tag(File.basename(channel.q.intermission.file_path), controls: false, loop: true, 'data-intermission': 'true') %>
+<%# File.basename(channel.q.intermission.file_path) %>
+<%= video_tag('', controls: false, loop: true, 'data-intermission': 'true') %>

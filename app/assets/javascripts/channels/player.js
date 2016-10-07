@@ -35,7 +35,7 @@
           }, 500);
           
           setTimeout(function(){
-            if(App.player.videoPlayer().dataset.intermission =! undefined && App.player.videoPlayer().dataset.intermission === 'true'){
+            if(App.player.videoPlayer().dataset =! undefined && App.player.videoPlayer().dataset.intermission === 'true'){
               console.log("INTERMISSION!");
               // App.player.videoPlayer().volume = 0.5;
               // App.player.videoPlayer().play();

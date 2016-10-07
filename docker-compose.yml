@@ -15,6 +15,7 @@ services:
       - ACTION_CABLE_URL=ws://lacuna.club:28080
       - ACTION_CABLE_ALLOWED_ORIGIN=https://lacuna.club:3001
       - VIRTUAL_HOST=http://lacuna.club:80,ws://lacuna.club:28080
+      - TCP_PORTS=28080 #or EXCLUDE_PORTS
       - YOUOKE_PG_DATABASE_USER=postgres
       - YOUOKE_PG_HOST=pg
       - YOUOKE_PG_PORT=5432
