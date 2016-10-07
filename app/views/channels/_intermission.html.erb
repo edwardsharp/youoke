@@ -1,7 +1,7 @@
 <script>
 $(function() {
 var step = 4, // colorChage step, use negative value to change direction
-    ms   = 10,  // loop every
+    ms   = 20,  // loop every
     $uni = $('.rainbow'),
     txt  = $uni.text(),
     len  = txt.length,
@@ -21,6 +21,9 @@ function anim(){
       $(this).attr({style:"color:hsla("+ h +", 100%, 50%, 1)"});
     });
   }, ms); 
+  setTimeout(function(){
+    clearInterval(itv);
+  }, 1000 * 28);
 }
 
 anim();
@@ -35,4 +38,4 @@ anim();
     Requested by: <%= channel.q.currently_playing.user.name rescue '' %>
   </h1>
 </div>
-<%= video_tag(File.basename(channel.q.intermission.file_path), controls: false, loop: true, 'data-intermission': 'true') %>
+<%# video_tag(File.basename(channel.q.intermission.file_path), controls: false, loop: true, 'data-intermission': 'true') %>

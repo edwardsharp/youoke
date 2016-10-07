@@ -8,10 +8,18 @@ services:
     links:
       - pg:pg
     restart: always
+    network_mode: "bridge"
+    volumes:
+      - /media/storagepool/youoke:/youoke/public/videos
     environment:
-      - ACTION_CABLE_URL=ws://localhost:28080
-      - ACTION_CABLE_ALLOWED_ORIGIN=https://lacuna.club
+      - ACTION_CABLE_URL=ws://lacuna.club:28080
+      - ACTION_CABLE_ALLOWED_ORIGIN=https://lacuna.club:3001
+      - VIRTUAL_HOST=http://lacuna.club:80,ws://lacuna.club:28080
+      - YOUOKE_PG_DATABASE_USER=postgres
+      - YOUOKE_PG_HOST=pg
+      - YOUOKE_PG_PORT=5432
     command: sh -c 'rm -f dump.rdb && rm -rf tmp/*.pid && rm -f tmp/pids/*.pid && ./init_youoke.sh && foreman start'
   pg:
     restart: always
     image: postgres:9.6
+    network_mode: "bridge"
