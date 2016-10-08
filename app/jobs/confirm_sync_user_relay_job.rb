@@ -1,7 +1,7 @@
 class ConfirmSyncUserRelayJob < ApplicationJob
   def perform(channel)
     
-    sleep(15)
+    sleep(10)
 
     ActionCable.server.broadcast(
       "channels:#{channel_id}:player", 

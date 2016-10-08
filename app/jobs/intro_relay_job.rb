@@ -4,7 +4,7 @@ class IntroRelayJob < ApplicationJob
     ActionCable.server.broadcast "channels:#{channel.id}:qs", 
       q: QsController.render(partial: 'qs/q', locals: { q: channel.q })
 
-    unless channel.q.nil? and channel.q.video_queue.empty?
+    unless channel.q.try(:video_queue).empty?
       ActionCable.server.broadcast(
         "channels:#{channel.id}:player", 
         intro: ChannelsController.render(render partial: 'channels/intro', locals: { channel: channel }),

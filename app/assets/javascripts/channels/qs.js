@@ -14,7 +14,9 @@
     received: function(data) {
       console.log('qs got data:');
       // if (this.userIsCurrentUser(data.q)) {
-      App.player.newQ();
+      if(data.q != undefined && data.q != ''){
+        App.player.newQ();
+      }
       // setTimeout(function(){
       //   if($('#intro').html() == "Nothing to play yet..."){
       //     console.log('Nothing to play yet... needsplayerload!!');

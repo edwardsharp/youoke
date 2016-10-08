@@ -8,11 +8,8 @@ class QRelayJob < ApplicationJob
 
     video.download
 
-    if video.q.q_length == 1
-      # ActionCable.server.broadcast "channels:#{video.q.channel_id}:player",
-      #   player: ChannelsController.render(partial: 'channels/player', locals: { channel: video.q.channel })
-      IntroRelayJob.perform_later(video.q.channel) 
-    end
+    IntroRelayJob.perform_later(video.q.channel) 
+    
     ActionCable.server.broadcast "channels:#{video.q.channel_id}:qs",
       q: QsController.render(partial: 'qs/q', locals: { q: video.q })
 

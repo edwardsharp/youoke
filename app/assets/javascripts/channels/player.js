@@ -4,6 +4,9 @@
     collection: function() {
       return $("[data-channel='player']");
     },
+    qCollection: function(){
+      return $('.q-collection').length;
+    },
     videoPlayer: function() {
       return document.getElementsByTagName("video")[0];
     },
@@ -17,7 +20,7 @@
       return this.collection().data('sync-user-id');
     },
     isSyncUser: function(){
-      return this.userId() === this.syncUserId();
+      return this.userId() == this.syncUserId();
     },
     updateSyncUserStar: function(){
       if(this.isSyncUser()){
@@ -31,10 +34,17 @@
       this.updateSyncUserStar();
     },
     introIsPlaying: function(){
-      return _intoIsPlaying;
+      //this really isn't the best constant, heh :/
+      if($('#intro').text().match(/N0THING/)){
+        _intoIsPlaying = false;
+        return false;
+      }else{
+        return _intoIsPlaying;
+      }
+      
     },
-    intoPlaying: function(_intoPlaying){
-      introIsPlaying = _intoPlaying;
+    introPlaying: function(_introPlaying){
+      introIsPlaying = _introPlaying;
     },
     connected: function() {
       return setTimeout((function(_this) {
@@ -47,21 +57,25 @@
     received: function(data) {
       console.log('player got data:',data);
       if(data.intro != undefined){
-        if (this.channelIsCurrentChannel(data.player)) {
+        if(this.channelId() == data.channel_id && !this.introIsPlaying() && this.isEnded() ) {
+          console.log('GONNA UPDATE INTRO!');
           $('#intoContainer').html(data.intro);
+        }else{
+          console.log('NOT GONNA UPDATE INTRO!');
         }
       }
 
       if(data.video_path != undefined){
-        if (this.channelIsCurrentChannel(data.player)) {
+        if(this.channelId() == data.channel_id){
           console.log('NEW VIDEO!');
           App.player.removePlayerEventHandlers();          
           App.player.videoPlayer().pause();
           App.player.videoPlayer().src = '';
           App.player.videoPlayer().load();
+          App.player.videoPlayer().src = data.video_path;
 
           setTimeout(function(){
-            App.player.videoPlayer().src = data.video_path;
+            
             App.player.videoPlayer().load();
             App.player.setupPlayerEventHandlers();
           }, 500);
@@ -70,7 +84,7 @@
           console.log('channel is not current channel!');
         }
       }else if(data.event_data.player_event != undefined){
-        if(this.channelId() === data.channel_id){
+        if(this.channelId() == data.channel_id){
           switch(data.event_data.player_event){
             case 'needstime':
               try {
@@ -94,13 +108,14 @@
             case 'updatesyncuser':
               console.log('updatesyncuser data.user_id:', data.user_id);
               App.player.updateSyncUserId(data.user_id);
+              this.updateSyncUserStar();
               break;
             case 'confirmsyncuser':
               console.log('updatesyncuser data.user_id:', data.user_id);
-              if(App.player.syncUserId() === data.user_id){
-                this.updateSyncUserStar();
+              if(App.player.syncUserId() == data.user_id){
                 this.playerChange({player_event: 'confirmsyncuser'});
               }
+              this.updateSyncUserStar();
               break;
             case 'lookingfornewsyncuser':
               console.log('lookingfornewsyncuser data.user_id:', data.user_id);
@@ -126,14 +141,16 @@
       
     },
     playVideo: function(){
-      playPromise = App.player.videoPlayer().play();
-      if (playPromise !== undefined) {
-        playPromise.then(function() {
-          // playback started!
-          $('#intro').addClass('hidden');
-        }).catch(function(err) {
-          console.log('o noz! canot play! err:',err);
-        });
+      if(App.player.videoPlayer() != undefined){
+        playPromise = App.player.videoPlayer().play();
+        if (playPromise !== undefined) {
+          playPromise.then(function() {
+            // playback started!
+            $('#intro').addClass('hidden');
+          }).catch(function(err) {
+            console.log('o noz! canot play! err:',err);
+          });
+        }
       }
     },
     pauseVideo: function(){
@@ -146,13 +163,39 @@
         });
       }
     },
+    isPaused: function(){
+      try{
+        return App.videoPlayer().paused;
+      }catch(err){
+        return true;
+      }
+    },
+    isEnded: function(){
+      try{
+        return App.videoPlayer().ended;
+      }catch(err){
+        return true;
+      }
+    },
     newQ: function(){
-      setTimeout(function(){
-        if(!App.player.introIsPlaying() && App.player.videoPlayer().paused){
+      console.log('player newQ!');
+      if(App.player.isSyncUser() &&
+        App.player.isEnded() &&
+        (App.player.qCollection() > 0)
+        ){
+          console.log('newQ gonna play!');
           App.player.playVideo();
-          App.player.playerChange({player_event: 'wantsync'});
+      }
+
+      setTimeout(function(){
+        if(!App.player.introIsPlaying() && App.player.isPaused()){
+          console.log('newQ TIMEOUT gonna needsplayerload!');
+          App.player.playerChange({player_event: 'needsplayerload'});
+          if(!App.player.isSyncUser()){
+            App.player.playerChange({player_event: 'wantsync'});
+          }
         }
-      }, 5000);
+      }, 2000);
     },
     setupPlayerEventHandlers: function(){
       console.log('setupPlayerEventHandlers!, needstime!');
@@ -195,6 +238,7 @@
       console.log('player ended!');
       try{
         if(App.player.isSyncUser()){
+          console.log('I AM SYNC, I VVILL TEL U!');
           App.player.playerChange({player_event: 'ended'});
         }
       }catch(err){
@@ -210,9 +254,6 @@
     },
     playerChange: function(event_data) {
       return this.perform('player_change', {channel_id: this.channelId(), user_id: this.userId(), event_data: event_data});
-    },
-    channelIsCurrentChannel: function(player) {
-      return $(player).attr('data-channel-id') === $('section[data-channel=qs]').attr('channel-id');
     },
     followCurrentChannel: function() {
       if (this.channelId()) {

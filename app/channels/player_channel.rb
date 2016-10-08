@@ -6,6 +6,7 @@ class PlayerChannel < ApplicationCable::Channel
     if channel = Channel.find_by(id: data['channel_id']) and channel.sync_user_id.blank?
       channel.update_attribute :sync_user_id, data['user_id'] 
       broadcast_sync_user_id(data['channel_id'], data['user_id'])
+      IntroRelayJob.perform_later(channel)
     end
   end
 
@@ -35,15 +36,14 @@ class PlayerChannel < ApplicationCable::Channel
     when 'ended'
       Channel.find_by(id: data['channel_id']).try(:q).try(:next_video)
     when 'needsplayerload'
-      ActionCable.server.broadcast "channels:#{data['channel_id']}:player",
-        player: ChannelsController.render(partial: 'channels/player', locals: { channel: Channel.find_by(id: data['channel_id']) })
+      IntroRelayJob.perform_later(channel)
     when 'wantsync'
       if channel = Channel.find_by(id: data['channel_id'])
         if channel.sync_user_id.blank?
           channel.update_attribute :sync_user_id, data['user_id'] 
           broadcast_sync_user_id(data['channel_id'], data['user_id'])
         else
-          channel.update_attribute :sync_user_id, nil 
+          # channel.update_attribute :sync_user_id, nil 
           ActionCable.server.broadcast(
             "channels:#{data['channel_id']}:player", 
             { channel_id: data['channel_id'], 
