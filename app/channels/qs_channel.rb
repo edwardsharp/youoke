@@ -8,4 +8,22 @@ class QsChannel < ApplicationCable::Channel
   def unfollow
     stop_all_streams
   end
+
+  def play_player(data)
+    ActionCable.server.broadcast(
+      "channels:#{data['channel_id']}:player", 
+      { channel_id: data['channel_id'], 
+        event_data: {player_event: 'play'}
+      }
+    )
+  end
+
+  def reload_player(data)
+    ActionCable.server.broadcast(
+      "channels:#{data['channel_id']}:player", 
+      { channel_id: data['channel_id'], 
+        event_data: {player_event: 'reload'}
+      }
+    )
+  end
 end

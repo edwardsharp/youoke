@@ -23,7 +23,8 @@ function anim(){
   }, ms); 
   setTimeout(function(){
     clearInterval(itv);
-  }, 1000 * 28);
+    $('#intermission').remove();
+  }, 1000 * 29);
 }
 
 anim();
@@ -34,9 +35,13 @@ anim();
 
 <div id="intermission" class="center">
   <h1 class="rainbow">
-    Next: <%= channel.q.currently_playing.title rescue '' %><br>
-    Requested by: <%= channel.q.currently_playing.user.name rescue '' %>
+    <% begin %>
+    Next: <%= channel.q.currently_playing.title %><br>
+    Requested by: <%= channel.q.currently_playing.user.name %>
+    <% rescue %>
+    N0THING! goto: http://lacuna.club and queue something?
+    <% end -%>
   </h1>
 </div>
 <%# File.basename(channel.q.intermission.file_path) %>
-<%= video_tag('', controls: false, loop: true, 'data-intermission': 'true') %>
+<%= video_tag(File.basename(channel.q.reload.currently_playing.file_path), controls: false, autobuffer: true, 'data-intermission': 'true') %>

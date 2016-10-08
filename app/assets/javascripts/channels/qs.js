@@ -14,6 +14,7 @@
     received: function(data) {
       console.log('qs got data:');
       // if (this.userIsCurrentUser(data.q)) {
+      App.player.newQ();
       setTimeout(function(){
         if($('#player h1').html() == "Nothing to play yet..."){
           console.log('Nothing to play yet... needsplayerload!!');
@@ -42,6 +43,24 @@
         this.installedPageChangeCallback = true;
         return $(document).on('page:change', function() {
           return App.qs.followCurrentChannel();
+        });
+      }
+    },
+    playPlayer: function() {
+      var channelId;
+      if (channelId = this.collection().data('channel-id')) {
+        console.log('qs playPlayer!');
+        return this.perform('play_player', {
+          channel_id: channelId
+        });
+      }
+    },
+    reloadPlayer: function() {
+      var channelId;
+      if (channelId = this.collection().data('channel-id')) {
+        console.log('qs reload_player');
+        return this.perform('reload_player', {
+          channel_id: channelId
         });
       }
     }

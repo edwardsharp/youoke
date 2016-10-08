@@ -1,3 +1,14 @@
+<script>
+$(function() {
+	$('#playPlayer').click(function(){
+		App.qs.playPlayer();
+	});
+	$('#refreshPlayer').click(function(){
+		App.qs.reloadPlayer();
+	});
+});
+</script>
+
 <div class="right-align channel-user">
    <span class="hide-on-med-and-down">HELLO <%= @current_user.name %></span>
    (<%= link_to 'logout', session_path, method: :delete %>)
@@ -13,4 +24,8 @@
   <%= link_to 'player', channel_player_path(@channel) %><br>
   <%= @channel.title %><br>
   <%= @channel.content %>
+  <br>
+  <a class="btn-floating waves-effect waves-light black" id="playPlayer"><i class="material-icons">play_circle_outline</i></a>
+  <a class="btn-floating waves-effect waves-light black" id="refreshPlayer"><i class="material-icons">refresh</i></a>
+
 </div>

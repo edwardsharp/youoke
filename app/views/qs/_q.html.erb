@@ -5,7 +5,7 @@
     <%= "<b>Currently Playing:<br>".html_safe if v == first_video %>
 
     <%= "<i>".html_safe if v.file_path.nil? %>
-    <small> <%= v.position %></small>
+    <small> <%# v.position %></small>
     <%= v.title[0..50] %> <br>
     <%= v.user.name %>
 

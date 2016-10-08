@@ -13,14 +13,12 @@ class Q < ApplicationRecord
   end
 
   def next_video
-
-    if Time.now.utc - updated_at > 10 #10sec throttle
-      currently_playing.update_column :position, nil
-      currently_playing.update_column :updated_at, Time.now.utc
-    end
-
+    currently_playing.update_column :position, nil unless currently_playing.nil?
     IntermissionRelayJob.perform_later(channel) 
+  end
 
+  def next_position
+    (videos.where.not(position: nil).maximum(:position).to_i) + 1
   end
 
   def skip(video_id)
@@ -33,8 +31,11 @@ class Q < ApplicationRecord
       ActionCable.server.broadcast "channels:#{channel.id}:qs", 
         q: QsController.render(partial: 'qs/q', locals: { q: self })
 
-      ActionCable.server.broadcast "channels:#{channel.id}:player",
-        player: ChannelsController.render(partial: 'channels/player', locals: { channel: channel })
+      if video_id == currently_playing.id  
+        ActionCable.server.broadcast "channels:#{channel.id}:player",
+          player: ChannelsController.render(partial: 'channels/player', locals: { channel: channel })
+      end
+
     end
     
   end

@@ -3,7 +3,7 @@ class QsController < ApplicationController
 
   def search
     
-    SearchRelayJob.perform_later(channel: @channel, user_id: @current_user.id, q: params[:q][:q])
+    SearchRelayJob.perform_later(channel_id: @channel.id, user_id: @current_user.id, q: params[:q][:q])
 
   end
 

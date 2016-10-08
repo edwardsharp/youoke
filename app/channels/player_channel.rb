@@ -1,8 +1,11 @@
 class PlayerChannel < ApplicationCable::Channel
 
+  @endedThrottle = Time.now
+
   def follow(data)
     stop_all_streams
     stream_from "channels:#{data['channel_id']}:player"
+    @endedThrottle = Time.now 
   end
 
   def unfollow
@@ -23,7 +26,11 @@ class PlayerChannel < ApplicationCable::Channel
     when 'timeupdate'
       broadcast_player_event data['channel_id'], data['event_data']
     when 'ended'
-      Channel.find_by(id: data['channel_id']).try(:q).try(:next_video)
+      Rails.logger.debug "\n\n Time.now: #{Time.now} @endedThrottle: #{@endedThrottle} diff: #{Time.now - @endedThrottle}\n\n"
+      if Time.now - @endedThrottle > 5
+        Channel.find_by(id: data['channel_id']).try(:q).try(:next_video)
+        @endedThrottle = Time.now
+      end
     when 'needsplayerload'
       ActionCable.server.broadcast "channels:#{data['channel_id']}:player",
         player: ChannelsController.render(partial: 'channels/player', locals: { channel: Channel.find_by(id: data['channel_id']) })

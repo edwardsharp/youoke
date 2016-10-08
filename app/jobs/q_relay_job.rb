@@ -1,7 +1,7 @@
 class QRelayJob < ApplicationJob
   def perform(video)
     
-    video.update_column(:position, video.q.q_length + 1)
+    video.update_column(:position, video.q.next_position)
 
     ActionCable.server.broadcast "channels:#{video.q.channel_id}:qs",
       q: QsController.render(partial: 'qs/q', locals: { q: video.q })

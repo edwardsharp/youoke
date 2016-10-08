@@ -39,11 +39,15 @@
               console.log("INTERMISSION!");
               // App.player.videoPlayer().volume = 0.5;
               // App.player.videoPlayer().play();
+              App.player.removePlayerEventHandlers();
+              App.player.videoPlayer().load();
+              App.player.videoPlayer().addEventListener('ended', App.player.endedEventListener);
             }else{
-              App.player.videoPlayer().play();
+              
               App.player.setupPlayerEventHandlers();
             }
           }, 700);
+
         }else{
           console.log('channel is not current channel!');
         }
@@ -58,8 +62,11 @@
                 console.log('O NOZ!! timeupdate err:',err);
               }
               break;
+            case 'reload':
+              location.reload();
+              break;
             case 'play':
-              this.videoPlayer().play();
+              App.player.playVideo();
               break;
             case 'pause':
               this.videoPlayer().pause();
@@ -67,18 +74,26 @@
             case 'timeupdate':
               if(data.event_data.player_token == playerToken){
                 console.log('player tokenz match, bail!');
-                if(App.player.videoPlayer().paused){
+                if(App.player.videoPlayer() != undefined && App.player.videoPlayer().paused){
                   App.player.videoPlayer().removeEventListener('play', App.player.playEventListener);
-                  App.player.videoPlayer().play();
+                  App.player.playVideo();
                   App.player.videoPlayer().addEventListener('play', App.player.playEventListener);
                 }
               }else{
                 console.log('timeupdate!');
                 if(!isNaN(parseFloat(data.event_data.current_time))){
                   console.log('timeupdate to', parseFloat(data.event_data.current_time));
-                  // this.videoPlayer().removeEventListener('seeked', App.player.seekedEventListener);
-                  this.videoPlayer().currentTime = parseFloat(data.event_data.current_time);
-                  this.videoPlayer().play();
+                  App.player.videoPlayer().removeEventListener('seeked', App.player.seekedEventListener);
+                  App.player.videoPlayer().removeEventListener('play', App.player.seekedEventListener);
+                  try {
+                    this.videoPlayer().currentTime = parseFloat(data.event_data.current_time);
+                    this.playVideo();
+                  }catch(err){
+                    console.log('o noz! timeupdate err:',err);
+                  }
+                  App.player.playVideo();
+                  App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
+                  App.player.videoPlayer().addEventListener('play', App.player.seekedEventListener);
                 }
               }
               break;
@@ -88,6 +103,23 @@
       }
 
       
+    },
+    playVideo: function(){
+      App.player.videoPlayer().removeEventListener('play', App.player.playEventListener);
+      playPromise = App.player.videoPlayer().play();
+      if (playPromise !== undefined) {
+        playPromise.then(function() {
+          // playback started!
+          App.player.videoPlayer().addEventListener('play', App.player.playEventListener);
+        }).catch(function(err) {
+          console.log('o noz! canot play! err:',err);
+        });
+      }
+    },
+    newQ: function(){
+      if(App.player.videoPlayer() != undefined && App.player.videoPlayer().paused){
+        App.player.playVideo();
+      }
     },
     setupPlayerEventHandlers: function(){
       console.log('setupPlayerEventHandlers!, needstime!');
@@ -100,16 +132,23 @@
       //   }, i * 1000);
         
       // }
-
       App.player.removePlayerEventHandlers();
+      if(App.player.videoPlayer() != undefined){    
 
-      App.player.playerChange({player_event: 'needstime'});
-      
-      App.player.videoPlayer().addEventListener('play', App.player.playEventListener);
-      App.player.videoPlayer().addEventListener('pause', App.player.pauseEventListener);
-      App.player.videoPlayer().addEventListener('ended', App.player.endedEventListener);
-      App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
-      App.player.videoPlayer().addEventListener('click', App.player.clickEventListener);
+        App.player.playerChange({player_event: 'needstime'});
+        
+        setTimeout(function(){
+          if(App.player.videoPlayer().paused){
+            App.player.playVideo();
+          }
+        },1200);
+
+        App.player.videoPlayer().addEventListener('play', App.player.playEventListener);
+        App.player.videoPlayer().addEventListener('pause', App.player.pauseEventListener);
+        App.player.videoPlayer().addEventListener('ended', App.player.endedEventListener);
+        App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
+        App.player.videoPlayer().addEventListener('click', App.player.clickEventListener);
+      }
     },
     removePlayerEventHandlers: function(){
       console.log('removePlayerEventHandlers!');
@@ -185,7 +224,7 @@
     },
     clickEventListener: function(){
       console.log('player onclick!');
-      return App.player.videoPlayer().paused ? App.player.videoPlayer().play() : App.player.videoPlayer().pause();
+      return App.player.videoPlayer().paused ? App.player.playVideo() : App.player.videoPlayer().pause();
     },
     playerChange: function(event_data) {
       return this.perform('player_change', {channel_id: this.channelId(), event_data: event_data});
