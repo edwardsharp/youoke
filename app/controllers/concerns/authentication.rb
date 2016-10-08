@@ -12,13 +12,13 @@ module Authentication
 
     def authenticate_user(user_id)
       if authenticated_user = User.find_by(id: user_id)
-        cookies.permanent.signed[:user_id] ||= user_id
+        cookies.signed[:user_id] ||= user_id
         @current_user = authenticated_user
       elsif !params[:user].blank?
         authenticated_user = User.where(name: params[:user]).first_or_create do |user|
           user.name = params[:user]
         end
-        cookies.permanent.signed[:user_id] ||= authenticated_user.id
+        cookies.signed[:user_id] ||= authenticated_user.id
         @current_user = authenticated_user
       end
     end

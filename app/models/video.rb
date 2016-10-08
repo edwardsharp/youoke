@@ -6,7 +6,7 @@ class Video < ApplicationRecord
   # after_commit :calc_position, on: :update
 
   def q_relay
-    QRelayJob.perform_later(self) unless intermission
+    QRelayJob.perform_later(self)
   end
 
   def download

@@ -1,6 +1,5 @@
 (function() {
-  var playerToken = Math.random();
-  var catchPauseBeforeEnd = false;
+  var _intoIsPlaying = false;
   App.player = App.cable.subscriptions.create("PlayerChannel", {
     collection: function() {
       return $("[data-channel='player']");
@@ -10,6 +9,32 @@
     },
     channelId: function(){
       return this.collection().data('channel-id');
+    },
+    userId: function(){
+      return $('meta[name=current-user]').attr('id');
+    },
+    syncUserId: function(){
+      return this.collection().data('sync-user-id');
+    },
+    isSyncUser: function(){
+      return this.userId() === this.syncUserId();
+    },
+    updateSyncUserStar: function(){
+      if(this.isSyncUser()){
+        $('#isSyncUser').removeClass('hidden');
+      }else{
+        $('#isSyncUser').removeClass('hidden');
+      }
+    },
+    updateSyncUserId: function(newSyncUserId){
+      this.collection().data('sync-user-id', newSyncUserId);
+      this.updateSyncUserStar();
+    },
+    introIsPlaying: function(){
+      return _intoIsPlaying;
+    },
+    intoPlaying: function(_intoPlaying){
+      introIsPlaying = _intoPlaying;
     },
     connected: function() {
       return setTimeout((function(_this) {
@@ -21,32 +46,25 @@
     },
     received: function(data) {
       console.log('player got data:',data);
-      if(data.player != undefined){
+      if(data.intro != undefined){
         if (this.channelIsCurrentChannel(data.player)) {
-          console.log('TRYING TO DESTROY EXISTING VIDEO!');
-          App.player.removePlayerEventHandlers();
+          $('#intoContainer').html(data.intro);
+        }
+      }
+
+      if(data.video_path != undefined){
+        if (this.channelIsCurrentChannel(data.player)) {
+          console.log('NEW VIDEO!');
+          App.player.removePlayerEventHandlers();          
           App.player.videoPlayer().pause();
           App.player.videoPlayer().src = '';
-          console.log('src???: ',this.videoPlayer().src);
-          // App.player.videoPlayer().load();
+          App.player.videoPlayer().load();
 
           setTimeout(function(){
-            App.player.collection().html(data.player);
+            App.player.videoPlayer().src = data.video_path;
+            App.player.videoPlayer().load();
+            App.player.setupPlayerEventHandlers();
           }, 500);
-          
-          setTimeout(function(){
-            if(App.player.videoPlayer().dataset =! undefined && App.player.videoPlayer().dataset.intermission === 'true'){
-              console.log("INTERMISSION!");
-              // App.player.videoPlayer().volume = 0.5;
-              // App.player.videoPlayer().play();
-              App.player.removePlayerEventHandlers();
-              App.player.videoPlayer().load();
-              App.player.videoPlayer().addEventListener('ended', App.player.endedEventListener);
-            }else{
-              
-              App.player.setupPlayerEventHandlers();
-            }
-          }, 700);
 
         }else{
           console.log('channel is not current channel!');
@@ -56,7 +74,9 @@
           switch(data.event_data.player_event){
             case 'needstime':
               try {
-                this.playerChange({player_event: 'timeupdate', current_time: this.videoPlayer().currentTime});
+                if(this.isSyncUser()){
+                  this.playerChange({player_event: 'timeupdate', current_time: this.videoPlayer().currentTime});
+                }
               }
               catch(err) {
                 console.log('O NOZ!! timeupdate err:',err);
@@ -69,31 +89,32 @@
               App.player.playVideo();
               break;
             case 'pause':
-              this.videoPlayer().pause();
+              App.player.pauseVideo();
+              break;
+            case 'updatesyncuser':
+              console.log('updatesyncuser data.user_id:', data.user_id);
+              App.player.updateSyncUserId(data.user_id);
+              break;
+            case 'confirmsyncuser':
+              console.log('updatesyncuser data.user_id:', data.user_id);
+              if(App.player.syncUserId() === data.user_id){
+                this.updateSyncUserStar();
+                this.playerChange({player_event: 'confirmsyncuser'});
+              }
+              break;
+            case 'lookingfornewsyncuser':
+              console.log('lookingfornewsyncuser data.user_id:', data.user_id);
+              this.playerChange({player_event: 'confirmsyncuser'});
               break;
             case 'timeupdate':
-              if(data.event_data.player_token == playerToken){
-                console.log('player tokenz match, bail!');
-                if(App.player.videoPlayer() != undefined && App.player.videoPlayer().paused){
-                  App.player.videoPlayer().removeEventListener('play', App.player.playEventListener);
-                  App.player.playVideo();
-                  App.player.videoPlayer().addEventListener('play', App.player.playEventListener);
-                }
-              }else{
-                console.log('timeupdate!');
-                if(!isNaN(parseFloat(data.event_data.current_time))){
-                  console.log('timeupdate to', parseFloat(data.event_data.current_time));
-                  App.player.videoPlayer().removeEventListener('seeked', App.player.seekedEventListener);
-                  App.player.videoPlayer().removeEventListener('play', App.player.seekedEventListener);
-                  try {
-                    this.videoPlayer().currentTime = parseFloat(data.event_data.current_time);
-                    this.playVideo();
-                  }catch(err){
-                    console.log('o noz! timeupdate err:',err);
-                  }
-                  App.player.playVideo();
-                  App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
-                  App.player.videoPlayer().addEventListener('play', App.player.seekedEventListener);
+              console.log('timeupdate!');
+              if(!this.isSyncUser() && !isNaN(parseFloat(data.event_data.current_time))){
+                console.log('timeupdate to', parseFloat(data.event_data.current_time));
+                try {
+                  this.videoPlayer().currentTime = parseFloat(data.event_data.current_time);
+                  this.playVideo();
+                }catch(err){
+                  console.log('o noz! timeupdate err:',err);
                 }
               }
               break;
@@ -105,21 +126,33 @@
       
     },
     playVideo: function(){
-      App.player.videoPlayer().removeEventListener('play', App.player.playEventListener);
       playPromise = App.player.videoPlayer().play();
       if (playPromise !== undefined) {
         playPromise.then(function() {
           // playback started!
-          App.player.videoPlayer().addEventListener('play', App.player.playEventListener);
+          $('#intro').addClass('hidden');
         }).catch(function(err) {
           console.log('o noz! canot play! err:',err);
         });
       }
     },
-    newQ: function(){
-      if(App.player.videoPlayer() != undefined && App.player.videoPlayer().paused){
-        App.player.playVideo();
+    pauseVideo: function(){
+      pausePromis = App.player.videoPlayer().pause();
+      if (pausePromis !== undefined) {
+        pausePromis.then(function() {
+          // playback started!
+        }).catch(function(err) {
+          console.log('o noz! canot pause! err:',err);
+        });
       }
+    },
+    newQ: function(){
+      setTimeout(function(){
+        if(!App.player.introIsPlaying() && App.player.videoPlayer().paused){
+          App.player.playVideo();
+          App.player.playerChange({player_event: 'wantsync'});
+        }
+      }, 5000);
     },
     setupPlayerEventHandlers: function(){
       console.log('setupPlayerEventHandlers!, needstime!');
@@ -135,86 +168,35 @@
       App.player.removePlayerEventHandlers();
       if(App.player.videoPlayer() != undefined){    
 
-        App.player.playerChange({player_event: 'needstime'});
-        
+        if(App.player.isSyncUser()){
+          App.player.playVideo();
+        }else{
+          App.player.playerChange({player_event: 'needstime'});
+        }
+
+        App.player.videoPlayer().addEventListener('ended', App.player.endedEventListener);
+        App.player.videoPlayer().addEventListener('click', App.player.clickEventListener);
+
         setTimeout(function(){
           if(App.player.videoPlayer().paused){
             App.player.playVideo();
+            App.player.playerChange({player_event: 'wantsync'});
           }
-        },1200);
-
-        App.player.videoPlayer().addEventListener('play', App.player.playEventListener);
-        App.player.videoPlayer().addEventListener('pause', App.player.pauseEventListener);
-        App.player.videoPlayer().addEventListener('ended', App.player.endedEventListener);
-        App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
-        App.player.videoPlayer().addEventListener('click', App.player.clickEventListener);
+        },35 * 1000);
+        
       }
     },
     removePlayerEventHandlers: function(){
       console.log('removePlayerEventHandlers!');
-      App.player.videoPlayer().removeEventListener('play', App.player.playEventListener);
-      App.player.videoPlayer().removeEventListener('pause', App.player.pauseEventListener);
       App.player.videoPlayer().removeEventListener('ended', App.player.endedEventListener);
-      App.player.videoPlayer().removeEventListener('seeked', App.player.seekedEventListener);
       App.player.videoPlayer().removeEventListener('click', App.player.clickEventListener);
-    },
-    seekedEventListener: function(){
-      console.log('player seeked!');
-      try{
-        App.player.videoPlayer().removeEventListener('seeked', App.player.seekedEventListener);
-        App.player.playerChange({player_event: 'timeupdate', player_token: playerToken, current_time: App.player.videoPlayer().currentTime});
-        setTimeout(function(){
-          App.player.videoPlayer().addEventListener('seeked', App.player.seekedEventListener);
-        }, 5000);
-      }catch(err){
-        //o noz!
-        console.log('o noz! seekedEventListener err',err);
-      }finally{
-        return;
-      }
-    },
-    playEventListener: function(){
-      console.log('player play!');
-      try{
-        App.player.videoPlayer().removeEventListener('play', App.player.playEventListener);
-        App.player.playerChange({player_event: 'play'});
-        setTimeout(function(){
-          App.player.videoPlayer().addEventListener('play', App.player.playEventListener);
-        }, 500);
-      }catch(err){
-        //o noz!
-        console.log('o noz! playEventListener err',err);
-      }finally{
-        return;
-      }
-    },
-    pauseEventListener: function(){
-      console.log('player pause!');
-      try{
-        catchPauseBeforeEnd = true;
-        App.player.videoPlayer().removeEventListener('pause', App.player.pauseEventListener);
-        setTimeout(function(){
-          if(catchPauseBeforeEnd){
-            App.player.playerChange({player_event: 'pause'});
-          }
-          App.player.videoPlayer().addEventListener('pause', App.player.pauseEventListener);
-        }, 1000);
-      }catch(err){
-        //o noz!
-        console.log('o noz! pauseEventListener err',err);
-      }finally{
-        return;
-      }
     },
     endedEventListener: function(){
       console.log('player ended!');
       try{
-        catchPauseBeforeEnd = false;
-        App.player.videoPlayer().removeEventListener('ended', App.player.endedEventListener);
-        App.player.playerChange({player_event: 'ended'});
-        setTimeout(function(){
-          App.player.videoPlayer().addEventListener('ended', App.player.endedEventListener);
-        }, 5000);
+        if(App.player.isSyncUser()){
+          App.player.playerChange({player_event: 'ended'});
+        }
       }catch(err){
         //o noz!
         console.log('o noz! endedEventListener err',err);
@@ -227,7 +209,7 @@
       return App.player.videoPlayer().paused ? App.player.playVideo() : App.player.videoPlayer().pause();
     },
     playerChange: function(event_data) {
-      return this.perform('player_change', {channel_id: this.channelId(), event_data: event_data});
+      return this.perform('player_change', {channel_id: this.channelId(), user_id: this.userId(), event_data: event_data});
     },
     channelIsCurrentChannel: function(player) {
       return $(player).attr('data-channel-id') === $('section[data-channel=qs]').attr('channel-id');
@@ -237,11 +219,14 @@
         console.log('following PlayerChannel ',this.channelId());
         App.player.setupPlayerEventHandlers();
         return this.perform('follow', {
-          channel_id: this.channelId()
+          channel_id: this.channelId(),
+          user_id: this.userId()
         });
       } else {
         console.log('unfollowing PlayerChannel')
-        return this.perform('unfollow');
+        return this.perform('unfollow', {
+          user_id: this.userId()
+        });
       }
     },
     installPageChangeCallback: function() {

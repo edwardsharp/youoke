@@ -9,10 +9,11 @@ module ApplicationCable
 
     protected
       def find_verified_user
-        if verified_user = User.find_by(id: cookies.permanent.signed[:user_id].to_i)
+        if verified_user = User.find_by(id: cookies.signed[:user_id].to_i)
           verified_user
         else
-          Rails.logger.debug "\n\n REJECT UNAUTHORIZED CONN, cookies.permanent.signed[:user_id]: #{cookies.permanent.signed[:user_id]} \n\n warden? #{env['warden'].inspect} \n\n"
+          Rails.logger.debug "\n\n REJECT UNAUTHORIZED CONN, cookies.signed[:user_id]: #{cookies.signed[:user_id]}  \n\n"
+          # Rails.logger.debug "\ncookies.permanent: #{cookies.permanent.inspect}\n\n"
           reject_unauthorized_connection
         end
       end

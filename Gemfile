@@ -25,6 +25,7 @@ gem 'foreman'
 gem 'yt'
 gem 'dotenv-rails'
 gem 'materialize-sass'
+gem 'rack-cors'
 
 group :development, :test do
   gem 'byebug'

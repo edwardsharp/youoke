@@ -15,12 +15,12 @@
       console.log('qs got data:');
       // if (this.userIsCurrentUser(data.q)) {
       App.player.newQ();
-      setTimeout(function(){
-        if($('#player h1').html() == "Nothing to play yet..."){
-          console.log('Nothing to play yet... needsplayerload!!');
-          App.player.playerChange({player_event: 'needsplayerload'});
-        }
-      }, 1000);
+      // setTimeout(function(){
+      //   if($('#intro').html() == "Nothing to play yet..."){
+      //     console.log('Nothing to play yet... needsplayerload!!');
+      //     App.player.playerChange({player_event: 'needsplayerload'});
+      //   }
+      // }, 1000);
       return this.collection().html(data.q);
       // }
     },
@@ -51,6 +51,15 @@
       if (channelId = this.collection().data('channel-id')) {
         console.log('qs playPlayer!');
         return this.perform('play_player', {
+          channel_id: channelId
+        });
+      }
+    },
+    pausePlayer: function() {
+      var channelId;
+      if (channelId = this.collection().data('channel-id')) {
+        console.log('qs pausePlayer!');
+        return this.perform('pause_player', {
           channel_id: channelId
         });
       }

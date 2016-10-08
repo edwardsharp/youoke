@@ -18,6 +18,7 @@ class QsController < ApplicationController
     @video = Video.find_by id: params[:yt_id]
     
     if @video
+      @video.update_attributes q: @channel.q, user: @current_user
       QRelayJob.perform_later(@video)
     else
       @video = Video.create id: params[:yt_id], title: params[:yt_title], q: @channel.q, user: @current_user

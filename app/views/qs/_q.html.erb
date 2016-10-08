@@ -1,4 +1,4 @@
-<% unless q.video_queue.blank? %>
+<% unless q.nil? and q.video_queue.blank? %>
   <% first_video = q.video_queue.first %>
   <% q.video_queue.each do |v| %>
 
@@ -13,7 +13,7 @@
     
     <%= "</b>".html_safe if v == first_video %>
          
-    <%= link_to 'skip', channel_skip_path(q.channel, v.id), remote: true, data: { disable_with: "xxxx" }, data: { confirm: 'r u sure?' } unless v.file_path.nil? %>
+    <%= link_to 'skip', channel_skip_path(q.channel, v.id), remote: true, data: { confirm: 'r u sure?', disable_with: "xxxx" } unless v.file_path.nil? %>
 
     <hr>
   <% end -%>

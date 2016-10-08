@@ -18,6 +18,15 @@ class QsChannel < ApplicationCable::Channel
     )
   end
 
+  def pause_player(data)
+    ActionCable.server.broadcast(
+      "channels:#{data['channel_id']}:player", 
+      { channel_id: data['channel_id'], 
+        event_data: {player_event: 'pause'}
+      }
+    )
+  end
+
   def reload_player(data)
     ActionCable.server.broadcast(
       "channels:#{data['channel_id']}:player", 

@@ -1,11 +1,14 @@
 <script>
 $(function() {
-	$('#playPlayer').click(function(){
-		App.qs.playPlayer();
-	});
-	$('#refreshPlayer').click(function(){
-		App.qs.reloadPlayer();
-	});
+  $('#playPlayer').click(function(){
+    App.qs.playPlayer();
+  });
+  $('#refreshPlayer').click(function(){
+    App.qs.reloadPlayer();
+  });
+  $('#pausePlayer').click(function(){
+    App.qs.pausePlayer();
+  });
 });
 </script>
 
@@ -26,6 +29,7 @@ $(function() {
   <%= @channel.content %>
   <br>
   <a class="btn-floating waves-effect waves-light black" id="playPlayer"><i class="material-icons">play_circle_outline</i></a>
+  <a class="btn-floating waves-effect waves-light black" id="pausePlayer"><i class="material-icons">pause_circle_outline</i></a>
   <a class="btn-floating waves-effect waves-light black" id="refreshPlayer"><i class="material-icons">refresh</i></a>
 
 </div>

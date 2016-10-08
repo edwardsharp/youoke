@@ -1,4 +1,4 @@
-<section id="player" data-channel="player" data-channel-id="<%= @channel.id %>">
+<section id="player" data-channel="player" data-channel-id="<%= @channel.id %>" data-sync-user-id="<%= @channel.sync_user_id %>">
   <%= render 'player', channel: @channel %>
 </section>
 
@@ -6,6 +6,13 @@
 <%= render 'qs/qs', channel: @channel %>
 
 
-<div id="channelContent"><%= @channel.title %><br><%= @channel.content %></div>
+<div id="channelContent">
+  <%= @channel.title %>
+  <br>
+  <%= @channel.content %>
+  <div id="isSyncUser" class="<%= 'hidden' unless @channel.sync_user_id == @current_user.id %>">
+    <i class="material-icons">star_border</i>
+  </div>
+</div>  
 
 <%= render 'comments/player_comments', channel: @channel %>

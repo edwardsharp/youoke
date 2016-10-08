@@ -19,7 +19,7 @@ a:hover{
   color: #ff6600;
 }
 
-video,#intermission {
+video,#intro {
   position: absolute;
   top: 0;
   left: 0;
@@ -39,7 +39,7 @@ video,#intermission {
       color-stop(1.00, violet));
 }
 
-#intermission{
+#into{
   z-index: 666;
   padding: 2em;
   background-color: rgba(0,0,0,0.5);

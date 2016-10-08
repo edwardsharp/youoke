@@ -1,15 +1,22 @@
 class PlayerChannel < ApplicationCable::Channel
 
-  @endedThrottle = Time.now
-
   def follow(data)
     stop_all_streams
     stream_from "channels:#{data['channel_id']}:player"
-    @endedThrottle = Time.now 
+    if channel = Channel.find_by(id: data['channel_id']) and channel.sync_user_id.blank?
+      channel.update_attribute :sync_user_id, data['user_id'] 
+      broadcast_sync_user_id(data['channel_id'], data['user_id'])
+    end
   end
 
-  def unfollow
+  def unfollow(data)
     stop_all_streams
+    Channel.where(sync_user_id: data['user_id']).each do |ch|
+      if ch.sync_user_id == data['user_id']
+        ch.update_attribute(:sync_user_id, nil) 
+        broadcast_sync_user_id(ch.id, '')
+      end
+    end
   end
 
   def player_change(data)
@@ -26,14 +33,32 @@ class PlayerChannel < ApplicationCable::Channel
     when 'timeupdate'
       broadcast_player_event data['channel_id'], data['event_data']
     when 'ended'
-      Rails.logger.debug "\n\n Time.now: #{Time.now} @endedThrottle: #{@endedThrottle} diff: #{Time.now - @endedThrottle}\n\n"
-      if Time.now - @endedThrottle > 5
-        Channel.find_by(id: data['channel_id']).try(:q).try(:next_video)
-        @endedThrottle = Time.now
-      end
+      Channel.find_by(id: data['channel_id']).try(:q).try(:next_video)
     when 'needsplayerload'
       ActionCable.server.broadcast "channels:#{data['channel_id']}:player",
         player: ChannelsController.render(partial: 'channels/player', locals: { channel: Channel.find_by(id: data['channel_id']) })
+    when 'wantsync'
+      if channel = Channel.find_by(id: data['channel_id'])
+        if channel.sync_user_id.blank?
+          channel.update_attribute :sync_user_id, data['user_id'] 
+          broadcast_sync_user_id(data['channel_id'], data['user_id'])
+        else
+          channel.update_attribute :sync_user_id, nil 
+          ActionCable.server.broadcast(
+            "channels:#{data['channel_id']}:player", 
+            { channel_id: data['channel_id'], 
+              user_id: channel.sync_user_id,
+              event_data: { player_event: 'confirmsyncuser' }
+            }
+          )
+          ConfirmSyncUserRelayJob.perform_later(channel)
+        end
+      end
+    when 'confirmsyncuser'
+      if channel = Channel.find_by(id: data['channel_id']) and channel.sync_user_id.blank?
+        channel.update_attribute :sync_user_id, data['user_id'] 
+        broadcast_sync_user_id(data['channel_id'], data['user_id'])
+      end
     end
     
   end
@@ -46,6 +71,16 @@ class PlayerChannel < ApplicationCable::Channel
           event_data: player_event
         }
       )
+  end
+
+  def broadcast_sync_user_id(channel_id, user_id)
+    ActionCable.server.broadcast(
+      "channels:#{channel_id}:player", 
+      { channel_id: channel_id, 
+        user_id: user_id,
+        event_data: { player_event: 'updatesyncuser' }
+      }
+    )
   end
 
 end

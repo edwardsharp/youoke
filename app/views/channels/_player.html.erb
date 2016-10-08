@@ -1,6 +1,10 @@
+<div id="intoContainer">
+<%= render partial: 'channels/intro', locals: { channel: channel } %>
+</div>
+
 <% begin %>
-<%= video_tag(File.basename(channel.q.currently_playing.file_path), controls: false, autoplay: false) %>
+  <%= video_tag(File.basename(channel.q.currently_playing.file_path), controls: false, autobuffer: true) %>
 <% rescue %>
-<%= video_tag('', controls: false) %>
-<h1>Nothing to play yet...</h1>
+  <%= video_tag('', controls: false, autobuffer: true) %>
 <% end -%>
+

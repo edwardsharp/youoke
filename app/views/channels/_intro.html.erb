@@ -1,4 +1,5 @@
 <script>
+var introInterval;
 $(function() {
 var step = 4, // colorChage step, use negative value to change direction
     ms   = 20,  // loop every
@@ -6,8 +7,7 @@ var step = 4, // colorChage step, use negative value to change direction
     txt  = $uni.text(),
     len  = txt.length,
     lev  = 360/len,
-    newCont = "",
-    itv;
+    newCont = "";
 
 for(var i=0; i<len; i++)newCont += "<span style='color:hsla("+ i*lev +", 100%, 50%, 1)'>"+ txt.charAt(i) +"</span>";
 
@@ -15,15 +15,16 @@ $uni.html(newCont); // Replace with new content
 var $ch = $uni.find('span'); // character
 
 function anim(){
-  itv = setInterval(function(){
+  App.player.introPlaying(true);
+  introInterval = setInterval(function(){
     $ch.each(function(){
       var h = +$(this).attr('style').split(',')[0].split('(')[1]-step % 360;
       $(this).attr({style:"color:hsla("+ h +", 100%, 50%, 1)"});
     });
   }, ms); 
   setTimeout(function(){
-    clearInterval(itv);
-    $('#intermission').remove();
+    clearInterval(introInterval);
+    App.player.introPlaying(false);
   }, 1000 * 29);
 }
 
@@ -33,7 +34,7 @@ anim();
 
 </script>
 
-<div id="intermission" class="center">
+<div id="intro" class="center">
   <h1 class="rainbow">
     <% begin %>
     Next: <%= channel.q.currently_playing.title %><br>
@@ -43,5 +44,3 @@ anim();
     <% end -%>
   </h1>
 </div>
-<%# File.basename(channel.q.intermission.file_path) %>
-<%= video_tag(File.basename(channel.q.reload.currently_playing.file_path), controls: false, autobuffer: true, 'data-intermission': 'true') %>
