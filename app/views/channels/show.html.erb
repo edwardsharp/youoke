@@ -9,6 +9,7 @@ $(function() {
   $('#pausePlayer').click(function(){
     App.qs.pausePlayer();
   });
+  $('.modal-trigger').leanModal();
 });
 </script>
 
@@ -33,9 +34,11 @@ $(function() {
       <%= @channel.content %><br>
 
 
-      <a class="btn-floating waves-effect waves-light black" id="playPlayer"><i class="material-icons">play_circle_outline</i></a>
-      <a class="btn-floating waves-effect waves-light black" id="pausePlayer"><i class="material-icons">pause_circle_outline</i></a>
-      <a class="btn-floating waves-effect waves-light black" id="refreshPlayer"><i class="material-icons">refresh</i></a>
+      <!-- Modal Trigger -->
+        <button data-target="modal1" class="btn modal-trigger black"><i class="material-icons">live_tv</i></button>
+
+
+     
 
     </div>
 
@@ -44,4 +47,15 @@ $(function() {
   </div>
 </div>
 
+
+
+<!-- Modal Structure -->
+<div id="modal1" class="modal bottom-sheet">
+  <div class="modal-content center">
+     <a class="btn-floating waves-effect waves-light black" id="playPlayer"><i class="material-icons">play_circle_outline</i></a>
+      <a class="btn-floating waves-effect waves-light black" id="pausePlayer"><i class="material-icons">pause_circle_outline</i></a>
+      <a class="btn-floating waves-effect waves-light black" id="refreshPlayer"><i class="material-icons">refresh</i></a>
+  </div>
+ 
+</div>
 <%= render 'comments/comments', channel: @channel %>
