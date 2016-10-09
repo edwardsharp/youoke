@@ -74,10 +74,18 @@ video {
   bottom: 0;
   right: 0;
   width: 20vw;
-  height: 20vh;
-
+  height: 25vh;
+  background: black;
   margin: auto;
   overflow: hidden;
+  text-align: right;
+  padding-right: 1em;
+}
+.playerUrl{
+  font-size: 30px;
+}
+.playerCh{
+  font-size: 18px;
 }
 #showChannel #channelContent{
   position: fixed;
