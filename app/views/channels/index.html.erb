@@ -22,7 +22,7 @@ $(function() {
   <%= form_for Channel.new, url: join_channel_path, remote: true, class: 'col s12' do |f| %>
   <div class="row">
     <div class="input-field col s9 m10">
-      <%= f.text_field :title %>
+      <%= f.text_field :title, class: 'validate' %>
       <label for="name" class="text-grey">wut channel?</label>
     </div>
 

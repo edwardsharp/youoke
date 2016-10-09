@@ -13,7 +13,7 @@ class PlayerChannel < ApplicationCable::Channel
   def unfollow(data)
     stop_all_streams
     Channel.where(sync_user_id: data['user_id']).each do |ch|
-      if ch.sync_user_id == data['user_id']
+      if !data['user_id'].empty? && ch.sync_user_id == data['user_id']
         ch.update_attribute(:sync_user_id, nil) 
         broadcast_sync_user_id(ch.id, '')
       end
@@ -36,7 +36,7 @@ class PlayerChannel < ApplicationCable::Channel
     when 'ended'
       Channel.find_by(id: data['channel_id']).try(:q).try(:next_video)
     when 'needsplayerload'
-      IntroRelayJob.perform_later(channel)
+      IntroRelayJob.perform_later(Channel.find_by(id: data['channel_id']))
     when 'wantsync'
       if channel = Channel.find_by(id: data['channel_id'])
         if channel.sync_user_id.blank?

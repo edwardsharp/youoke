@@ -28,6 +28,9 @@ class QsChannel < ApplicationCable::Channel
   end
 
   def reload_player(data)
+    if channel = Channel.find_by(id: data['channel_id'])
+      channel.update_attribute :sync_user_id, nil
+    end
     ActionCable.server.broadcast(
       "channels:#{data['channel_id']}:player", 
       { channel_id: data['channel_id'], 

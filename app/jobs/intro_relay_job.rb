@@ -4,14 +4,22 @@ class IntroRelayJob < ApplicationJob
     ActionCable.server.broadcast "channels:#{channel.id}:qs", 
       q: QsController.render(partial: 'qs/q', locals: { q: channel.q })
 
-    unless channel.q.try(:video_queue).empty?
-      ActionCable.server.broadcast(
-        "channels:#{channel.id}:player", 
-        intro: ChannelsController.render(render partial: 'channels/intro', locals: { channel: channel }),
-        video_path: asset_path(File.basename(channel.q.currently_playing.file_path)) 
-      )
+    begin
+      video_path = "/videos/#{File.basename(channel.q.currently_playing.file_path)}"
+    rescue 
+      video_path = ''
+    end
 
-      sleep(30)
+    ActionCable.server.broadcast(
+      "channels:#{channel.id}:player", 
+      { channel_id: channel.id,
+        intro: ChannelsController.render(partial: 'channels/intro', locals: { channel: channel }),
+        video_path: video_path } 
+    )
+
+    unless channel.q.try(:video_queue).empty?
+      
+      sleep(25)
       # ActionCable.server.broadcast "channels:#{channel.id}:player",
       #   player: ChannelsController.render(partial: 'channels/player', locals: { channel: channel })
 

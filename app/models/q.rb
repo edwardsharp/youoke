@@ -10,7 +10,7 @@ class Q < ApplicationRecord
 
 
   def next_video
-    currently_playing.update_column :position, nil unless currently_playing.nil?
+    currently_playing.update_column(:position, nil) unless currently_playing.nil?
     IntroRelayJob.perform_later(channel) 
   end
 
@@ -28,9 +28,7 @@ class Q < ApplicationRecord
       ActionCable.server.broadcast "channels:#{channel.id}:qs", 
         q: QsController.render(partial: 'qs/q', locals: { q: self })
 
-      if video_id == currently_playing.id  
-        IntroRelayJob.perform_later(channel) 
-      end
+      IntroRelayJob.perform_later(channel) 
 
     end
     

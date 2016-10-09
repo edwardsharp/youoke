@@ -12,10 +12,13 @@
       })(this), 1000);
     },
     received: function(data) {
-      console.log('qs got data:');
+      console.log('qs got data:', data);
       // if (this.userIsCurrentUser(data.q)) {
       if(data.q != undefined && data.q != ''){
-        App.player.newQ();
+        setTimeout(function(){
+          App.player.newQ();
+        }, 500);
+        
       }
       // setTimeout(function(){
       //   if($('#intro').html() == "Nothing to play yet..."){

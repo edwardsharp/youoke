@@ -1,5 +1,4 @@
 <script>
-var introInterval;
 $(function() {
 var step = 4, // colorChage step, use negative value to change direction
     ms   = 20,  // loop every
@@ -15,17 +14,12 @@ $uni.html(newCont); // Replace with new content
 var $ch = $uni.find('span'); // character
 
 function anim(){
-  App.player.introPlaying(true);
   introInterval = setInterval(function(){
     $ch.each(function(){
       var h = +$(this).attr('style').split(',')[0].split('(')[1]-step % 360;
       $(this).attr({style:"color:hsla("+ h +", 100%, 50%, 1)"});
     });
   }, ms); 
-  setTimeout(function(){
-    clearInterval(introInterval);
-    App.player.introPlaying(false);
-  }, 1000 * 29);
 }
 
 anim();
@@ -37,8 +31,8 @@ anim();
 <div id="intro" class="center">
   <h1 class="rainbow">
     <% begin %>
-    Next: <%= channel.q.currently_playing.title %><br>
-    Requested by: <%= channel.q.currently_playing.user.name %>
+    <%= channel.q.currently_playing.title %><br>
+    requested by: <%= channel.q.currently_playing.user.name %>
     <% rescue %>
     N0THING! goto: http://lacuna.club and queue something?
     <% end -%>

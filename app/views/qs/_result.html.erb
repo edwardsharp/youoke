@@ -2,10 +2,19 @@
 $(function() {
   $('#searchPreloader').addClass('hidden');
   $('#q_q').blur();
+  $('#clearSearch').click(function(){
+    setTimeout(function(){
+      $('#search').html('');
+      $('#q_q').val('');
+    }, 500);
+  });
 });
 </script>
-<div class="leftCol">
+
 <% unless search.nil? %>
+  <div class="center">
+    <a class="waves-effect waves-orange grey btn" id="clearSearch">clear search</a>
+  </div>
   <ul class="collection">
   <% search.each do |s| %>
     <li class="collection-item avatar">
@@ -32,5 +41,5 @@ $(function() {
   <% end -%>
   </ul>
 <% end -%>
-</div>
+
 <div id="modalContainer"></div>

@@ -2,10 +2,11 @@
   <%= render 'player', channel: @channel %>
 </section>
 
-
+<div id="playerQ">
 <%= render 'qs/qs', channel: @channel %>
+</div>
 
-
+<div id="playerChannel">
 <div id="channelContent">
   <%= @channel.title %>
   <br>
@@ -14,5 +15,6 @@
     <i class="material-icons">star_border</i>
   </div>
 </div>  
+</div>
 
 <%= render 'comments/player_comments', channel: @channel %>
