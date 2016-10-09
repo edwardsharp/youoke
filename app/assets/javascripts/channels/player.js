@@ -82,7 +82,10 @@ var introInterval;
       }
 
       if(data.video_path != undefined){
-        if(this.channelId() == data.channel_id && !this.introIsPlaying() && this.isEnded()){
+        if(this.channelId() == data.channel_id && this.needsNewSrc()){
+          App.player.videoPlayer().src = data.video_path;
+          App.player.videoPlayer().load();
+        }else if(this.channelId() == data.channel_id && !this.introIsPlaying() && this.isEnded()){
           console.log('NEW VIDEO!');
           App.player.removePlayerEventHandlers();          
           App.player.videoPlayer().pause();
@@ -98,22 +101,12 @@ var introInterval;
           }, 500);
 
         }else{
-          console.log('channel is not current channel!');
+          console.log('channel is not current channel (not goona replace src)!');
         }
         return;
       }else if(data.event_data.player_event != undefined){
         if(this.channelId() == data.channel_id){
           switch(data.event_data.player_event){
-            case 'needstime':
-              try {
-                if(this.isSyncUser()){
-                  this.playerChange({player_event: 'timeupdate', current_time: this.videoPlayer().currentTime});
-                }
-              }
-              catch(err) {
-                console.log('O NOZ!! timeupdate err:',err);
-              }
-              break;
             case 'reload':
               location.reload();
               break;
@@ -139,13 +132,48 @@ var introInterval;
               console.log('lookingfornewsyncuser data.user_id:', data.user_id);
               this.playerChange({player_event: 'confirmsyncuser'});
               break;
+            case 'needstime':
+              try {
+                if(this.isSyncUser()){
+                  if(data.event_data.timestamp != undefined){
+                    this.playerChange({player_event: 'timeupdate', current_time: this.videoPlayer().currentTime, timestamp: data.event_data.timestamp });
+                  }else{
+                    this.playerChange({player_event: 'timeupdate', current_time: this.videoPlayer().currentTime});
+                  }
+                  
+                }
+              }
+              catch(err) {
+                console.log('O NOZ!! timeupdate err:',err);
+              }
+              break;
             case 'timeupdate':
               console.log('timeupdate!');
               if(!this.isSyncUser() && !isNaN(parseFloat(data.event_data.current_time))){
-                console.log('timeupdate to', parseFloat(data.event_data.current_time));
+                
                 try {
-                  this.videoPlayer().currentTime = parseFloat(data.event_data.current_time);
+                  //would be nice to know the round trip time here... 
                   
+                  if(data.event_data.timestamp != undefined && !isNaN(parseInt(data.event_data.timestamp))){
+                    offset = (Date.now() - parseInt(data.event_data.timestamp)) / 1000; // milis to seconds
+                    // offset = offset / 2; //assume the trip there and back took the same amount of time.
+                    
+                    if(offset > 0){
+                      console.log('timeupdate offset:',offset, ' currentTime now:',parseFloat(data.event_data.current_time) + offset);
+                      this.videoPlayer().currentTime = parseFloat(data.event_data.current_time) + offset;
+                    }else{
+                      console.log("unable to calc an offset!");
+                      this.videoPlayer().currentTime = parseFloat(data.event_data.current_time);
+                    }
+                    
+
+                  }else{
+                    console.log("unable to calc an offset!");
+                    this.videoPlayer().currentTime = parseFloat(data.event_data.current_time);
+                  }
+
+                  
+                  //setTimeout to sync later/continually? 
                   // this.playVideo();
                 }catch(err){
                   console.log('o noz! timeupdate err:',err);
@@ -167,6 +195,13 @@ var introInterval;
           playPromise.then(function() {
             // playback started!
             App.player.clearIntro();
+
+            if(!App.player.isSyncUser()){
+              setTimeout(function(){
+                App.player.playerChange({player_event: 'needstime', timestamp: Date.now()});
+              }, 3000);
+            }
+
           }).catch(function(err) {
             console.log('o noz! canot play! err:',err);
           });
@@ -209,7 +244,18 @@ var introInterval;
     },
     needsNewSrc: function(){
       if(App.player.videoPlayer() != undefined){
-        return App.player.videoPlayer().src.match(/http:\/\/.*\/channels\/.*\/player/);
+        if(App.player.videoPlayer().src == undefined){
+          return true;
+        }
+        if(App.player.videoPlayer().src == ''){
+          return true;
+        }
+        if(App.player.videoPlayer().src.match(/http:\/\/.*\/channels\/.*\/player/) == undefined){
+          return false;
+        }else{
+          return true;
+        }
+        
       }else{
         return false;
       }
@@ -238,7 +284,7 @@ var introInterval;
       }, 2000);
     },
     setupPlayerEventHandlers: function(){
-      console.log('setupPlayerEventHandlers!, needstime!');
+      console.log('setupPlayerEventHandlers!!');
 
       //attempt to sync time 3-times over 3 seconds
       // for (var i = 1; i < 4; i++) {
@@ -251,11 +297,6 @@ var introInterval;
       App.player.removePlayerEventHandlers();
       if(App.player.videoPlayer() != undefined){    
 
-        if(App.player.isSyncUser()){
-          // App.player.playVideo();
-        }else{
-          App.player.playerChange({player_event: 'needstime'});
-        }
 
         App.player.videoPlayer().addEventListener('ended', App.player.endedEventListener);
         App.player.videoPlayer().addEventListener('click', App.player.clickEventListener);

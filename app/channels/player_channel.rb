@@ -30,7 +30,7 @@ class PlayerChannel < ApplicationCable::Channel
     when 'pause'
       broadcast_player_event data['channel_id'], {player_event: 'pause'}
     when 'needstime'
-      broadcast_player_event data['channel_id'], {player_event: 'needstime'}
+      broadcast_player_event data['channel_id'], data['event_data']
     when 'timeupdate'
       broadcast_player_event data['channel_id'], data['event_data']
     when 'ended'
