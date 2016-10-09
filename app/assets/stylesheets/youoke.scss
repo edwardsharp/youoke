@@ -79,7 +79,11 @@ video {
   margin: auto;
   overflow: hidden;
 }
-
+#showChannel #channelContent{
+  position: fixed;
+  bottom: 0;
+  background: black;
+}
 #comments {
   position: absolute;
   bottom: 0;

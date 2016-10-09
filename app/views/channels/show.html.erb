@@ -13,7 +13,7 @@ $(function() {
 </script>
 
 
-<div class="row">
+<div class="row center">
  
   <div class="col s12 m8">
     <%= render 'qs/search', channel: @channel, current_user: @current_user %>
@@ -21,8 +21,9 @@ $(function() {
 
   <div class="col s12 m4">
     <%= render 'qs/qs', channel: @channel %>
-  
-    <div id="channelContent">
+    <div class="row">
+    <div id="showChannel">
+    <div id="channelContent" class="col s12 m4">
       <div>
          HELLO <%= @current_user.name %>
          (<%= link_to 'logout', session_path, method: :delete %>)
@@ -31,7 +32,7 @@ $(function() {
       <%= @channel.title %><br>
       <%= @channel.content %><br>
 
-      <%= link_to 'player', channel_player_path(@channel) %> 
+
       <a class="btn-floating waves-effect waves-light black" id="playPlayer"><i class="material-icons">play_circle_outline</i></a>
       <a class="btn-floating waves-effect waves-light black" id="pausePlayer"><i class="material-icons">pause_circle_outline</i></a>
       <a class="btn-floating waves-effect waves-light black" id="refreshPlayer"><i class="material-icons">refresh</i></a>
@@ -39,8 +40,8 @@ $(function() {
     </div>
 
   </div>
-
-
+  </div>
+  </div>
 </div>
 
 <%= render 'comments/comments', channel: @channel %>
