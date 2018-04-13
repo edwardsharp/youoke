@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 #rvm stuff
-#ruby=ruby-2.3.0
+#ruby=ruby-2.4.0
 #ruby-gemset=youoke
 
 gem 'rails', '5.0.0.1'
