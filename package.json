@@ -1,0 +1,35 @@
+{
+  "name": "youoke",
+  "version": "0.0.1",
+  "description": "karatube? youaoke? karayouoketube?? dunno. create a queue of youtube videos, maybe they're karaoke videoz. maybe you got a mic. ...maybe",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "build": {
+    "productName": "youoke",
+    "appId": "org.edwardsharp.youoke",
+    "mac": {
+      "category": "public.app-category.entertainment"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://edwardsharp@github.com/edwardsharp/youoke.git"
+  },
+  "keywords": [
+    "youtube",
+    "karaoke"
+  ],
+  "author": "3dwardsharp",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/edwardsharp/youoke/issues"
+  },
+  "homepage": "https://github.com/edwardsharp/youoke#readme",
+  "devDependencies": {
+    "electron": "^2.0.1",
+    "electron-builder": "^20.13.4"
+  }
+}
