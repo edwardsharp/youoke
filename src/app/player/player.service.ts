@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 
 import Dexie from 'dexie';
 import 'dexie-observable';
+
+import { Playlist } from '../playlist/playlist';
 
 @Injectable({
   providedIn: 'root'
@@ -9,6 +12,8 @@ import 'dexie-observable';
 export class PlayerService {
 
   db: any;
+  public playerChange = new Subject<any>();
+
   constructor() {
   	this.makeDatabase();
     this.connectToDatabase();
@@ -17,15 +22,16 @@ export class PlayerService {
   makeDatabase(): void {
     this.db = new Dexie('Player');
     this.db.version(1).stores({
-      playlist: '++id, yId, name' //only list indexed attrz here...
+      player: '++id, yId, name' //only list indexed attrz here...
     });
     
   }
 
   connectToDatabase(): void {
     
-  	this.db.on('changes', function (changes) {
-      changes.forEach(function (change) {
+  	this.db.on('changes', changes => {
+      changes.forEach(change => {
+        this.playerChange.next(change);
         switch (change.type) {
           case 1: // CREATED
             console.log('An object was created: ' + JSON.stringify(change.obj));
@@ -39,9 +45,26 @@ export class PlayerService {
         }
       });
     });
-    
+
     this.db.open().catch((error:any) => {
       alert("Errod during connecting to database : " + error);
+    });
+  }
+
+  addPlaylist(playlist: Playlist): void{
+    console.log('adding player item:',playlist);
+    // this.db.player.bulkAdd(playlist.items.map(i => i.value))
+    for(let item of playlist.items){
+    	this.db.player.add({
+	      name: item.value
+	    });
+    } 
+  }
+
+  addPlaylistItem(item: string): Promise<number>{
+    console.log('adding player item:',item);
+    return this.db.player.add({
+      name: item
     });
   }
 

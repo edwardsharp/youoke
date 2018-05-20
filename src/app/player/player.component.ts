@@ -22,6 +22,7 @@ export class PlayerComponent implements OnInit {
 
   ngOnInit() {
   	window.setTimeout(() => {this.appToolbarService.toggleHidden(true); }, 10);
+    this.playerService.playerChange.subscribe(change => console.log('player change:',change));
   }
   ngOnDestroy(){
   	this.appToolbarService.toggleHidden(false);

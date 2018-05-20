@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { Playlist } from './playlist';
 import { PlaylistService } from './playlist.service';
+import { PlayerService } from '../player/player.service';
 
 @Component({
   selector: 'app-playlist',
@@ -25,14 +26,14 @@ import { PlaylistService } from './playlist.service';
       <input matInput placeholder="Playlist Name" [(ngModel)]="selectedPlaylist.name" (keyup.enter)="updatePlaylist(selectedPlaylist)" (change)="selectedPlaylistChange()">
     </mat-form-field>
     <button mat-icon-button (click)="addItem()" matTooltip="Add Item"><mat-icon>playlist_add</mat-icon></button>
-    <button mat-icon-button matTooltip="Play All"><mat-icon>playlist_play</mat-icon></button>
+    <button mat-icon-button matTooltip="Play All" (click)="playAll()"><mat-icon>playlist_play</mat-icon></button>
     <mat-list>
       <mat-list-item *ngFor="let item of selectedPlaylist.items">
         <button mat-icon-button (click)="removeItem(item)" matTooltip="Remove {{item.value}}"><mat-icon>delete</mat-icon></button>
         <mat-form-field>
           <input matInput placeholder="Item" (keyup.enter)="updatePlaylist(selectedPlaylist)" [(ngModel)]="item.value" (change)="selectedPlaylistChange()">
         </mat-form-field>
-        <button mat-icon-button matTooltip="Play {{item.value}}"><mat-icon>play_circle_outline</mat-icon></button>
+        <button mat-icon-button matTooltip="Play {{item.value}}" (click)="playItem(item)"><mat-icon>play_circle_outline</mat-icon></button>
       </mat-list-item>
     </mat-list>
   </div>
@@ -82,7 +83,10 @@ export class PlaylistComponent implements OnInit {
   selectedPlaylistItems: any;
   selectedPlaylistId: number;
 
-  constructor(private playlistService: PlaylistService){}
+  constructor(
+    private playlistService: PlaylistService, 
+    private playerService: PlayerService
+  ){}
 
   ngOnInit(): void {
     this.loadRows();
@@ -167,6 +171,14 @@ export class PlaylistComponent implements OnInit {
   selectedPlaylistChange(): void{
     console.log('selected playlist changed!');
     this.updatePlaylist(this.selectedPlaylist);
+  }
+
+  playAll(){
+    this.playerService.addPlaylist(this.selectedPlaylist);
+  }
+
+  playItem(item: any){
+    this.playerService.addPlaylistItem(item);
   }
 
 }
