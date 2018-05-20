@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from 'electron';
 import { enableLiveReload } from 'electron-compile';
 
+const electron = require('electron');
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow: Electron.BrowserWindow | null;
@@ -11,9 +12,12 @@ if (isDevMode) enableLiveReload();
 
 const createWindow = async () => {
   // Create the browser window.
+  const {width, height} = electron.screen.getPrimaryDisplay().workAreaSize;
+  
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: width,
+    height: height,
+    frame: true
   });
 
   // and load the index.html of the app.

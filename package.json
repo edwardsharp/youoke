@@ -11,7 +11,10 @@
     "publish": "electron-forge publish",
     "lint": "tslint src"
   },
-  "keywords": ["youtube","karaoke"],
+  "keywords": [
+    "youtube",
+    "karaoke"
+  ],
   "author": "3dwardsharp",
   "license": "GPL-3.0",
   "bugs": {
@@ -51,17 +54,21 @@
     }
   },
   "dependencies": {
-    "@angular/common": "^2.4.1",
-    "@angular/compiler": "^2.4.1",
-    "@angular/core": "^2.4.1",
-    "@angular/platform-browser": "^2.4.1",
-    "@angular/platform-browser-dynamic": "^2.4.1",
+    "@angular/common": "^6.0.2",
+    "@angular/compiler": "^6.0.2",
+    "@angular/core": "^6.0.2",
+    "@angular/forms": "^6.0.2",
+    "@angular/platform-browser": "^6.0.2",
+    "@angular/platform-browser-dynamic": "^6.0.2",
+    "@angular/router": "^6.0.2",
+    "dexie": "^2.0.3",
     "electron-compile": "^6.4.2",
     "electron-devtools-installer": "^2.1.0",
     "electron-squirrel-startup": "^1.0.0",
     "reflect-metadata": "^0.1.9",
+    "rxjs": "^6.1.0",
     "tslib": "^1.4.0",
-    "zone.js": "^0.7.4"
+    "zone.js": "^0.8.26"
   },
   "devDependencies": {
     "babel-plugin-transform-async-to-generator": "^6.24.1",
@@ -69,7 +76,7 @@
     "babel-preset-react": "^6.24.1",
     "electron-forge": "^5.2.2",
     "electron-prebuilt-compile": "2.0.0",
-    "tslint": "^4.2.0",
-    "typescript": "~2.1.4"
+    "tslint": "^5.10.0",
+    "typescript": "~2.8.3"
   }
 }
