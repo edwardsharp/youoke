@@ -51,6 +51,10 @@ export class PlayerService {
     });
   }
 
+  getRows(): Promise<any>{
+  	return this.db.player.toArray();
+  }
+
   addPlaylist(playlist: Playlist): void{
     console.log('adding player item:',playlist);
     // this.db.player.bulkAdd(playlist.items.map(i => i.value))
