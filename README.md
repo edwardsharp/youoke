@@ -1,4 +1,4 @@
-# YOUOKE
+# YOUOKE :microphone:
 
 karatube? youaoke? karayouoketube?? dunno. create a queue of youtube videos, maybe they're karaoke videoz. maybe you got a mic. ...maybe
 
@@ -6,7 +6,7 @@ karatube? youaoke? karayouoketube?? dunno. create a queue of youtube videos, may
 
 `npm start`
 
-:metal:
+:zap:
 
 ## [Angular CLI](https://github.com/angular/angular-cli) version 6.0.3.
 
