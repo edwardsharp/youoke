@@ -1,31 +1,20 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
-    "removeComments": false,
-    "preserveConstEnums": true,
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
     "sourceMap": true,
-    "declaration": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "suppressImplicitAnyIndexErrors": true,
-    "strictNullChecks": true,
-    "experimentalDecorators": true,
-    "noUnusedLocals": true,
-    "noImplicitThis": true,
-    "noUnusedParameters": true,
-    "importHelpers": true,
-    "noEmitHelpers": true,
-    "module": "commonjs",
+    "declaration": false,
     "moduleResolution": "node",
-    "pretty": true,
-    "target": "es2015",
-    "outDir": "dist",
-    "emitDecoratorMetadata": true
-  },
-  "formatCodeOptions": {
-    "indentSize": 2,
-    "tabSize": 2
-  },
-  "exclude": [
-    "node_modules"
-  ]
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "target": "es5",
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "lib": [
+      "es2017",
+      "dom"
+    ]
+  }
 }
