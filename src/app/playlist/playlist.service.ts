@@ -40,7 +40,7 @@ export class PlaylistService {
   	return this.db.playlist.clear();
   }
 
-  addRow(playlist: Playlist): Promise<Playlist>{
+  addRow(playlist: Playlist): Promise<number>{
     console.log('adding playlist:',playlist);
     return this.db.playlist.add({
       name: playlist.name,

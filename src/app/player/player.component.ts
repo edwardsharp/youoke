@@ -1,16 +1,24 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+
 import { AppToolbarService } from '../app-toolbar.service';
-
-
+import { PlayerService } from './player.service';
 
 @Component({
   selector: 'app-player',
-  templateUrl: './player.component.html',
-  styleUrls: ['./player.component.css']
+  template: `
+<video controls
+    src=""
+    poster=""
+    width="">
+</video>
+`, styles: ['video{height: 100%; width: 100%;}']
 })
 export class PlayerComponent implements OnInit {
 
-  constructor(private appToolbarService: AppToolbarService) { }
+  constructor(
+    private appToolbarService: AppToolbarService,
+    private playerService: PlayerService
+  ) { }
 
   ngOnInit() {
   	window.setTimeout(() => {this.appToolbarService.toggleHidden(true); }, 10);
