@@ -9,17 +9,6 @@ import { PlayerService } from '../player/player.service';
   template:`
 
 <div>
-
-  <div class="flex">
-    <mat-form-field>
-      <mat-select (selectionChange)="playlistSelectionChange($event)" [(ngModel)]="selectedPlaylistId" placeholder="Playlists">
-        <mat-option>None</mat-option>
-        <mat-option *ngFor="let playlist of playlists" [value]="playlist.id">{{playlist.name}}</mat-option>
-      </mat-select>
-    </mat-form-field>
-    <button *ngIf="!showNewPlayList" mat-button (click)="addNewPlaylist()">New Playlist</button>
-  </div>
-
   <div *ngIf="selectedPlaylist">
     <button mat-icon-button (click)="removePlaylist()" matTooltip="Delete Playlist {{selectedPlaylist.name}}"><mat-icon>delete_sweep</mat-icon></button>
     <mat-form-field>
@@ -90,7 +79,12 @@ export class PlaylistComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadRows();
+    this.playlistService.playlistSelectionChange.subscribe(id => this.playlistSelectionChange(id));
+    this.playlistService.addNewPlaylist.subscribe(bool => this.addNewPlaylist());
+  }
 
+  ngOnDestroy(): void{
+    this.playlistService.playlistSelectionChange.next(undefined);
   }
   
   // clearRows(): void {
@@ -107,6 +101,7 @@ export class PlaylistComponent implements OnInit {
     this.selectedPlaylist = undefined;
     this.selectedPlaylistItems = undefined;
     this.selectedPlaylistId = undefined;
+    this.playlistService.playlistSelectionChange.next(undefined);
   }
 
   addRow(playlist: Playlist): void {
@@ -116,6 +111,8 @@ export class PlaylistComponent implements OnInit {
     this.playlistService.getRows().then(p => {
       this.playlists = p;
       this.selectedPlaylistId = playlist.id;
+      this.playlistService.needsRefresh.next(true);
+      this.playlistService.playlistSelectionChange.next(playlist.id);
       //this.playlists.findIndex(p => p.name == playlist.name);
     });
 
@@ -144,6 +141,8 @@ export class PlaylistComponent implements OnInit {
     this.playlistService.deletePlaylist(this.selectedPlaylist.id).then(p => {
       this.selectedPlaylist = undefined;
       this.selectedPlaylistId = undefined;
+      this.playlistService.playlistSelectionChange.next(undefined);
+      this.playlistService.needsRefresh.next(true);
       this.loadRows();
     });
 
@@ -164,8 +163,8 @@ export class PlaylistComponent implements OnInit {
     }
   }
 
-  playlistSelectionChange(): void{
-    this.selectedPlaylist = this.playlists.find(p => p.id == this.selectedPlaylistId);
+  playlistSelectionChange(id: number): void{
+    this.selectedPlaylist = this.playlists.find(p => p.id == id);
   }
 
   selectedPlaylistChange(): void{

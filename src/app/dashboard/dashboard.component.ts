@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+
+import { PlaylistService } from '../playlist/playlist.service';
 
 @Component({
   selector: 'app-settings',
@@ -10,11 +12,13 @@ import { Component, OnInit } from '@angular/core';
 })
 export class DashboardComponent implements OnInit {
 
-  constructor(){}
+  constructor(private playlistService: PlaylistService){}
 
   ngOnInit(): void {
-    console.log('component initialized');
+  }
 
+  ngOnDestroy(): void{
+  	this.playlistService.playlistSelectionChange.next(undefined);
   }
 
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import Dexie from 'dexie';
+import { Subject } from 'rxjs';
 
 import { Playlist } from './playlist';
 
@@ -9,6 +10,11 @@ import { Playlist } from './playlist';
 export class PlaylistService {
 
 	db: any;
+
+  public playlistSelectionChange = new Subject<number>();
+  public addNewPlaylist = new Subject<boolean>();
+  public needsRefresh = new Subject<boolean>();
+
   constructor() {
   	this.makeDatabase();
     this.connectToDatabase();
@@ -42,19 +48,22 @@ export class PlaylistService {
 
   addRow(playlist: Playlist): Promise<number>{
     console.log('adding playlist:',playlist);
+    this.needsRefresh.next(true);
     return this.db.playlist.add({
       name: playlist.name,
       items: playlist.items
     });
   }
 
-  updatePlaylist(playlist: Playlist): Promise<Playlist> {
-    return this.db.playlist.put(playlist);
+  updatePlaylist(playlist: Playlist): void {
+    return this.db.playlist.put(playlist).then( plist => this.needsRefresh.next(true));
   }
 
   deletePlaylist(id: number) {
     console.log('playlist service deletePlaylist id:',id);
     // return this.db.delete(id);
+    this.needsRefresh.next(true);
     return this.db.playlist.where('id').equals(id).delete(); 
   }
+
 }

@@ -23,6 +23,16 @@
         <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
       </button>
       <span>YOUOKE</span>
+      <span class="flexfill">&nbsp;</span>
+      <mat-form-field id="playlist-select">
+        <mat-select (selectionChange)="playlistSelectionChange($event)" [(ngModel)]="selectedPlaylistId" placeholder="Playlists">
+          <mat-option>None</mat-option>
+          <mat-option *ngFor="let playlist of playlists" [value]="playlist.id">{{playlist.name}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button *ngIf="!showNewPlayList" mat-icon-button (click)="addNewPlaylist()" matTooltip="New Playlist"><mat-icon>playlist_add</mat-icon></button>
+      <span class="flexfill">&nbsp;</span>
+
     </mat-toolbar>
     <div id="main-content">
       <router-outlet></router-outlet>
