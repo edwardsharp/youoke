@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 import Dexie from 'dexie';
-import { Settings } from '../settings/settings';
+import { Settings } from './settings';
 
 @Component({
   selector: 'app-settings',
@@ -54,7 +54,7 @@ export class SettingsComponent implements OnInit {
   constructor(){}
 
   ngOnInit(): void {
-    console.log('component initialized');
+    console.log('settings initialized');
     // var db = new SettingsDatabase();
     //
     // Manipulate and Query Database

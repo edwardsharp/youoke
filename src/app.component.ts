@@ -5,6 +5,7 @@ import { FormsModule } from "@angular/forms";
 import { RouterModule, Routes } from '@angular/router';
 
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { PlaylistComponent } from './playlist/playlist.component';
 import { SettingsComponent } from './settings/settings.component';
 
 @Component({
@@ -13,6 +14,7 @@ import { SettingsComponent } from './settings/settings.component';
 <div>
   <nav>
     <a routerLink="/" routerLinkActive="active">Home</a> | 
+    <a routerLink="/playlist" routerLinkActive="active">Playlists</a>
     <a routerLink="/settings" routerLinkActive="active">Settings</a>
   </nav>
 
@@ -32,6 +34,7 @@ export class AppComponent implements OnInit {
 }
 
 const appRoutes: Routes = [
+  { path: 'playlist', component: PlaylistComponent },
   { path: 'settings', component: SettingsComponent },
   {
     path: 'dashboard',
@@ -54,6 +57,7 @@ const appRoutes: Routes = [
   declarations: [
     AppComponent, 
     DashboardComponent, 
+    PlaylistComponent,
     SettingsComponent
   ],
   bootstrap: [AppComponent]
