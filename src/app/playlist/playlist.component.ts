@@ -178,7 +178,7 @@ export class PlaylistComponent implements OnInit {
   }
 
   playItem(item: any){
-    this.playerService.addPlaylistItem(item);
+    this.playerService.addPlaylistItem(item.value);
   }
 
 }
