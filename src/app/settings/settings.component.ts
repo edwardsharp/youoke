@@ -25,22 +25,18 @@ import { Settings } from './settings';
       </tr>
     </ng-container>
   </table>
-  <button type="button" id="clear" name="clear" (click)="clearRows()">Clear</button>
+  <button mat-button (click)="clearRows()">Clear</button>
   <hr/>
   <h2>Add settings to list</h2>
-  <form>
-    <div>
-      <label for="name">Name of settings</label>
-      <input type="text" id="name" name="name" [(ngModel)]="newSettings.name"/>
-    </div>
-    <div>
-      <label for="description">Description of settings</label>
-      <textarea rows="3" id="description" name="description" [(ngModel)]="newSettings.description">
-      </textarea>
-    </div>
-    <button type="submit" id="submit" name="submit" (click)="addRow(newSettings)">Add settings
-    </button>
-  </form>
+  <mat-form-field>
+    <input matInput placeholder="Name" [(ngModel)]="newSettings.name">
+  </mat-form-field>
+  <mat-form-field>
+    <input matInput placeholder="Description" [(ngModel)]="newSettings.description">
+  </mat-form-field>
+  <button mat-button (click)="addRow(newSettings)">Add settings
+  </button>
+
 </div>
 `,
   styles: [':host{min-height: 100vh;}']

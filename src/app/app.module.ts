@@ -10,10 +10,11 @@ import { AppComponent } from './app.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { PlaylistComponent } from './playlist/playlist.component';
 import { SettingsComponent } from './settings/settings.component';
+import { PlayerComponent } from './player/player.component';
 
 
 const appRoutes: Routes = [
-  { path: 'playlist', component: PlaylistComponent },
+  { path: 'playlists', component: PlaylistComponent },
   { path: 'settings', component: SettingsComponent },
   {
     path: 'dashboard',
@@ -22,6 +23,10 @@ const appRoutes: Routes = [
   { path: '',
     redirectTo: '/dashboard',
     pathMatch: 'full'
+  },
+  {
+  	path: 'player',
+  	component: PlayerComponent
   }
   // { path: '**', component: PageNotFoundComponent }
 ];
@@ -32,7 +37,8 @@ const appRoutes: Routes = [
     AppComponent,
     DashboardComponent, 
     PlaylistComponent,
-    SettingsComponent
+    SettingsComponent,
+    PlayerComponent
   ],
   imports: [
   	RouterModule.forRoot(
@@ -45,6 +51,7 @@ const appRoutes: Routes = [
     ReactiveFormsModule,
 		AppMaterialModule
   ],
+  entryComponents: [PlayerComponent],
   providers: [],
   bootstrap: [AppComponent]
 })

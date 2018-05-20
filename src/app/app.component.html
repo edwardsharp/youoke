@@ -4,16 +4,17 @@
     class="sidenav"
     fixedInViewport="true"
     role="dialog"
-    mode="over">
+    mode="side">
     <mat-toolbar color="primary">Menu</mat-toolbar>
     <mat-nav-list>
       <a mat-list-item routerLink="/" routerLinkActive="active">Home</a>
-      <a mat-list-item routerLink="/playlist" routerLinkActive="active">Playlists</a>
+      <a mat-list-item routerLink="/playlists" routerLinkActive="active">Playlists</a>
       <a mat-list-item routerLink="/settings" routerLinkActive="active">Settings</a>
+      <a mat-list-item href="/player" target="_blank">Player</a>
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content>
-    <mat-toolbar color="primary">
+    <mat-toolbar *ngIf="!toolbarHidden" color="primary">
       <button
         type="button"
         aria-label="Toggle sidenav"

@@ -4,6 +4,7 @@ import { Component, OnInit } from '@angular/core';
   selector: 'app-settings',
   template:`
 <h1>DASHBOARD</h1>
+<app-playlist></app-playlist>
 `,
   styles: []
 })

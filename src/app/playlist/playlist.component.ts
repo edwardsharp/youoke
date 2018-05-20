@@ -1,38 +1,49 @@
 import { Component, OnInit } from '@angular/core';
 
-import Dexie from 'dexie';
 import { Playlist } from './playlist';
+import { PlaylistService } from './playlist.service';
 
 @Component({
   selector: 'app-playlist',
   template:`
 
 <div>
-  <h2>Playlists</h2>
-  <table>
-    <tr>
-      <th>Name</th>
-      <th>Items</th>
-    </tr>
-    <ng-container *ngIf="rows && rows.length>0">
-      <tr *ngFor="let playlist of rows">
-        <td>{{playlist.name}}</td>
-        <td><span *ngFor="let item of playlist.items">{{item.value}} </span></td>
-      </tr>
-    </ng-container>
-    <ng-container *ngIf="!rows || rows.length==0">
-      <tr>
-        <td colspan="2">No playlists found</td>
-      </tr>
-    </ng-container>
-  </table>
-  
-  <button mat-button (click)="clearRows()">Clear</button>
-  <hr/>
 
-  <mat-card class="playlist-card">
-    <mat-card-header>
-      <mat-card-title><h2>Create playlist</h2></mat-card-title>
+  <div class="flex">
+    <mat-form-field>
+      <mat-select (selectionChange)="playlistSelectionChange($event)" [(ngModel)]="selectedPlaylistIdx" placeholder="Playlists">
+        <mat-option>None</mat-option>
+        <mat-option *ngFor="let playlist of playlists; let i = index;" [value]="i">{{playlist.name}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-button (click)="clearRows()">Clear All Playlists</button>
+    <button *ngIf="!showNewPlayList" mat-button (click)="addNewPlaylist()">New Playlist</button>
+  </div>
+
+  <div *ngIf="selectedPlaylist">
+    <mat-form-field>
+      <input matInput placeholder="Playlist Name" [(ngModel)]="selectedPlaylist.name" (keyup.enter)="updatePlaylist(selectedPlaylist)">
+    </mat-form-field>
+    <button mat-icon-button (click)="removePlaylist()" matTooltip="Remove {{selectedPlaylist.name}}"><mat-icon>delete</mat-icon></button>
+    <h4>Items</h4>
+    <mat-selection-list #selectedPlaylistItems>
+      <mat-list-option *ngFor="let item of selectedPlaylist.items">
+        {{item.value}}
+      </mat-list-option>
+    </mat-selection-list>
+  </div>
+
+  
+
+
+  <mat-card class="playlist-card" *ngIf="showNewPlayList">
+    <mat-card-header style="display:flex;justify-content:space-between;">
+      <mat-card-title>
+        <h2 *ngIf="newPlaylist.name;else newList">{{newPlaylist.name}}</h2>
+        <ng-template #newList><h2>New Playlist</h2></ng-template>
+      </mat-card-title>
+      <mat-card-subtitle>playlist</mat-card-subtitle>
+      <button mat-icon-button (click)="showNewPlayList = !showNewPlayList"  matTooltip="Cancel"><mat-icon>clear</mat-icon></button>
     </mat-card-header>
     <mat-card-content>
       <mat-form-field>
@@ -43,7 +54,7 @@ import { Playlist } from './playlist';
         <mat-form-field>
           <input matInput placeholder="New Item" [(ngModel)]="item.value">
         </mat-form-field>
-        <button mat-icon-button (click)="removeItem(item)" matTooltip="Remove {{item.value}}"><mat-icon>clear</mat-icon></button>
+        <button mat-icon-button (click)="removeItem(item)" matTooltip="Remove {{item.value}}"><mat-icon>delete</mat-icon></button>
       </div>
     
     </mat-card-content>
@@ -53,62 +64,75 @@ import { Playlist } from './playlist';
     </mat-card-actions>
   </mat-card>
 
-  
-
 </div>
 `,
   styles: [':host{min-height: 100vh;} .playlist-card{max-width: 200px;} .flex{display:flex;}']
 })
 export class PlaylistComponent implements OnInit {
 
-  db: any;
-  newPlaylist: Playlist = new Playlist("", [{value: ""}]);
-  rows: Playlist[] = [];
+  
+  newPlaylist: Playlist = new Playlist();
+  playlists: Playlist[] = [];
+  showNewPlayList: boolean;
+  selectedPlaylist: any;
+  selectedPlaylistItems: any;
+  selectedPlaylistIdx: number;
 
-  constructor(){}
+  constructor(private playlistService: PlaylistService){}
 
   ngOnInit(): void {
-    console.log('playlist initialized');
-
-    this.makeDatabase();
-    this.connectToDatabase();
-  }
-  makeDatabase(): void {
-    this.db = new Dexie('Playlist');
-    this.db.version(1).stores({
-      playlist: 'name' //only list indexed attrz here...
-    });
     this.loadRows();
-  }
 
-  connectToDatabase(): void {
-    this.db.open().catch((error:any) => {
-      alert("Errod during connecting to database : " + error);
-    });
   }
+  
 
   clearRows(): void {
-    this.db.playlist.clear().then(result => console.log(result));
+    this.playlistService.clearRows().then(result => console.log(result));
     this.loadRows();
   }
 
   loadRows(): void {
-    this.db.playlist.toArray().then(p => this.rows = p);
+    this.playlistService.getRows().then(p => this.playlists = p);
+  }
+
+  addNewPlaylist(): void{
+    this.showNewPlayList = true;
+    this.selectedPlaylist = undefined;
+    this.selectedPlaylistItems = undefined;
+    this.selectedPlaylistIdx = undefined;
   }
 
   addRow(playlist: Playlist): void {
-    console.log(playlist);
-    this.db.playlist.add({
-      name: playlist.name,
-      items: playlist.items
-    });
+    this.playlistService.addRow(playlist).then(pList => console.log('add ROW:',pList));
 
     this.loadRows();
-    this.newPlaylist = new Playlist("", [{value: ""}]);
+    this.playlistService.getRows().then(p => {
+      this.playlists = p;
+      this.selectedPlaylistIdx = this.playlists.findIndex(p => p.name == playlist.name);
+    });
+
+    this.newPlaylist = new Playlist();
+    this.showNewPlayList = false;
+    console.log('selectedPlist now:',playlist);
+    this.selectedPlaylist = playlist;
+    
   }
 
   addItem(): void{
     this.newPlaylist.items.push({value: ""});
+  }
+
+  updatePlaylist(playlist: Playlist): void{
+    this.playlistService.updatePlaylist(playlist);
+  }
+
+  removePlaylist(): void{
+    this.playlistService.deletePlaylist(this.selectedPlaylist.id).then(p => {
+      this.selectedPlaylist = undefined;
+      this.selectedPlaylistIdx = undefined;
+      this.loadRows();
+    });
+
   }
 
   removeItem(item:any): void{
@@ -116,6 +140,10 @@ export class PlaylistComponent implements OnInit {
     if(idx > -1){
       this.newPlaylist.items.splice(idx, 1);
     }
+  }
+
+  playlistSelectionChange(): void{
+    this.selectedPlaylist = this.playlists[this.selectedPlaylistIdx];
   }
 
 }
