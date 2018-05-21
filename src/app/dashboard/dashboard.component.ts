@@ -5,10 +5,13 @@ import { PlaylistService } from '../playlist/playlist.service';
 @Component({
   selector: 'app-settings',
   template:`
-<h1>DASHBOARD</h1>
-<app-playlist></app-playlist>
+<mat-form-field appearance="outline" class="yt-search">
+  <mat-label>Search YouTube</mat-label>
+  <input matInput placeholder="Enter Query...">
+  <mat-icon matSuffix>search</mat-icon>
+</mat-form-field>
 `,
-  styles: []
+  styles: ['.yt-search{margin: 2em 5%; width: 90%;}']
 })
 export class DashboardComponent implements OnInit {
 
@@ -18,7 +21,7 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnDestroy(): void{
-  	this.playlistService.playlistSelectionChange.next(undefined);
+  	// this.playlistService.playlistSelectionChange.next(undefined);
   }
 
 }

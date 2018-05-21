@@ -1,38 +1,57 @@
 <mat-sidenav-container class="sidenav-container">
   <mat-sidenav
-    #drawer
-    class="sidenav"
+    #leftNav
+    class="playlist-nav"
     fixedInViewport="true"
     role="dialog"
     mode="side">
-    <mat-toolbar color="primary">Menu</mat-toolbar>
-    <mat-nav-list>
-      <a mat-list-item routerLink="/" routerLinkActive="active">Home</a>
-      <a mat-list-item routerLink="/playlists" routerLinkActive="active">Playlists</a>
-      <a mat-list-item routerLink="/settings" routerLinkActive="active">Settings</a>
-      <a mat-list-item href="/player" target="_blank">Player <span class="flexfill">&nbsp;</span><mat-icon>open_in_new</mat-icon></a>
-    </mat-nav-list>
-  </mat-sidenav>
-  <mat-sidenav-content>
-    <mat-toolbar *ngIf="!toolbarHidden" color="primary">
-      <button
-        type="button"
-        aria-label="Toggle sidenav"
-        mat-icon-button
-        (click)="drawer.toggle()">
-        <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
-      </button>
-      <span>YOUOKE</span>
-      <span class="flexfill">&nbsp;</span>
+    <mat-toolbar color="primary" class="sticky-toolbar">
       <mat-form-field id="playlist-select">
         <mat-select (selectionChange)="playlistSelectionChange($event)" [(ngModel)]="selectedPlaylistId" placeholder="Playlists">
           <mat-option>None</mat-option>
           <mat-option *ngFor="let playlist of playlists" [value]="playlist.id">{{playlist.name}}</mat-option>
         </mat-select>
       </mat-form-field>
-      <button *ngIf="!showNewPlayList" mat-icon-button (click)="addNewPlaylist()" matTooltip="New Playlist"><mat-icon>playlist_add</mat-icon></button>
+      <button *ngIf="!showNewPlayList" mat-icon-button (click)="addNewPlaylist()" matTooltip="New Playlist"><mat-icon>add</mat-icon></button>
+    </mat-toolbar>
+    <app-playlist></app-playlist>
+  </mat-sidenav>
+  <mat-sidenav 
+    #rightNav
+    class="sidenav"
+    mode="side" 
+    position="end">
+    <mat-toolbar color="primary" id="q-toolbar">Queue <a mat-icon-button href="/player" target="_blank" matTooltip="Open player in new window"><mat-icon>open_in_new</mat-icon></a></mat-toolbar>
+    <div>
+      <app-video-player></app-video-player>
+      <app-queue></app-queue>
+    </div>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <mat-toolbar *ngIf="!toolbarHidden" color="primary"  class="sticky-toolbar">
+      <button
+        type="button"
+        aria-label="Toggle Playlists"
+        matTooltip="Toggle Playlists"
+        mat-icon-button
+        (click)="leftNav.toggle()">
+        <mat-icon aria-label="playlist">clear_all</mat-icon>
+      </button>
       <span class="flexfill">&nbsp;</span>
+      <span><a routerLink="/dashboard" class="base">YOUOKE</a></span>
+      <span class="flexfill">&nbsp;</span>
+      <button mat-icon-button routerLink="/settings" routerLinkActive="active" matTooltip="Settings"><mat-icon>settings</mat-icon></button>
+      <button mat-icon-button matTooltip="User"><mat-icon>account_circle</mat-icon></button>
 
+      <span class="btn-spacing">&nbsp;</span>
+      <button
+        type="button"
+        aria-label="Toggle Queue"
+        matTooltip="Toggle Queue"
+        mat-icon-button
+        (click)="rightNav.toggle()">
+        <mat-icon aria-label="q">live_tv</mat-icon>
+      </button>
     </mat-toolbar>
     <div id="main-content">
       <router-outlet></router-outlet>

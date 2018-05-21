@@ -51,6 +51,10 @@ export class PlayerService {
     });
   }
 
+  clearRows(): any{
+    return this.db.player.clear();
+  }
+
   getRows(): Promise<any>{
   	return this.db.player.toArray();
   }
@@ -70,6 +74,13 @@ export class PlayerService {
     return this.db.player.add({
       name: item
     });
+  }
+
+  deleteItem(id: number) {
+    console.log('player service item id:',id);
+    // return this.db.delete(id);
+    this.playerChange.next(true);
+    return this.db.player.where('id').equals(id).delete(); 
   }
 
 }

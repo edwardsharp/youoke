@@ -11,6 +11,8 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { PlaylistComponent } from './playlist/playlist.component';
 import { SettingsComponent } from './settings/settings.component';
 import { PlayerComponent } from './player/player.component';
+import { QueueComponent } from './queue/queue.component';
+import { VideoPlayerComponent } from './video-player/video-player.component';
 
 
 const appRoutes: Routes = [
@@ -38,7 +40,9 @@ const appRoutes: Routes = [
     DashboardComponent, 
     PlaylistComponent,
     SettingsComponent,
-    PlayerComponent
+    PlayerComponent,
+    QueueComponent,
+    VideoPlayerComponent
   ],
   imports: [
   	RouterModule.forRoot(

@@ -2,13 +2,50 @@
   min-height: 100vh;
 }
 .sidenav {
-  width: 150px;
+  width: 200px;
+  overflow: hidden;
+}
+
+.playlist-nav{
+	width: 200px;
+	direction: rtl;
+}
+.playlist-nav *{
+	direction: ltr;
 }
 
 #main-content{
-	padding: 0 1em 1em 1em;
+	/*padding: 0 1em 1em 1em;*/
+}
+
+.sticky-toolbar{
+	position: sticky;
+	top: 0;
+	z-index: 1;
 }
 
 #playlist-select{
 	font-size: 12px;
+	width: 140px!important;
+}
+
+.btn-spacing{
+	width: 2em;
+}
+
+#q-toolbar{
+	display: flex;
+	justify-content: space-around;
+}
+
+.base{
+	text-decoration: none;
+	color: white;
+}
+.base:hover{
+	text-decoration: underline;
+}
+app-video-player{
+	position: sticky;
+	top: 86px;
 }

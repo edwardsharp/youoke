@@ -9,26 +9,29 @@ import { PlayerService } from '../player/player.service';
   template:`
 
 <div>
-  <div *ngIf="selectedPlaylist">
-    <button mat-icon-button (click)="removePlaylist()" matTooltip="Delete Playlist {{selectedPlaylist.name}}"><mat-icon>delete_sweep</mat-icon></button>
+  <div *ngIf="selectedPlaylist" class="selected-playlist">
     <mat-form-field>
       <input matInput placeholder="Playlist Name" [(ngModel)]="selectedPlaylist.name" (keyup.enter)="updatePlaylist(selectedPlaylist)" (change)="selectedPlaylistChange()">
     </mat-form-field>
-    <button mat-icon-button (click)="addItem()" matTooltip="Add Item"><mat-icon>playlist_add</mat-icon></button>
-    <button mat-icon-button matTooltip="Play All" (click)="playAll()"><mat-icon>playlist_play</mat-icon></button>
-    <mat-list>
-      <mat-list-item *ngFor="let item of selectedPlaylist.items">
-        <button mat-icon-button (click)="removeItem(item)" matTooltip="Remove {{item.value}}"><mat-icon>delete</mat-icon></button>
-        <mat-form-field>
-          <input matInput placeholder="Item" (keyup.enter)="updatePlaylist(selectedPlaylist)" [(ngModel)]="item.value" (change)="selectedPlaylistChange()">
+    
+    <div>
+      <div *ngFor="let item of selectedPlaylist.items">
+        <button mat-icon-button (click)="removeItem(item)" matTooltip="Remove {{item.value}}"><mat-icon>clear</mat-icon></button>
+        <mat-form-field class="yt-input">
+          <mat-label>YouTube Video ID</mat-label>
+          <input matInput placeholder="8leAAwMIigI" (keyup.enter)="updatePlaylist(selectedPlaylist)" [(ngModel)]="item.value" (change)="selectedPlaylistChange()">
         </mat-form-field>
         <button mat-icon-button matTooltip="Play {{item.value}}" (click)="playItem(item)"><mat-icon>play_circle_outline</mat-icon></button>
-      </mat-list-item>
-    </mat-list>
+      </div>
+    </div>
+
+    <div class="btn-nav">
+      <button mat-icon-button (click)="removePlaylist()" matTooltip="Delete Playlist {{selectedPlaylist.name}}"><mat-icon>delete_sweep</mat-icon></button>
+      <button mat-icon-button (click)="addItem()" matTooltip="Add Video"><mat-icon>playlist_add</mat-icon></button>
+      <button mat-icon-button matTooltip="Play All" (click)="playAll()"><mat-icon>playlist_play</mat-icon></button>
+      <button mat-icon-button matTooltip="Hide Playlist" (click)="hidePlaylist()"><mat-icon>visibility_off</mat-icon></button>
+    </div>
   </div>
-
-  
-
 
   <mat-card class="playlist-card" *ngIf="showNewPlayList">
     <mat-card-header style="display:flex;justify-content:space-between;">
@@ -40,27 +43,35 @@ import { PlayerService } from '../player/player.service';
       <button mat-icon-button (click)="cancelNewPlaylist()"  matTooltip="Cancel"><mat-icon>clear</mat-icon></button>
     </mat-card-header>
     <mat-card-content>
-      <mat-form-field>
+      <mat-form-field class="yt-name-input">
         <input matInput placeholder="Playlist Name" [(ngModel)]="newPlaylist.name"/>
       </mat-form-field>
 
       <div class="flex" *ngFor="let item of newPlaylist.items">
-        <mat-form-field>
-          <input matInput placeholder="New Item" [(ngModel)]="item.value">
+        <mat-form-field class="yt-input">
+          <mat-label>YouTube Video ID</mat-label>
+          <input matInput placeholder="8leAAwMIigI" [(ngModel)]="item.value">
         </mat-form-field>
         <button mat-icon-button (click)="removeNewItem(item)" matTooltip="Remove {{item.value}}"><mat-icon>delete</mat-icon></button>
       </div>
     
     </mat-card-content>
     <mat-card-actions>
-      <button mat-icon-button (click)="addNewItem()" matTooltip="Add item"><mat-icon>playlist_add</mat-icon></button>
+      <button mat-icon-button (click)="addNewItem()" matTooltip="Add Video"><mat-icon>playlist_add</mat-icon></button>
       <button mat-button (click)="addRow(newPlaylist)"><mat-icon>save</mat-icon>Save</button>
     </mat-card-actions>
   </mat-card>
 
 </div>
 `,
-  styles: [':host{min-height: 100vh;} .playlist-card{max-width: 200px;} .flex{display:flex;}']
+  styles: [':host{display:flex; justify-content:center;}',
+  '.playlist-card{max-width: 200px; box-shadow: none!important;}',
+  '.yt-name-input{width:140px!important}',
+  '.yt-input{width: 100px!important}',
+  '.selected-playlist{margin-top: 1em}',
+  'mat-card-actions{margin:0!important}',
+  '.btn-nav{position:sticky; z-index:2; bottom:0; background-color:white; display:flex; justify-content:space-around;}'
+  ]
 })
 export class PlaylistComponent implements OnInit {
 
@@ -84,7 +95,7 @@ export class PlaylistComponent implements OnInit {
   }
 
   ngOnDestroy(): void{
-    this.playlistService.playlistSelectionChange.next(undefined);
+    // this.playlistService.playlistSelectionChange.next(undefined);
   }
   
   // clearRows(): void {
@@ -178,6 +189,12 @@ export class PlaylistComponent implements OnInit {
 
   playItem(item: any){
     this.playerService.addPlaylistItem(item.value);
+  }
+
+  hidePlaylist(){
+    this.selectedPlaylist = undefined;
+    this.selectedPlaylistId = undefined;
+    this.playlistService.playlistSelectionChange.next(undefined);
   }
 
 }

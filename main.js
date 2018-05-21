@@ -4,6 +4,12 @@ const electron = require('electron');
 let mainWindow; 
 const isDevMode = process.execPath.match(/[\\/]electron/);
 
+const HOMEDIR = `${os.homedir()}/YOUOKE`;
+
+if (!fs.existsSync(HOMEDIR)){
+  fs.mkdirSync(HOMEDIR);
+}
+
 const createWindow = async () => {
   // Create the browser window.
   const {width, height} = electron.screen.getPrimaryDisplay().workAreaSize;
