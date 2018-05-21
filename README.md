@@ -6,6 +6,9 @@ karatube? youaoke? karayouoketube?? dunno. create a queue of youtube videos, may
 
 `npm start`
 
+_-or-_  
+`./node_modules/.bin/electron .`
+
 :zap:
 
 ## [Angular CLI](https://github.com/angular/angular-cli) version 6.0.3.
