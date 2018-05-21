@@ -1,6 +1,9 @@
 .env
 node_modules
 out
+client_secret.json
+client_id.json
+.credentials/
 # compiled output
 /dist
 /tmp

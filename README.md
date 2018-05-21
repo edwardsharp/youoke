@@ -2,6 +2,26 @@
 
 karatube? youaoke? karayouoketube?? dunno. create a queue of youtube videos, maybe they're karaoke videoz. maybe you got a mic. ...maybe
 
+## Google API
+
+Turn on the YouTube Data API
+
+1. [Use this wizard](https://console.developers.google.com/start/api?id=youtube) to create or select a project in the Google Developers Console and automatically turn on the API. Click __Continue__, then __Go to credentials__.
+
+2. On the __Add credentials to your project page__, click the __Cancel__ button.
+
+3. At the top of the page, select the __OAuth consent screen__ tab. Select an __Email address__, enter a __Product name__ if not already set, and click the __Save__ button.
+
+4. Select the __Credentials__ tab, click the __Create credentials__ button and select __OAuth client ID__.
+
+5. Select the application type __Other__, enter the name "YOUOKE" (or whatever), and click the __Create__ button.
+
+6. Click __OK__ to dismiss the resulting dialog.
+
+7. Click the :arrow_down: (Download JSON) button to the right of the client ID.
+
+8. Move the downloaded file `client_id.json` to your working directory.
+
 ## electronjs
 
 `npm start`
