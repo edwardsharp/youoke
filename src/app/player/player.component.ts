@@ -11,7 +11,7 @@ import { PlayerService } from './player.service';
 <app-queue [hideCtrl]="true"></app-queue>
 </div>
 `, styles: [
-  'app-video-player{height: 100%; flex: 2}', 
+  'app-video-player{flex: 2}', 
   'app-queue{ flex: 1; max-width: 150px; max-height: 90vh; overflow: scroll;}']
 })
 export class PlayerComponent implements OnInit {

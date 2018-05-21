@@ -1,5 +1,7 @@
 const { app, BrowserWindow } = require('electron');
 const electron = require('electron');
+const os = require('os');
+const fs = require('fs');
 
 let mainWindow; 
 const isDevMode = process.execPath.match(/[\\/]electron/);
