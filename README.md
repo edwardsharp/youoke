@@ -20,7 +20,7 @@ Turn on the YouTube Data API
 
 7. Click the :arrow_down: (Download JSON) button to the right of the client ID.
 
-8. Move the downloaded file `client_id.json` to your working directory.
+8. Move the downloaded file `client_secret_3255645blahblahblah.json` to your working directory and rename it `client_secret.json`.
 
 ## electronjs
 

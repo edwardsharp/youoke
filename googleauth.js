@@ -1,3 +1,33 @@
+/**
+ * nodejs google auth helper lib for authenticating & calling youtube api.
+ * 
+ * mostly ripped from the nodjs quickstart: 
+ *   https://developers.google.com/youtube/v3/quickstart/nodejs 
+ *
+ * example usage: 
+const gAuth = require('./googleauth');
+gAuth.init().then( ok => {
+  gAuth.myPlaylists().then( data => {
+    console.log('myPlaylists response data:',JSON.stringify(data));
+    console.log('- - - - - - - - - - - - - - - - - - - - - - - -');
+  });
+  gAuth.myChannel().then( data => {
+    console.log('myChannel response data:', JSON.stringify(data));
+    console.log('- - - - - - - - - - - - - - - - - - - - - - - -');
+  });
+  gAuth.channelsListManagedByMe().then( data => {
+    console.log('channelsListManagedByMe response data:', JSON.stringify(data));
+    console.log('- - - - - - - - - - - - - - - - - - - - - - - -');
+  });
+  gAuth.getChannel('3dwardsharp').then( data => {
+    console.log('getChannel response data:', JSON.stringify(data));
+    console.log('- - - - - - - - - - - - - - - - - - - - - - - -');
+  });
+}).catch( err => {
+  console.log('caught err:',err);
+});
+ */ 
+
 var fs = require('fs');
 var readline = require('readline');
 var {google} = require('googleapis');
@@ -21,7 +51,7 @@ function setAuth(auth){
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-function authorize(credentials, callback) {
+function authorize(credentials, resolve, reject) {
   var clientSecret = credentials.installed.client_secret;
   var clientId = credentials.installed.client_id;
   var redirectUrl = credentials.installed.redirect_uris[0];
@@ -30,10 +60,12 @@ function authorize(credentials, callback) {
   // Check if we have previously stored a token.
   fs.readFile(TOKEN_PATH, function(err, token) {
     if (err) {
-      getNewToken(oauth2Client, callback);
+      getNewToken(oauth2Client, resolve, reject);
     } else {
       oauth2Client.credentials = JSON.parse(token);
-      callback(oauth2Client);
+      // callback();
+      gAuth = oauth2Client;
+      resolve();
     }
   });
 }
@@ -46,7 +78,7 @@ function authorize(credentials, callback) {
  * @param {getEventsCallback} callback The callback to call with the authorized
  *     client.
  */
-function getNewToken(oauth2Client, callback) {
+function getNewToken(oauth2Client, resolve, reject) {
   var authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPES
@@ -62,10 +94,14 @@ function getNewToken(oauth2Client, callback) {
       if (err) {
         console.log('Error while trying to retrieve access token', err);
         return;
+        reject(err);
       }
       oauth2Client.credentials = token;
       storeToken(token);
-      callback(oauth2Client);
+      // callback(oauth2Client);
+      gAuth = oauth2Client;
+      resolve();
+
     });
   });
 }
@@ -91,44 +127,86 @@ function storeToken(token) {
 }
 
 /**
- * Lists the names and IDs of up to 10 files.
- *
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ * handy\dandy exports for your consumption <3
  */
-
 module.exports = {
   init(){
-    fs.readFile('client_id.json', function processClientSecrets(err, content) {
-      if (err) {
-        console.log('Error loading client secret file: ' + err);
-        return;
-      }
-      // Authorize a client with the loaded credentials, then call the YouTube API.
-      authorize(JSON.parse(content), setAuth);
+    return new Promise((resolve, reject) => {
+      fs.readFile('client_secret.json', function processClientSecrets(err, content) {
+        if (err){
+          reject(err);
+        }else{
+          // Authorize a client with the loaded credentials, then call the YouTube API.
+          authorize(JSON.parse(content), resolve, reject);
+        }
+      });
     });
   },
-  getChannel(){
-    var service = google.youtube('v3');
-    service.channels.list({
-      auth: gAuth,
-      part: 'snippet,contentDetails,statistics',
-      forUsername: 'GoogleDevelopers'
-    }, function(err, response) {
-      if (err) {
-        console.log('The API returned an error: ' + err);
+  myPlaylists(){
+    return new Promise((resolve, reject) => {
+      google.youtube('v3').playlists.list( 
+        { auth: gAuth,
+          mine: true,
+          maxResults: 50,
+          part: 'id,snippet,contentDetails'
+        }, function(err, response) {
+          if (err) {
+            reject(err);
+          }else{
+            resolve(response.data);
+          }
+      }); 
+    });
+  },
+  myChannel(){
+    return new Promise((resolve, reject) => {
+      google.youtube('v3').channels.list({
+        auth: gAuth,
+        mine: true,
+        'part': 'id'
+      }, function(err, response) {
+        if (err) {
+          reject(err);
+        }else{
+          resolve(response.data);
+        }
+      });
+    });
+  },
+  channelsListManagedByMe(){
+    return new Promise((resolve, reject) => {
+      google.youtube('v3').channels.list({
+        auth: gAuth,
+        mine: true,
+        maxResults: 50,
+        'part': 'snippet,contentDetails'
+      }, function(err, response) {
+        if (err) {
+          reject(err);
+        }else{
+          resolve(response.data);
+        }
+      });
+    });
+  },
+  getChannel(username){
+    return new Promise((resolve, reject) => {
+      if(!username || username == ''){ 
+        reject('Error! no username specified.'); 
         return;
       }
-      var channels = response.data.items;
-      if (channels.length == 0) {
-        console.log('No channel found.');
-      } else {
-        console.log('This channel\'s ID is %s. Its title is \'%s\', and ' +
-                    'it has %s views.',
-                    channels[0].id,
-                    channels[0].snippet.title,
-                    channels[0].statistics.viewCount);
-      }
+      google.youtube('v3').channels.list({
+        auth: gAuth,
+        part: 'snippet,contentDetails',
+        forUsername: username
+      }, function(err, response) {
+        if (err) {
+          reject(err);
+        }else{
+          resolve(response.data);
+        }
+      });
     });
   }
-};
+}
 
