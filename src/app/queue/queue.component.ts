@@ -32,7 +32,7 @@ import { PlayerService } from '../player/player.service';
 </div>
 `, styles: [
 	'#rows{overflow:scroll; height:calc(100vh - 64px - 40px - 100px);}',
-	'.item{display:flex; justify-content:space-between; align-items:center; border-bottom:thin solid #eaeaea; height: 50px;}',
+	'.item{display:flex; justify-content:flex-end; align-items:center; border-bottom:thin solid #eaeaea; height: 50px; margin-right: 1em;}',
   '#q-ctrl{position:sticky; z-index:2; bottom:0; background-color:white; display:flex; justify-content:space-around;}'
  ]
 })
