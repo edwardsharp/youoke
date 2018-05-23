@@ -137,8 +137,8 @@ export class PlayerService {
             showinfo: 0,
             controls: controls ? 1 : 0,
             disablekb: controls ? 1 : 0,
-            rel: 0,
-            autoplay: 0
+            autoplay: 0,
+            rel: 0
           },
           height: '100%',
           width: '100%',

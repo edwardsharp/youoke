@@ -2,6 +2,7 @@
   <mat-sidenav
     *ngIf="!toolbarHidden"
     #leftNav
+    [opened]="leftNavOpened"
     class="playlist-nav"
     fixedInViewport="true"
     role="dialog"
@@ -20,7 +21,8 @@
   <mat-sidenav 
     *ngIf="!toolbarHidden"
     #rightNav
-    class="sidenav"
+    [opened]="rightNavOpened"
+    class="qnav"
     mode="side" 
     position="end">
     <mat-toolbar color="primary" id="q-toolbar">Queue <a mat-icon-button href="/player" target="_blank" matTooltip="Open player in new window"><mat-icon>open_in_new</mat-icon></a></mat-toolbar>
@@ -30,14 +32,15 @@
     </div>
   </mat-sidenav>
   <mat-sidenav-content>
-    <mat-toolbar *ngIf="!toolbarHidden" color="primary" class="sticky-toolbar">
+    <mat-toolbar *ngIf="!toolbarHidden" color="primary">
       <button
         type="button"
         aria-label="Toggle Playlists"
         matTooltip="Toggle Playlists"
         mat-icon-button
         (click)="leftNavToggle()">
-        <mat-icon aria-label="playlist">clear_all</mat-icon>
+        <mat-icon *ngIf="leftNavOpened"aria-label="playlist">chevron_left</mat-icon>
+        <mat-icon *ngIf="!leftNavOpened" aria-label="playlist">clear_all</mat-icon>
       </button>
       <span class="flexfill">&nbsp;</span>
       <span><a routerLink="/dashboard" class="base">YOUOKE</a></span>
@@ -52,7 +55,8 @@
         matTooltip="Toggle Queue"
         mat-icon-button
         (click)="rightNavToggle()">
-        <mat-icon aria-label="q">live_tv</mat-icon>
+        <mat-icon *ngIf="rightNavOpened"aria-label="q">queue_play_next</mat-icon>
+        <mat-icon *ngIf="!rightNavOpened" aria-label="q" class="mirror">queue_play_next</mat-icon>
       </button>
     </mat-toolbar>
     <div id="main-content">

@@ -1,9 +1,14 @@
+mat-spinner{
+	margin: 15% auto;
+}
+
 .sidenav-container {
   min-height: 100vh;
 }
-.sidenav {
+.qnav {
   width: 200px;
   overflow: hidden;
+  position: fixed;
 }
 
 .playlist-nav{

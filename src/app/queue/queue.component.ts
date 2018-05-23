@@ -9,19 +9,17 @@ import { PlayerService } from '../player/player.service';
 	  {{item.name}} <button *ngIf="!hideCtrl" (click)="removeItem(item)" mat-icon-button matTooltip="Remove {{item.name}}"><mat-icon>remove_from_queue</mat-icon></button>
 	</div>
 </div>
-<div id="q-ctrl" *ngIf="!hideCtrl">
+<div id="q-ctrl" *ngIf="!hideCtrl && currentlyPlaying && rows && rows.length > 0">
 	<button mat-icon-button 
-		*ngIf="rows && rows.length > 0"
 		(click)="clearQ()" 
 		matTooltip="Clear Queue">
 			<mat-icon>delete_sweep</mat-icon>
 	</button>
 
 	<button mat-icon-button 
-		*ngIf="currentlyPlaying"
 		(click)="syncTime()" 
 		matTooltip="Sync Time">
-			<mat-icon>av_timer</mat-icon>
+			<mat-icon>timer</mat-icon>
 	</button>
 
 	<mat-menu #volMenu="matMenu">
@@ -42,13 +40,13 @@ import { PlayerService } from '../player/player.service';
 	</button>
 
 	<button mat-icon-button 
-		*ngIf="currentlyPlaying && !currentlyPlaying.playing"
+		*ngIf="!currentlyPlaying.playing"
 		matTooltip="Play"
 		(click)="play()">
 			<mat-icon>play_circle_outline</mat-icon>
 	</button>
 	<button mat-icon-button 
-		*ngIf="currentlyPlaying && currentlyPlaying.playing"
+		*ngIf="currentlyPlaying.playing"
 		matTooltip="Pause"
 		(click)="pause()">
 			<mat-icon>pause_circle_outline</mat-icon>
@@ -110,6 +108,7 @@ export class QueueComponent implements OnInit {
   }
 
   clearQ(){
+    this.pause();
   	this.playerService.clearRows();
   }
 

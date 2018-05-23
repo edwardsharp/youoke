@@ -1,4 +1,5 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterContentInit, ViewChild } from '@angular/core';
+import { MatSidenav } from '@angular/material';
 
 import { AppToolbarService } from './app-toolbar.service';
 import { SettingsService } from './settings/settings.service';
@@ -13,13 +14,14 @@ import { Playlist } from './playlist/playlist';
 })
 export class AppComponent {
   
-  @ViewChild('leftNav') leftNav: any;
-  @ViewChild('rightNav') rightNav: any;
+  @ViewChild('leftNav') leftNav: MatSidenav;
+  @ViewChild('rightNav') rightNav: MatSidenav;
+  leftNavOpened: boolean;
+  rightNavOpened: boolean;
 
-  title = 'app';
-
+  loading: boolean = true;
+  title = 'YOUOKE';
   toolbarHidden: boolean;
-
   settings: Settings[] = [];
   selectedPlaylistId: number;
   playlists: Playlist[] = [];
@@ -28,14 +30,19 @@ export class AppComponent {
     private appToolbarService: AppToolbarService,
     private playlistService: PlaylistService,
     private settingsService: SettingsService
-  ) {
-  	this.appToolbarService.toolbarHidden
-			.subscribe((hidden:boolean) => {
-				this.toolbarHidden = hidden;
-			});
-  }
+  ) { }
 
   ngOnInit(){
+    
+  }
+
+  //[style.display]
+  ngAfterContentInit(){
+    this.appToolbarService.toolbarHidden
+    .subscribe((hidden:boolean) => {
+      this.toolbarHidden = hidden;
+    });
+
     this.settingsService.getSettings().then(settings => this.loadSettings(settings) );
     this.settingsService.needsRefresh.subscribe( bool => {
       this.settingsService.getSettings().then(settings => this.loadSettings(settings) );
@@ -51,17 +58,16 @@ export class AppComponent {
     const lNav = settings.find(s => s.name == 'leftNav');
     if(lNav 
       && (lNav.opened === true || lNav.opened == false) 
-      && this.leftNav.opened != lNav.opened){
-      // this.leftNavToggle();
-      this.leftNav.opened = lNav.opened;
+      && this.leftNavOpened != lNav.opened){
+      this.leftNavOpened = lNav.opened;
     }
     const rNav = settings.find(s => s.name == 'rightNav');
     if(rNav 
       && (rNav.opened === true || rNav.opened == false) 
-      && this.rightNav.opened != rNav.opened){
-      // this.rightNavToggle();
-      this.rightNav.opened = rNav.opened;
+      && this.rightNavOpened != rNav.opened){
+      this.rightNavOpened = rNav.opened;
     }
+    this.loading = false;
   }
 
   loadPlaylists(): void {

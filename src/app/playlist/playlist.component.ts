@@ -20,6 +20,7 @@ import { PlayerService } from '../player/player.service';
         <mat-form-field class="yt-input">
           <mat-label>YouTube Video ID</mat-label>
           <input matInput placeholder="8leAAwMIigI" (keyup.enter)="updatePlaylist(selectedPlaylist)" [(ngModel)]="item.value" (change)="selectedPlaylistChange()">
+          <mat-hint matTooltip="{{item.name}}">{{item.name}}</mat-hint>
         </mat-form-field>
         <button mat-icon-button 
         matTooltip="Queue {{item.value}}" 
@@ -33,7 +34,6 @@ import { PlayerService } from '../player/player.service';
       <button mat-icon-button (click)="removePlaylist()" matTooltip="Delete Playlist {{selectedPlaylist.name}}"><mat-icon>delete_sweep</mat-icon></button>
       <button mat-icon-button (click)="addItem()" matTooltip="Add Video"><mat-icon>playlist_add</mat-icon></button>
       <button mat-icon-button matTooltip="Play All" (click)="playAll()"><mat-icon>playlist_play</mat-icon></button>
-      <button mat-icon-button matTooltip="Hide Playlist" (click)="hidePlaylist()"><mat-icon>visibility_off</mat-icon></button>
     </div>
   </div>
 
@@ -52,11 +52,11 @@ import { PlayerService } from '../player/player.service';
       </mat-form-field>
 
       <div class="flex" *ngFor="let item of newPlaylist.items">
+        <button mat-icon-button (click)="removeNewItem(item)" matTooltip="Remove {{item.value}}"><mat-icon>clear</mat-icon></button>      
         <mat-form-field class="yt-input">
           <mat-label>YouTube Video ID</mat-label>
           <input matInput placeholder="8leAAwMIigI" [(ngModel)]="item.value">
         </mat-form-field>
-        <button mat-icon-button (click)="removeNewItem(item)" matTooltip="Remove {{item.value}}"><mat-icon>delete</mat-icon></button>
       </div>
     
     </mat-card-content>
@@ -74,7 +74,8 @@ import { PlayerService } from '../player/player.service';
   '.yt-input{width: 100px!important}',
   '.selected-playlist{margin-top: 1em}',
   'mat-card-actions{margin:0!important}',
-  '.btn-nav{position:sticky; z-index:2; bottom:0; background-color:white; display:flex; justify-content:space-around;}'
+  '.btn-nav{position:sticky; z-index:2; bottom:0; background-color:white; display:flex; justify-content:space-around;}',
+  'mat-hint{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}'
   ]
 })
 export class PlaylistComponent implements OnInit {
@@ -96,6 +97,14 @@ export class PlaylistComponent implements OnInit {
     this.loadRows();
     this.playlistService.playlistSelectionChange.subscribe(id => this.playlistSelectionChange(id));
     this.playlistService.addNewPlaylist.subscribe(bool => this.addNewPlaylist());
+    this.playlistService.needsRefresh.subscribe(bool => {
+      this.playlistService.getRows().then( (playlists) => {
+        this.playlists = playlists;
+        if(this.selectedPlaylist && this.selectedPlaylist.id){
+          this.selectedPlaylist = this.playlists.find( p => p.id == this.selectedPlaylist.id);
+        }
+      });
+    })
   }
 
   ngOnDestroy(): void{
@@ -139,10 +148,10 @@ export class PlaylistComponent implements OnInit {
   }
 
   addItem(): void{
-    this.selectedPlaylist.items.push({value: ""});
+    this.selectedPlaylist.items.push({value: "", name: ""});
   }
   addNewItem(): void{
-    this.newPlaylist.items.push({value: ""});
+    this.newPlaylist.items.push({value: "", name: ""});
   }
   cancelNewPlaylist(): void{
     this.showNewPlayList = false;
@@ -193,12 +202,6 @@ export class PlaylistComponent implements OnInit {
 
   playItem(item: any){
     this.playerService.addPlaylistItem(item.value);
-  }
-
-  hidePlaylist(){
-    this.selectedPlaylist = undefined;
-    this.selectedPlaylistId = undefined;
-    this.playlistService.playlistSelectionChange.next(undefined);
   }
 
 }

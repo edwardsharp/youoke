@@ -11,3 +11,6 @@ body { margin: 0; background-color: white;}
 .flexfill {
 	flex: 1 1 auto;
 }
+.mirror {
+	transform: scale(-1, 1);
+}
