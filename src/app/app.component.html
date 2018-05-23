@@ -14,7 +14,7 @@
           <mat-option *ngFor="let playlist of playlists" [value]="playlist.id">{{playlist.name}}</mat-option>
         </mat-select>
       </mat-form-field>
-      <button *ngIf="!showNewPlayList" mat-icon-button (click)="addNewPlaylist()" matTooltip="New Playlist"><mat-icon>add</mat-icon></button>
+      <button *ngIf="!showNewPlayList" mat-icon-button (click)="addNewPlaylist()" matTooltip="New Playlist"><mat-icon>playlist_add</mat-icon></button>
     </mat-toolbar>
     <app-playlist></app-playlist>
   </mat-sidenav>

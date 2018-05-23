@@ -85,11 +85,13 @@ export class AppComponent {
 
   leftNavToggle(){
     this.leftNav.toggle();
+    this.leftNavOpened = !this.leftNavOpened;
     this.settingsService.toggleNav('leftNav');
   }
 
   rightNavToggle(){
     this.rightNav.toggle();
+    this.rightNavOpened = !this.rightNavOpened;
     this.settingsService.toggleNav('rightNav');
   }
 

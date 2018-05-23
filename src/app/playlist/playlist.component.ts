@@ -16,14 +16,14 @@ import { PlayerService } from '../player/player.service';
     
     <div>
       <div *ngFor="let item of selectedPlaylist.items">
-        <button mat-icon-button (click)="removeItem(item)" matTooltip="Remove {{item.value}}"><mat-icon>clear</mat-icon></button>
+        <button mat-icon-button (click)="removeItem(item)" matTooltip="Remove Video"><mat-icon>clear</mat-icon></button>
         <mat-form-field class="yt-input">
           <mat-label>YouTube Video ID</mat-label>
           <input matInput placeholder="8leAAwMIigI" (keyup.enter)="updatePlaylist(selectedPlaylist)" [(ngModel)]="item.value" (change)="selectedPlaylistChange()">
           <mat-hint matTooltip="{{item.name}}">{{item.name}}</mat-hint>
         </mat-form-field>
         <button mat-icon-button 
-        matTooltip="Queue {{item.value}}" 
+        matTooltip="Queue" 
         (click)="playItem(item)">
           <mat-icon>add_to_queue</mat-icon>
         </button>
@@ -32,8 +32,8 @@ import { PlayerService } from '../player/player.service';
 
     <div class="btn-nav">
       <button mat-icon-button (click)="removePlaylist()" matTooltip="Delete Playlist {{selectedPlaylist.name}}"><mat-icon>delete_sweep</mat-icon></button>
-      <button mat-icon-button (click)="addItem()" matTooltip="Add Video"><mat-icon>playlist_add</mat-icon></button>
-      <button mat-icon-button matTooltip="Play All" (click)="playAll()"><mat-icon>playlist_play</mat-icon></button>
+      <button mat-button (click)="addItem()" matTooltip="Add Video"><mat-icon>add</mat-icon></button>
+      <button mat-icon-button matTooltip="Queue All" (click)="playAll()"><mat-icon>playlist_play</mat-icon></button>
     </div>
   </div>
 
