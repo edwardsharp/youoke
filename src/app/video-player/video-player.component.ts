@@ -12,7 +12,6 @@ import { PlayerService } from '../player/player.service';
   poster="">
 </video>
 <div id="player"></div>
-
 `, styles: [
   ':host{background-color:black; height: 100vh; overflow: hidden;}',
   'video, iframe{width:100%; height:100%; background-color:black;}'
@@ -20,15 +19,9 @@ import { PlayerService } from '../player/player.service';
 })
 export class VideoPlayerComponent implements OnInit {
 
-  // @ViewChild('ytPlayer') ytPlayer: any;
-  // @ViewChild('ytPlayer') ytPlayer: any;
- 
   @Input() controls: boolean;
 
   needsVideoPlayer: boolean;
-  // needsYtPlayer: boolean;
-  // ytId: string;
-  // ytSrc: string;
   currentlyPlaying: any;
 
   rows: Array<any> = [];
@@ -39,13 +32,9 @@ export class VideoPlayerComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    
-
   }
 
   ngAfterViewInit() {
-    console.log('ngAfterViewInit!!');
-    
     this.playerService.initYtPlayer().then( ok => {
       this.playerService.loadYtPlayer(this.controls).then( player => {
         this.playerService.getRows().then(rows => {
@@ -56,29 +45,23 @@ export class VideoPlayerComponent implements OnInit {
             this.rowsChanged(rows);
           }) 
         });
-
       });
-
     });
-
   }
 
   rowsChanged(rows:Array<any>){
     this.rows = rows;
     if(rows[0] && rows[0].name){
       if(!this.currentlyPlaying){
-        console.log('new currentlyPlaying',rows[0]);
         this.currentlyPlaying = rows[0];
         this.playerService.cueYtVideo(rows[0].name);
        }else if(this.currentlyPlaying && this.currentlyPlaying.id != rows[0].id){
-        console.log('currentlyPlaying id mismatch',rows[0]);
         this.currentlyPlaying = rows[0];
-        this.playerService.cueYtVideo(rows[0].name);
+        this.playerService.loadYtVideo(rows[0].name);
+        this.currentlyPlaying.playing = true;
+        this.playerService.updatePlayer(this.currentlyPlaying);
       }
-
     }
   }
-
-
 
 }

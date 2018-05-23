@@ -21,7 +21,11 @@ import { PlayerService } from '../player/player.service';
           <mat-label>YouTube Video ID</mat-label>
           <input matInput placeholder="8leAAwMIigI" (keyup.enter)="updatePlaylist(selectedPlaylist)" [(ngModel)]="item.value" (change)="selectedPlaylistChange()">
         </mat-form-field>
-        <button mat-icon-button matTooltip="Play {{item.value}}" (click)="playItem(item)"><mat-icon>play_circle_outline</mat-icon></button>
+        <button mat-icon-button 
+        matTooltip="Queue {{item.value}}" 
+        (click)="playItem(item)">
+          <mat-icon>add_to_queue</mat-icon>
+        </button>
       </div>
     </div>
 

@@ -6,7 +6,7 @@ import { PlayerService } from '../player/player.service';
   template: `
 <div id="rows">
 	<div *ngFor="let item of rows" class="item">
-	  {{item.name}} <button *ngIf="!hideCtrl" (click)="removeItem(item)" mat-icon-button matTooltip="Remove {{item.name}}"><mat-icon>clear</mat-icon></button>
+	  {{item.name}} <button *ngIf="!hideCtrl" (click)="removeItem(item)" mat-icon-button matTooltip="Remove {{item.name}}"><mat-icon>remove_from_queue</mat-icon></button>
 	</div>
 </div>
 <div id="q-ctrl" *ngIf="!hideCtrl">
@@ -14,7 +14,14 @@ import { PlayerService } from '../player/player.service';
 		*ngIf="rows && rows.length > 0"
 		(click)="clearQ()" 
 		matTooltip="Clear Queue">
-			<mat-icon>delete</mat-icon>
+			<mat-icon>delete_sweep</mat-icon>
+	</button>
+
+	<button mat-icon-button 
+		*ngIf="currentlyPlaying"
+		(click)="syncTime()" 
+		matTooltip="Sync Time">
+			<mat-icon>av_timer</mat-icon>
 	</button>
 
 	<mat-menu #volMenu="matMenu">
@@ -28,12 +35,14 @@ import { PlayerService } from '../player/player.service';
 		  max="100"></mat-slider>
 	</mat-menu>
 
-	<button mat-icon-button [matMenuTriggerFor]="volMenu">
+	<button mat-icon-button 
+		matTooltip="Volume {{level || 0}}"
+		[matMenuTriggerFor]="volMenu">
 	  <mat-icon>volume_mute</mat-icon>
 	</button>
 
 	<button mat-icon-button 
-		*ngIf="!currentlyPlaying || !currentlyPlaying.playing"
+		*ngIf="currentlyPlaying && !currentlyPlaying.playing"
 		matTooltip="Play"
 		(click)="play()">
 			<mat-icon>play_circle_outline</mat-icon>
@@ -46,7 +55,7 @@ import { PlayerService } from '../player/player.service';
 	</button>
 	<button mat-icon-button 
 		matTooltip="Next"
-		(click)="skip()">
+		(click)="next()">
 			<mat-icon>skip_next</mat-icon>
 	</button>
 
@@ -77,20 +86,25 @@ export class QueueComponent implements OnInit {
     this.playerService.playerChange.subscribe(change => {
     	this.playerService.getRows().then(rows => {
     		this.rows = rows
-    		
     		if(!this.currentlyPlaying && rows[0]){
-    			console.log("QUEUE gonna set currentlyPlaying");
     			this.currentlyPlaying = rows[0];
     		}else if(rows[0] && rows[0].id && this.currentlyPlaying.id != rows[0].id){
-    			console.log("QUEUE gonna set currentlyPlaying");
     			this.currentlyPlaying = rows[0];
+    		}else if(rows[0] && rows[0].playing !== this.currentlyPlaying.playing){
+    			this.currentlyPlaying.playing = rows[0].playing;
     		}
     	}); 
     });
 
-    this.playerService.playerSkip.subscribe( bool => {
-    	if(this.rows && this.rows[1]){
+    this.playerService.playerNext.subscribe( bool => {
+    	if(this.rows && this.rows[0]){
+    		if(this.currentlyPlaying.playing){
+    			this.pause();
+    		}
   			this.removeItem(this.rows[0]);
+  		}else{
+  			this.currentlyPlaying = undefined;
+  			this.playerService.loadYtVideo(undefined);
   		}
     });
   }
@@ -106,20 +120,16 @@ export class QueueComponent implements OnInit {
   play(){
   	this.currentlyPlaying.playing = true;
   	this.playerService.updatePlayer(this.currentlyPlaying);
-  	// this.playerService.playYtVideo();
   }
   pause(){
   	this.currentlyPlaying.playing = false;
   	this.playerService.updatePlayer(this.currentlyPlaying);
-  	// this.playerService.pauseYtVideo();
   }
-  skip(){
-  	// this.playerService.stopYtVideo();
-  	this.playerService.skip();
+  next(){
+  	this.playerService.next();
   }
 
   volumeChange(){
-  	console.log('volumeChanged this.level',this.level);
   	this.setVolume(this.level);
   }
 
@@ -128,6 +138,11 @@ export class QueueComponent implements OnInit {
   		this.currentlyPlaying.volume = level;
   		this.playerService.updatePlayer(this.currentlyPlaying);
   	}
+  }
+
+  syncTime(){
+  	this.currentlyPlaying.currentTime = this.playerService.player.getCurrentTime();
+  	this.playerService.updatePlayer(this.currentlyPlaying);
   }
 
 }

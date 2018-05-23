@@ -31,7 +31,6 @@ export class AppComponent {
   ) {
   	this.appToolbarService.toolbarHidden
 			.subscribe((hidden:boolean) => {
-				console.log('appToolbarService hidden:',hidden);
 				this.toolbarHidden = hidden;
 			});
   }

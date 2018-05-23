@@ -9,7 +9,6 @@ import { Settings } from './settings';
 })
 export class SettingsService {
 
-
 	db: any;
   public needsRefresh = new Subject<boolean>();
 
@@ -50,13 +49,11 @@ export class SettingsService {
   }
 
   clearRows(): Promise<any> {
-    return this.db.settings.clear()
-    //.then(result => console.log(result));
-    // this.loadRows();
+    return this.db.settings.clear();
   }
 
   addRow(settings: Settings): Promise<any> {
-    console.log(settings);
+    // console.log(settings);
     return this.db.settings.add({
       name: settings.name,
       description: settings.description
@@ -84,7 +81,6 @@ export class SettingsService {
     this.db.settings.where('name').equals(name).first( setting => {
       setting["opened"] = !setting["opened"];
       this.db.settings.put(setting);
-      //.then( ok => this.needsRefresh.next(true));
     })
   }
 

@@ -50,15 +50,13 @@ export class SettingsComponent implements OnInit {
   constructor(private settingsService: SettingsService){}
 
   ngOnInit(): void {
-    console.log('settings initialized');
-
+    this.loadRows();
   }
   loadRows(): void {
     this.settingsService.getSettings().then(p => this.rows = p);
   }
 
   addRow(settings: Settings): void {
-    console.log(settings);
     this.settingsService.addRow({
       name: settings.name,
       description: settings.description
@@ -66,9 +64,6 @@ export class SettingsComponent implements OnInit {
       this.loadRows();
       this.newSettings = new Settings("", "");
     });
-
-    
   }
-  
 
 }

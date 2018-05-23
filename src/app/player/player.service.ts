@@ -18,7 +18,7 @@ export class PlayerService {
 
   public player: any;
   public playerChange = new Subject<any>();
-  public playerSkip = new Subject<boolean>();
+  public playerNext = new Subject<boolean>();
 
   private hasControl: boolean;
 
@@ -42,10 +42,10 @@ export class PlayerService {
         this.playerChange.next(change);
         switch (change.type) {
           case 1: // CREATED
-            console.log('An object was created: ' + JSON.stringify(change.obj));
+            // console.log('An object was created: ' + JSON.stringify(change.obj));
             break;
           case 2: // UPDATED
-            console.log('An object with key ' + change.key + ' was updated with modifications: ' + JSON.stringify(change.mods));
+            // console.log('An object with key ' + change.key + ' was updated with modifications: ' + JSON.stringify(change.mods));
             if(change.mods.playing === true){
               this.playYtVideo();
             }else if(change.mods.playing === false){
@@ -60,9 +60,13 @@ export class PlayerService {
               this.setVolume(change.mods.volume);
             }
 
+            if(change.mods.currentTime && !this.hasControl){
+              this.seekTo(change.mods.currentTime);
+            }
+
             break;
           case 3: // DELETED
-            console.log('An object was deleted: ' + JSON.stringify(change.oldObj));
+            // console.log('An object was deleted: ' + JSON.stringify(change.oldObj));
             break;
         }
       });
@@ -81,14 +85,13 @@ export class PlayerService {
   	return this.db.player.toArray();
   }
 
-  updatePlayer(player: any): void {
+  updatePlayer(player: any) {
     this.playerChange.next(player);
     return this.db.player.put(player);
-    //.then( _player => this.needsRefresh.next(true));
   }
 
   addPlaylist(playlist: Playlist): void{
-    console.log('adding player item:',playlist);
+    // #todo: addPlaylists()
     // this.db.player.bulkAdd(playlist.items.map(i => i.value))
     for(let item of playlist.items){
     	this.db.player.add({
@@ -98,15 +101,12 @@ export class PlayerService {
   }
 
   addPlaylistItem(item: string): Promise<number>{
-    console.log('adding player item:',item);
     return this.db.player.add({
       name: item
     });
   }
 
   deleteItem(id: number) {
-    console.log('player service item id:',id);
-    // return this.db.delete(id);
     this.playerChange.next(true);
     return this.db.player.where('id').equals(id).delete(); 
   }
@@ -118,7 +118,6 @@ export class PlayerService {
       var firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
       window["onYouTubeIframeAPIReady"] = () => {
-        console.log("onYouTubeIframeAPIReady!");
         this.playerReady = true;
         resolve();
       }
@@ -129,7 +128,6 @@ export class PlayerService {
     this.hasControl = controls;
     return new Promise((resolve, reject) => {
       if(!this.player){
-        console.log('gonna loadYtPlayer');
         this.player = new window["YT"].Player('player', {
           // origin: window.location.origin,
           // host: 'https://www.youtube.com',
@@ -146,15 +144,16 @@ export class PlayerService {
           width: '100%',
           events: {
             'onReady': (event) => {
-              console.log('onReady! event:',event);
               if(!controls){
                 this.setVolume(0);
               }
-
               resolve(this.player);              
             },
             'onStateChange': (event) => {
-              console.log('onStateChange event:',event);
+              // console.log('onStateChange event:',event);
+              if(event.data == window["YT"].PlayerState.ENDED){
+                this.next();
+              }
             }
           }
         }); 
@@ -166,30 +165,30 @@ export class PlayerService {
   }
 
   cueYtVideo(vID: string){
-    console.log('gonna cueYtVideo vID',vID);
     this.player.cueVideoById({videoId:vID, suggestedQuality: "large"});
   }
 
   loadYtVideo(vID: string){
-    console.log('gonna loadVideoById vID',vID);
-    this.player.loadVideoById({videoId:vID, suggestedQuality: "large"});
+    if(vID){
+      this.player.loadVideoById({videoId:vID, suggestedQuality: "large"});
+    }else{
+      this.pauseYtVideo();
+    }
   }
 
   playYtVideo(){
-    console.log('gonna play video!');
     this.player.playVideo();
   }
 
   pauseYtVideo(){
-    console.log('gonna pause vid...');
     this.player.pauseVideo();
   }
   stopYtVideo(){
     this.player.stopVideo();
   }
 
-  skip(){
-    this.playerSkip.next(true);
+  next(){
+    this.playerNext.next(true);
   }
 
   seekTo(seconds:Number){
