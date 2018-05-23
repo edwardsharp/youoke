@@ -103,7 +103,7 @@ export class DashboardComponent implements OnInit {
   }
 
   getPlaylists(){
-    this.playlistService.getRows().then( (playlists) {
+    this.playlistService.getRows().then( (playlists) => {
       this.playlists = playlists;
     });
   }
