@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, Input } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
 import { PlayerService } from '../player/player.service';
@@ -23,7 +23,7 @@ export class VideoPlayerComponent implements OnInit {
   // @ViewChild('ytPlayer') ytPlayer: any;
   // @ViewChild('ytPlayer') ytPlayer: any;
  
-  
+  @Input() controls: boolean;
 
   needsVideoPlayer: boolean;
   // needsYtPlayer: boolean;
@@ -47,11 +47,10 @@ export class VideoPlayerComponent implements OnInit {
     console.log('ngAfterViewInit!!');
     
     this.playerService.initYtPlayer().then( ok => {
-      this.playerService.loadYtPlayer().then( player => {
+      this.playerService.loadYtPlayer(this.controls).then( player => {
         this.playerService.getRows().then(rows => {
           this.rowsChanged(rows);
         });
-
         this.playerService.playerChange.subscribe(change => {
           this.playerService.getRows().then(rows => {
             this.rowsChanged(rows);
@@ -76,6 +75,7 @@ export class VideoPlayerComponent implements OnInit {
         this.currentlyPlaying = rows[0];
         this.playerService.cueYtVideo(rows[0].name);
       }
+
     }
   }
 

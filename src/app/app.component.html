@@ -25,7 +25,7 @@
     position="end">
     <mat-toolbar color="primary" id="q-toolbar">Queue <a mat-icon-button href="/player" target="_blank" matTooltip="Open player in new window"><mat-icon>open_in_new</mat-icon></a></mat-toolbar>
     <div>
-      <app-video-player></app-video-player>
+      <app-video-player [controls]="true"></app-video-player>
       <app-queue></app-queue>
     </div>
   </mat-sidenav>

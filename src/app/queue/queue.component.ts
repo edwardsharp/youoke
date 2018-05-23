@@ -17,10 +17,19 @@ import { PlayerService } from '../player/player.service';
 			<mat-icon>delete</mat-icon>
 	</button>
 
-	<button mat-icon-button 
-		matTooltip="Restart"
-		(click)="restart()">
-			<mat-icon>replay</mat-icon>
+	<mat-menu #volMenu="matMenu">
+	  <mat-slider
+	  	[(ngModel)]="level"
+	  	(change)="volumeChange()"
+		  thumbLabel
+		  [displayWith]="formatLabel"
+		  tickInterval="1"
+		  min="1"
+		  max="100"></mat-slider>
+	</mat-menu>
+
+	<button mat-icon-button [matMenuTriggerFor]="volMenu">
+	  <mat-icon>volume_mute</mat-icon>
 	</button>
 
 	<button mat-icon-button 
@@ -45,7 +54,8 @@ import { PlayerService } from '../player/player.service';
 `, styles: [
 	'#rows{overflow:scroll; height:calc(100vh - 64px - 40px - 100px);}',
 	'.item{display:flex; justify-content:flex-end; align-items:center; border-bottom:thin solid #eaeaea; height: 50px; margin-right: 1em;}',
-  '#q-ctrl{position:sticky; z-index:2; bottom:0; background-color:white; display:flex; justify-content:space-around;}'
+  '#q-ctrl{position:sticky; z-index:2; bottom:0; background-color:white; display:flex; justify-content:space-around;}',
+  'mat-slider{height: 70px; top:15px}'
  ]
 })
 export class QueueComponent implements OnInit {
@@ -53,6 +63,8 @@ export class QueueComponent implements OnInit {
 	@Input() hideCtrl: string;
 	rows: Array<any> = [];
 	currentlyPlaying: any;
+
+	private level: number;
 
   constructor(private playerService: PlayerService) { }
 
@@ -81,7 +93,6 @@ export class QueueComponent implements OnInit {
   			this.removeItem(this.rows[0]);
   		}
     });
-
   }
 
   clearQ(){
@@ -92,9 +103,6 @@ export class QueueComponent implements OnInit {
   	this.playerService.deleteItem(item.id);
   }
 
-  restart(){
-  	this.playerService.restart();
-  }
   play(){
   	this.currentlyPlaying.playing = true;
   	this.playerService.updatePlayer(this.currentlyPlaying);
@@ -108,6 +116,18 @@ export class QueueComponent implements OnInit {
   skip(){
   	// this.playerService.stopYtVideo();
   	this.playerService.skip();
+  }
+
+  volumeChange(){
+  	console.log('volumeChanged this.level',this.level);
+  	this.setVolume(this.level);
+  }
+
+  setVolume(level: number){
+  	if(this.currentlyPlaying){
+  		this.currentlyPlaying.volume = level;
+  		this.playerService.updatePlayer(this.currentlyPlaying);
+  	}
   }
 
 }

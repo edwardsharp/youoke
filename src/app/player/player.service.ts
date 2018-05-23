@@ -20,6 +20,8 @@ export class PlayerService {
   public playerChange = new Subject<any>();
   public playerSkip = new Subject<boolean>();
 
+  private hasControl: boolean;
+
   constructor() {
   	this.makeDatabase();
     this.connectToDatabase();
@@ -54,6 +56,10 @@ export class PlayerService {
               this.seekTo(change.mods.seekTo);
             }
 
+            if(change.mods.volume){
+              this.setVolume(change.mods.volume);
+            }
+
             break;
           case 3: // DELETED
             console.log('An object was deleted: ' + JSON.stringify(change.oldObj));
@@ -76,6 +82,7 @@ export class PlayerService {
   }
 
   updatePlayer(player: any): void {
+    this.playerChange.next(player);
     return this.db.player.put(player);
     //.then( _player => this.needsRefresh.next(true));
   }
@@ -118,20 +125,20 @@ export class PlayerService {
     });
   }
 
-  loadYtPlayer(): Promise<any>{
-    
+  loadYtPlayer(controls: boolean): Promise<any>{
+    this.hasControl = controls;
     return new Promise((resolve, reject) => {
       if(!this.player){
         console.log('gonna loadYtPlayer');
         this.player = new window["YT"].Player('player', {
-          // enablejsapi: 1,
           // origin: window.location.origin,
           // host: 'https://www.youtube.com',
           playerVars: {
-            modestbranding: 1,
+            enablejsapi: 1,
+            modestbranding: 0,
             showinfo: 0,
-            controls: 0,
-            disablekb: 1,
+            controls: controls ? 1 : 0,
+            disablekb: controls ? 1 : 0,
             rel: 0,
             autoplay: 0
           },
@@ -139,18 +146,15 @@ export class PlayerService {
           width: '100%',
           events: {
             'onReady': (event) => {
-              resolve(this.player);
               console.log('onReady! event:',event);
-              // event.target.playVideo();
+              if(!controls){
+                this.setVolume(0);
+              }
+
+              resolve(this.player);              
             },
             'onStateChange': (event) => {
               console.log('onStateChange event:',event);
-              // if (event.data == window["YT"].PlayerState.PLAYING && !this.donePlaying) {
-              //   setTimeout(() => {
-              //     this.player.stopVideo();
-              //   }, 6000);
-              //   this.donePlaying = true;
-              // }
             }
           }
         }); 
@@ -189,7 +193,18 @@ export class PlayerService {
   }
 
   seekTo(seconds:Number){
-    this.player.seekTo(seconds);
+    this.player.seekTo(seconds, true);
+  }
+
+  setVolume(level: Number){
+    if(!this.hasControl){
+      this.player.unMute();
+      this.player.setVolume(level);
+    }
+  }
+
+  getVolume(){
+    return this.player.getVolume();
   }
 
 }
