@@ -75,7 +75,7 @@ export class YTSearchService {
 
 
 
-  search(q: string, nextPageToken?: string;): Promise<any> {
+  search(q: string, nextPageToken?: string): Promise<any> {
   	//#todo: model window objectz?
 	  const request = window["gapi"].client.youtube.search.list({
 	    q: q,
