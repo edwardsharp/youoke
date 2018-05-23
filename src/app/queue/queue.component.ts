@@ -34,7 +34,7 @@ import { PlayerService } from '../player/player.service';
 	</mat-menu>
 
 	<button mat-icon-button 
-		matTooltip="Volume {{level || 0}}"
+		matTooltip="Player volume: {{level || 0}}"
 		[matMenuTriggerFor]="volMenu">
 	  <mat-icon>volume_mute</mat-icon>
 	</button>

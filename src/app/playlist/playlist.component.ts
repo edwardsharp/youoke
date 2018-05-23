@@ -61,7 +61,7 @@ import { PlayerService } from '../player/player.service';
     
     </mat-card-content>
     <mat-card-actions>
-      <button mat-icon-button (click)="addNewItem()" matTooltip="Add Video"><mat-icon>playlist_add</mat-icon></button>
+      <button mat-icon-button (click)="addNewItem()" matTooltip="Add Video"><mat-icon>add</mat-icon></button>
       <button mat-button (click)="addRow(newPlaylist)"><mat-icon>save</mat-icon>Save</button>
     </mat-card-actions>
   </mat-card>
