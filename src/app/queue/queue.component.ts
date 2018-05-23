@@ -16,16 +16,28 @@ import { PlayerService } from '../player/player.service';
 		matTooltip="Clear Queue">
 			<mat-icon>delete</mat-icon>
 	</button>
+
 	<button mat-icon-button 
-		matTooltip="Play">
+		matTooltip="Restart"
+		(click)="restart()">
+			<mat-icon>replay</mat-icon>
+	</button>
+
+	<button mat-icon-button 
+		*ngIf="!currentlyPlaying || !currentlyPlaying.playing"
+		matTooltip="Play"
+		(click)="play()">
 			<mat-icon>play_circle_outline</mat-icon>
 	</button>
 	<button mat-icon-button 
-		matTooltip="Pause">
+		*ngIf="currentlyPlaying && currentlyPlaying.playing"
+		matTooltip="Pause"
+		(click)="pause()">
 			<mat-icon>pause_circle_outline</mat-icon>
 	</button>
 	<button mat-icon-button 
-		matTooltip="Next">
+		matTooltip="Next"
+		(click)="skip()">
 			<mat-icon>skip_next</mat-icon>
 	</button>
 
@@ -40,13 +52,35 @@ export class QueueComponent implements OnInit {
 
 	@Input() hideCtrl: string;
 	rows: Array<any> = [];
+	currentlyPlaying: any;
 
   constructor(private playerService: PlayerService) { }
 
   ngOnInit() {
-  	this.playerService.getRows().then(rows => this.rows = rows);
+  	this.playerService.getRows().then(rows => {
+  		this.currentlyPlaying = rows[0];
+  		this.rows = rows;
+  	});
 
-    this.playerService.playerChange.subscribe(change => this.playerService.getRows().then(rows => this.rows = rows) );
+    this.playerService.playerChange.subscribe(change => {
+    	this.playerService.getRows().then(rows => {
+    		this.rows = rows
+    		
+    		if(!this.currentlyPlaying && rows[0]){
+    			console.log("QUEUE gonna set currentlyPlaying");
+    			this.currentlyPlaying = rows[0];
+    		}else if(rows[0] && rows[0].id && this.currentlyPlaying.id != rows[0].id){
+    			console.log("QUEUE gonna set currentlyPlaying");
+    			this.currentlyPlaying = rows[0];
+    		}
+    	}); 
+    });
+
+    this.playerService.playerSkip.subscribe( bool => {
+    	if(this.rows && this.rows[1]){
+  			this.removeItem(this.rows[0]);
+  		}
+    });
 
   }
 
@@ -56,6 +90,24 @@ export class QueueComponent implements OnInit {
 
   removeItem(item){
   	this.playerService.deleteItem(item.id);
+  }
+
+  restart(){
+  	this.playerService.restart();
+  }
+  play(){
+  	this.currentlyPlaying.playing = true;
+  	this.playerService.updatePlayer(this.currentlyPlaying);
+  	// this.playerService.playYtVideo();
+  }
+  pause(){
+  	this.currentlyPlaying.playing = false;
+  	this.playerService.updatePlayer(this.currentlyPlaying);
+  	// this.playerService.pauseYtVideo();
+  }
+  skip(){
+  	// this.playerService.stopYtVideo();
+  	this.playerService.skip();
   }
 
 }

@@ -12,7 +12,13 @@ import { Playlist } from '../playlist/playlist';
 export class PlayerService {
 
   db: any;
+  playerReady: boolean;
+  
+  public donePlaying: boolean;
+
+  public player: any;
   public playerChange = new Subject<any>();
+  public playerSkip = new Subject<boolean>();
 
   constructor() {
   	this.makeDatabase();
@@ -38,6 +44,16 @@ export class PlayerService {
             break;
           case 2: // UPDATED
             console.log('An object with key ' + change.key + ' was updated with modifications: ' + JSON.stringify(change.mods));
+            if(change.mods.playing === true){
+              this.playYtVideo();
+            }else if(change.mods.playing === false){
+              this.pauseYtVideo();
+            }
+
+            if(change.mods.seekTo){
+              this.seekTo(change.mods.seekTo);
+            }
+
             break;
           case 3: // DELETED
             console.log('An object was deleted: ' + JSON.stringify(change.oldObj));
@@ -57,6 +73,11 @@ export class PlayerService {
 
   getRows(): Promise<any>{
   	return this.db.player.toArray();
+  }
+
+  updatePlayer(player: any): void {
+    return this.db.player.put(player);
+    //.then( _player => this.needsRefresh.next(true));
   }
 
   addPlaylist(playlist: Playlist): void{
@@ -81,6 +102,94 @@ export class PlayerService {
     // return this.db.delete(id);
     this.playerChange.next(true);
     return this.db.player.where('id').equals(id).delete(); 
+  }
+
+  initYtPlayer(): Promise<any>{
+    return new Promise((resolve, reject) => {
+      var tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      window["onYouTubeIframeAPIReady"] = () => {
+        console.log("onYouTubeIframeAPIReady!");
+        this.playerReady = true;
+        resolve();
+      }
+    });
+  }
+
+  loadYtPlayer(): Promise<any>{
+    
+    return new Promise((resolve, reject) => {
+      if(!this.player){
+        console.log('gonna loadYtPlayer');
+        this.player = new window["YT"].Player('player', {
+          // enablejsapi: 1,
+          // origin: window.location.origin,
+          // host: 'https://www.youtube.com',
+          playerVars: {
+            modestbranding: 1,
+            showinfo: 0,
+            controls: 0,
+            disablekb: 1,
+            rel: 0,
+            autoplay: 0
+          },
+          height: '100%',
+          width: '100%',
+          events: {
+            'onReady': (event) => {
+              resolve(this.player);
+              console.log('onReady! event:',event);
+              // event.target.playVideo();
+            },
+            'onStateChange': (event) => {
+              console.log('onStateChange event:',event);
+              // if (event.data == window["YT"].PlayerState.PLAYING && !this.donePlaying) {
+              //   setTimeout(() => {
+              //     this.player.stopVideo();
+              //   }, 6000);
+              //   this.donePlaying = true;
+              // }
+            }
+          }
+        }); 
+        
+      }else{
+        reject({playerAlreadyLoaded: true});
+      }
+    });
+  }
+
+  cueYtVideo(vID: string){
+    console.log('gonna cueYtVideo vID',vID);
+    this.player.cueVideoById({videoId:vID, suggestedQuality: "large"});
+  }
+
+  loadYtVideo(vID: string){
+    console.log('gonna loadVideoById vID',vID);
+    this.player.loadVideoById({videoId:vID, suggestedQuality: "large"});
+  }
+
+  playYtVideo(){
+    console.log('gonna play video!');
+    this.player.playVideo();
+  }
+
+  pauseYtVideo(){
+    console.log('gonna pause vid...');
+    this.player.pauseVideo();
+  }
+  stopYtVideo(){
+    this.player.stopVideo();
+  }
+
+  skip(){
+    this.playerSkip.next(true);
+  }
+
+  seekTo(seconds:Number){
+    this.player.seekTo(seconds);
   }
 
 }

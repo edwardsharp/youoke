@@ -1,5 +1,6 @@
 <mat-sidenav-container class="sidenav-container">
   <mat-sidenav
+    *ngIf="!toolbarHidden"
     #leftNav
     class="playlist-nav"
     fixedInViewport="true"
@@ -17,24 +18,25 @@
     <app-playlist></app-playlist>
   </mat-sidenav>
   <mat-sidenav 
+    *ngIf="!toolbarHidden"
     #rightNav
     class="sidenav"
     mode="side" 
     position="end">
     <mat-toolbar color="primary" id="q-toolbar">Queue <a mat-icon-button href="/player" target="_blank" matTooltip="Open player in new window"><mat-icon>open_in_new</mat-icon></a></mat-toolbar>
     <div>
-      <!-- <app-video-player></app-video-player> -->
+      <app-video-player></app-video-player>
       <app-queue></app-queue>
     </div>
   </mat-sidenav>
   <mat-sidenav-content>
-    <mat-toolbar *ngIf="!toolbarHidden" color="primary"  class="sticky-toolbar">
+    <mat-toolbar *ngIf="!toolbarHidden" color="primary" class="sticky-toolbar">
       <button
         type="button"
         aria-label="Toggle Playlists"
         matTooltip="Toggle Playlists"
         mat-icon-button
-        (click)="leftNav.toggle()">
+        (click)="leftNavToggle()">
         <mat-icon aria-label="playlist">clear_all</mat-icon>
       </button>
       <span class="flexfill">&nbsp;</span>
@@ -49,7 +51,7 @@
         aria-label="Toggle Queue"
         matTooltip="Toggle Queue"
         mat-icon-button
-        (click)="rightNav.toggle()">
+        (click)="rightNavToggle()">
         <mat-icon aria-label="q">live_tv</mat-icon>
       </button>
     </mat-toolbar>
