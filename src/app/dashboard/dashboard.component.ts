@@ -16,13 +16,13 @@ import { PlayerService } from '../player/player.service';
 </mat-form-field>
 
 <mat-list>
-  <mat-list-item *ngFor="let item of searchItems">
+  <mat-list-item *ngFor="let item of searchItems" id="{{item.id.videoId}}">
     <img matListAvatar src="{{item.snippet.thumbnails.default.url}}" alt="thumbnail">
     <h3 matLine matTooltip="{{item.snippet.title}}"> {{item.snippet.title}} </h3>
     <div matLine class="flex">
       <mat-chip-list><mat-chip>{{item.snippet.channelTitle}}</mat-chip></mat-chip-list>
       <span class="flexfill">&nbsp;</span>
-      <mat-menu #playlistMenu="matMenu" xPosition="before" yPosition="below">
+      <mat-menu #playlistMenu="matMenu">
         <button mat-menu-item 
           (click)="addItemToNewPlaylist(item)">
           <mat-icon>playlist_add</mat-icon> New Playlist...
@@ -32,7 +32,7 @@ import { PlayerService } from '../player/player.service';
           <mat-icon>playlist_add</mat-icon> {{playlist.name}}
         </button>
       </mat-menu>
-      <button mat-icon-button matTooltip="Add To Playlist" [matMenuTriggerFor]="playlistMenu">
+      <button mat-icon-button matTooltip="Add To Playlist" [matMenuTriggerFor]="playlistMenu" (click)="openPlaylistMenu(item.id.videoId)">
         <mat-icon>playlist_add</mat-icon>
       </button>
       <button mat-icon-button matTooltip="Add To Queue" (click)="queue(item)">
@@ -46,12 +46,14 @@ import { PlayerService } from '../player/player.service';
     <button mat-button (click)="nextPage()">Show More</button>
   </mat-list-item>
 </mat-list>
+<div id="showMoreFix" *ngIf="nextPageToken">&nbsp;</div>
 `,
   styles: [
   '.yt-search{margin: 2em 5%; width: 90%;}',
   'mat-list-item:hover{background-color:#efefef}',
   'mat-list-item .flex{display:flex!important; justify-content:flex-end;}',
-  'mat-list-item img:hover{border-radius: 0;}'
+  'mat-list-item img:hover{border-radius: 0;}',
+  '#showMoreFix{min-height:calc(100vh - 120px)}'
   ]
 })
 export class DashboardComponent implements OnInit {
@@ -132,6 +134,13 @@ export class DashboardComponent implements OnInit {
 
   queue(item: any){
     this.playerService.addPlaylistItem(item.id.videoId);
+  }
+
+  //hhhhhhhhack
+  openPlaylistMenu(id){
+    // 
+    console.log('openPlaylistMenu elem: ',document.getElementById(id));
+    document.getElementById(id).scrollIntoView(true);
   }
 
 }
