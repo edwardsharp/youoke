@@ -7,6 +7,6 @@ export class Video {
 	public requestedBy?: string;
 
   constructor(name: string) {
-  	this.name = "";
+  	this.name = name || "";
   }
 }

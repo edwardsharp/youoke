@@ -75,7 +75,6 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.ytSearchService.initYtSearch();
     this.ytSearchService.searchReady.subscribe( ready => {
-      console.log('search ready?',ready);
       this.searchReady = ready;
     });
     this.getPlaylists();
@@ -91,7 +90,7 @@ export class DashboardComponent implements OnInit {
   search(){
     this.nextPageToken = undefined;
     this.ytSearchService.search(this.q, this.nextPageToken).then( results => {
-      console.log('search results:',results);
+      // console.log('search results:',results);
       this.nextPageToken = results.nextPageToken;
       this.searchItems = results.items;
     });
@@ -99,7 +98,6 @@ export class DashboardComponent implements OnInit {
 
   nextPage(){
     this.ytSearchService.nextPage(this.q, this.nextPageToken).then( results => {
-      console.log('nextPage gonna push search items:',results);
       this.nextPageToken = results.nextPageToken;
       this.searchItems = this.searchItems.concat(results.items);
     });
@@ -138,15 +136,13 @@ export class DashboardComponent implements OnInit {
   }
 
   queue(item: any){
-    let _video = new Video(item.title);
+    let _video = new Video(item.snippet.title);
     _video.value = item.id.videoId;
     this.playerService.addPlaylistItem(_video);
   }
 
   //hhhhhhhhack
   openPlaylistMenu(id){
-    // 
-    console.log('openPlaylistMenu elem: ',document.getElementById(id));
     document.getElementById(id).scrollIntoView(true);
   }
 

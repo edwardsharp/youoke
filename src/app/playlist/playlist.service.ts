@@ -47,7 +47,6 @@ export class PlaylistService {
   }
 
   addRow(playlist: Playlist): Promise<number>{
-    console.log('adding playlist:',playlist);
     this.needsRefresh.next(true);
     return this.db.playlist.add({
       name: playlist.name,
@@ -60,8 +59,6 @@ export class PlaylistService {
   }
 
   deletePlaylist(id: number) {
-    console.log('playlist service deletePlaylist id:',id);
-    // return this.db.delete(id);
     this.needsRefresh.next(true);
     return this.db.playlist.where('id').equals(id).delete(); 
   }

@@ -33,14 +33,10 @@ export class YTSearchService {
       var firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
       window["googleApiClientReady"] = () => {
-        console.log('[ytsearch] googleApiClientReady...');
         window["gapi"].auth.init( () => {
           window.setTimeout(() => {
-            console.log('[ytsearch] auth init...');
             window["gapi"].client.setApiKey(environment.yt_api_key);
             window["gapi"].client.load('youtube', 'v3', () => {
-              console.log('[ytsearch] READY!');
-              
               this.ready = true;
               this.searchReady.next(true);
               resolve();
@@ -94,7 +90,6 @@ export class YTSearchService {
 	}
 
   nextPage(q: string, nextPageToken: string): Promise<any>{
-    console.log('nextPage',nextPageToken);
     return this.search(q, nextPageToken);
   }
 

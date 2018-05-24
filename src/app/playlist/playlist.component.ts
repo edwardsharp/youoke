@@ -143,7 +143,6 @@ export class PlaylistComponent implements OnInit {
 
     this.newPlaylist = new Playlist();
     this.showNewPlayList = false;
-    console.log('selectedPlist now:',playlist);
     this.selectedPlaylist = playlist;
     
   }
@@ -193,7 +192,6 @@ export class PlaylistComponent implements OnInit {
   }
 
   selectedPlaylistChange(): void{
-    console.log('selected playlist changed!');
     this.updatePlaylist(this.selectedPlaylist);
   }
 
