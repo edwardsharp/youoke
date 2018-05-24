@@ -28,6 +28,7 @@ Turn on the YouTube Data API
 
 _-or-_  
 `./node_modules/.bin/electron .`
+`ng serve`
 
 :zap:
 
@@ -50,8 +51,8 @@ Run `ng build` to build the project. The build artifacts will be stored in the `
 `ng build -aot --prod`
 
 for electronjs:  
-`ng build --base-href ./`  
-`ng build --aot -prod --base-href ./`
+`ng build --base-href=""`  
+`ng build --aot --prod --base-href=""`
 
 electronjs release OSX build:  
 `./node_modules/.bin/electron-builder . -m`

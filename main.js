@@ -1,10 +1,13 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const electron = require('electron');
 const os = require('os');
 const fs = require('fs');
+const url = require('url');
+const path = require('path');
 
-let mainWindow; 
-const isDevMode = process.execPath.match(/[\\/]electron/);
+let mainWindow;
+//,let playerWindow;
+const isDevMode = false;//process.execPath.match(/[\\/]electron/);
 
 const HOMEDIR = `${os.homedir()}/YOUOKE`;
 
@@ -26,8 +29,49 @@ const createWindow = async () => {
     mainWindow.loadURL('http://localhost:4200');
     mainWindow.webContents.openDevTools();
   }else{
-    mainWindow.loadURL(`file://${__dirname}/index.html`);
+    mainWindow.loadURL(url.format({
+      pathname: path.join(app.getAppPath(), 'dist/youoke/index.html'),
+      protocol: 'file:',
+      slashes: true
+    }));
   }
+
+
+  // let displays = electron.screen.getAllDisplays()
+  // let externalDisplay = displays.find((display) => {
+  //   return display.bounds.x !== 0 || display.bounds.y !== 0
+  // })
+
+  // let extDisplayDim;
+  // if (externalDisplay) {
+  //   extDisplayDim = {
+  //     x: externalDisplay.bounds.x + 50,
+  //     y: externalDisplay.bounds.y + 50,
+  //     height: externalDisplay.bounds.height,
+  //     width: externalDisplay.bounds.width
+  //   }
+  // }else{
+  //   extDisplayDim = { x: 0, y:0, width: width/2, height: height/2}
+  // }
+
+  // playerWindow = new BrowserWindow({
+  //   x: extDisplayDim.x,
+  //   y: extDisplayDim.y,
+  //   width: extDisplayDim.width,
+  //   height: extDisplayDim.height,
+  //   frame: true
+  // });
+  // openPlayerWindow();
+  // function openPlayerWindow(){
+  //   playerWindow.loadURL(url.format({
+  //     pathname: path.join(app.getAppPath(), 'dist/youoke/index.html#player'),
+  //     protocol: 'file:',
+  //     slashes: true
+  //   }));
+  // }
+  // ipcMain.on("openPlayer", () => {
+  //   openPlayerWindow();
+  // });
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {

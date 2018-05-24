@@ -66,4 +66,8 @@ export class SettingsComponent implements OnInit {
     });
   }
 
+  clearRows(){
+    this.settingsService.clearRows();
+  }
+
 }
