@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, AfterViewInit, Input } from '@angular/cor
 import { DomSanitizer } from '@angular/platform-browser';
 
 import { PlayerService } from '../player/player.service';
+import { Video } from '../player/video';
 
 @Component({
   selector: 'app-video-player',
@@ -51,13 +52,13 @@ export class VideoPlayerComponent implements OnInit {
 
   rowsChanged(rows:Array<any>){
     this.rows = rows;
-    if(rows[0] && rows[0].name){
+    if(rows[0] && rows[0].value){
       if(!this.currentlyPlaying){
         this.currentlyPlaying = rows[0];
-        this.playerService.cueYtVideo(rows[0].name);
+        this.playerService.cueYtVideo(rows[0].value);
        }else if(this.currentlyPlaying && this.currentlyPlaying.id != rows[0].id){
         this.currentlyPlaying = rows[0];
-        this.playerService.loadYtVideo(rows[0].name);
+        this.playerService.loadYtVideo(rows[0].value);
         this.currentlyPlaying.playing = true;
         this.playerService.updatePlayer(this.currentlyPlaying);
       }

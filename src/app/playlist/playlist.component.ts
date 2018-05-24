@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Playlist } from './playlist';
 import { PlaylistService } from './playlist.service';
 import { PlayerService } from '../player/player.service';
+import { Video } from '../player/video';
 
 @Component({
   selector: 'app-playlist',
@@ -148,10 +149,10 @@ export class PlaylistComponent implements OnInit {
   }
 
   addItem(): void{
-    this.selectedPlaylist.items.push({value: "", name: ""});
+    this.selectedPlaylist.items.push(new Video(""));
   }
   addNewItem(): void{
-    this.newPlaylist.items.push({value: "", name: ""});
+    this.newPlaylist.items.push(new Video(""));
   }
   cancelNewPlaylist(): void{
     this.showNewPlayList = false;
@@ -201,7 +202,7 @@ export class PlaylistComponent implements OnInit {
   }
 
   playItem(item: any){
-    this.playerService.addPlaylistItem(item.value);
+    this.playerService.addPlaylistItem(item);
   }
 
 }

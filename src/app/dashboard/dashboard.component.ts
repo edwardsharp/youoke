@@ -5,6 +5,7 @@ import { YTSearchService } from '../ytsearch.service';
 import { PlaylistService } from '../playlist/playlist.service';
 import { Playlist } from '../playlist/playlist';
 import { PlayerService } from '../player/player.service';
+import { Video } from '../player/video';
 
 @Component({
   selector: 'app-settings',
@@ -112,7 +113,9 @@ export class DashboardComponent implements OnInit {
 
   addItemToPlaylist(item: any, playlist: Playlist){
     playlist.items = playlist.items || [];
-    playlist.items.push({value: item.id.videoId, name: item.snippet.title});
+    let _video = new Video(item.snippet.title);
+    _video.value = item.id.videoId;
+    playlist.items.push(_video);
     this.playlistService.updatePlaylist(playlist);
     this.playlistService.playlistSelectionChange.next(playlist.id);
   }
@@ -121,7 +124,9 @@ export class DashboardComponent implements OnInit {
     let _playlist = new Playlist();
     _playlist.name = "New Playlist"
     _playlist.items = [];
-    _playlist.items.push({value: item.id.videoId, name: item.snippet.title});
+    let _video = new Video(item.snippet.title);
+    _video.value = item.id.videoId;
+    _playlist.items.push(_video);
     this.playlistService.addRow(_playlist).then(id => {
       _playlist.id = id;
       this.playlistService.needsRefresh.next(true);
@@ -133,7 +138,9 @@ export class DashboardComponent implements OnInit {
   }
 
   queue(item: any){
-    this.playerService.addPlaylistItem(item.id.videoId);
+    let _video = new Video(item.title);
+    _video.value = item.id.videoId;
+    this.playerService.addPlaylistItem(_video);
   }
 
   //hhhhhhhhack

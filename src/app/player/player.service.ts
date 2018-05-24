@@ -5,6 +5,7 @@ import Dexie from 'dexie';
 import 'dexie-observable';
 
 import { Playlist } from '../playlist/playlist';
+import { Video } from './video';
 
 @Injectable({
   providedIn: 'root'
@@ -94,16 +95,13 @@ export class PlayerService {
     // #todo: addPlaylists()
     // this.db.player.bulkAdd(playlist.items.map(i => i.value))
     for(let item of playlist.items){
-    	this.db.player.add({
-	      name: item.value
-	    });
+    	
+      this.db.player.add(new Video(item.value));
     } 
   }
 
-  addPlaylistItem(item: string): Promise<number>{
-    return this.db.player.add({
-      name: item
-    });
+  addPlaylistItem(video: Video): Promise<number>{
+    return this.db.player.add(video);
   }
 
   deleteItem(id: number) {

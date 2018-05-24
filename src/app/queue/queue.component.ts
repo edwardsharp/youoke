@@ -5,8 +5,13 @@ import { PlayerService } from '../player/player.service';
   selector: 'app-queue',
   template: `
 <div id="rows">
-	<div *ngFor="let item of rows" class="item">
-	  {{item.name}} <button *ngIf="!hideCtrl" (click)="removeItem(item)" mat-icon-button matTooltip="Remove {{item.name}}"><mat-icon>remove_from_queue</mat-icon></button>
+	<div *ngFor="let item of rows" class="item" class="flex">
+    <div class="video">
+      <span *ngIf="item && (item.title || item.name);else NoNameNoSlogan">{{item.title}} <br>
+      {{item.name}} </span>
+      <ng-template #NoNameNoSlogan>No Name</ng-template>
+    </div>
+    <button *ngIf="!hideCtrl" (click)="removeItem(item)" mat-icon-button matTooltip="Remove {{item.name}}"><mat-icon>remove_from_queue</mat-icon></button>
 	</div>
 </div>
 <div id="q-ctrl" *ngIf="!hideCtrl && currentlyPlaying && rows && rows.length > 0">
@@ -62,7 +67,8 @@ import { PlayerService } from '../player/player.service';
 	'#rows{overflow:scroll; height:calc(100vh - 64px - 40px - 100px);}',
 	'.item{display:flex; justify-content:flex-end; align-items:center; border-bottom:thin solid #eaeaea; height: 50px; margin-right: 1em;}',
   '#q-ctrl{position:sticky; z-index:2; bottom:0; background-color:white; display:flex; justify-content:space-around;}',
-  'mat-slider{height: 70px; top:15px}'
+  'mat-slider{height: 70px; top:15px}',
+  '.video{overflow:hidden; text-overflow:ellipsis; min-height:40px; max-height:54px; padding:0 5px; width:100%; display:inline-grid; align-items:center;}'
  ]
 })
 export class QueueComponent implements OnInit {
