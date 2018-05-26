@@ -40,3 +40,7 @@ $dark-theme: mat-dark-theme($dark-primary, $dark-accent, $dark-warn);
   a{color: white;}
   #q-ctrl, .playlist-nav, mat-sidenav, .mat-drawer, app-queue { background-color: black}
 }
+
+[mat-button]:hover, [mat-icon-button]:hover, .mat-tab-label:hover{
+  color: #ff4081!important;
+}
