@@ -1,5 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { FormsModule } from '@angular/forms';
+import { AppMaterialModule } from '../app-material.module';
 import { QueueComponent } from './queue.component';
 
 describe('QueueComponent', () => {
@@ -8,7 +10,8 @@ describe('QueueComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ QueueComponent ]
+      declarations: [ QueueComponent ],
+      imports: [AppMaterialModule, FormsModule]
     })
     .compileComponents();
   }));
