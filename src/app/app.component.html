@@ -7,7 +7,7 @@
     fixedInViewport="true"
     role="dialog"
     mode="side">
-    <mat-toolbar color="primary" class="sticky-toolbar">
+    <mat-toolbar class="sticky-toolbar">
       <mat-form-field id="playlist-select">
         <mat-select (selectionChange)="playlistSelectionChange($event)" [(ngModel)]="selectedPlaylistId" placeholder="Playlists">
           <mat-option>None</mat-option>
@@ -25,14 +25,14 @@
     class="qnav"
     mode="side" 
     position="end">
-    <mat-toolbar color="primary" id="q-toolbar">Queue <a mat-icon-button routerLink="/player" target="_blank" matTooltip="Open player in new window"><mat-icon>open_in_new</mat-icon></a></mat-toolbar>
+    <mat-toolbar id="q-toolbar">Queue <a mat-icon-button routerLink="/player" target="_blank" matTooltip="Open player in new window"><mat-icon>open_in_new</mat-icon></a></mat-toolbar>
     <div>
       <app-video-player [controls]="true"></app-video-player>
       <app-queue></app-queue>
     </div>
   </mat-sidenav>
   <mat-sidenav-content>
-    <mat-toolbar *ngIf="!toolbarHidden" color="primary">
+    <mat-toolbar *ngIf="!toolbarHidden">
       <button
         type="button"
         aria-label="Toggle Playlists"
@@ -47,6 +47,14 @@
       <span class="flexfill">&nbsp;</span>
       <button mat-icon-button routerLink="/settings" routerLinkActive="active" matTooltip="Settings"><mat-icon>settings</mat-icon></button>
       <!-- <button mat-icon-button matTooltip="User"><mat-icon>account_circle</mat-icon></button> -->
+      <mat-menu #themeMenu="matMenu">
+        <button mat-menu-item (click)="switchTheme('dark-theme', true)" [disabled]="theme == 'dark-theme'">Dark Theme</button>
+        <button mat-menu-item (click)="switchTheme('light-theme', true)" [disabled]="theme == 'light-theme'">Light Theme</button>
+      </mat-menu>
+
+      <button mat-icon-button [matMenuTriggerFor]="themeMenu">
+        <mat-icon>format_paint</mat-icon>
+      </button>
 
       <span class="btn-spacing">&nbsp;</span>
       <button

@@ -31,7 +31,7 @@ import { Video } from '../player/video';
       </div>
     </div>
 
-    <div class="btn-nav">
+    <div class="playlist-nav">
       <button mat-icon-button (click)="removePlaylist()" matTooltip="Delete Playlist {{selectedPlaylist.name}}"><mat-icon>delete_sweep</mat-icon></button>
       <button mat-button (click)="addItem()" matTooltip="Add Video"><mat-icon>add</mat-icon></button>
       <button mat-icon-button matTooltip="Queue All" (click)="playAll()"><mat-icon>playlist_play</mat-icon></button>
@@ -75,7 +75,7 @@ import { Video } from '../player/video';
   '.yt-input{width: 100px!important}',
   '.selected-playlist{margin-top: 1em}',
   'mat-card-actions{margin:0!important}',
-  '.btn-nav{position:sticky; z-index:2; bottom:0; background-color:white; display:flex; justify-content:space-around;}',
+  '.playlist-nav{position:sticky; z-index:2; bottom:0; display:flex; justify-content:space-around;}',
   'mat-hint{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}'
   ]
 })

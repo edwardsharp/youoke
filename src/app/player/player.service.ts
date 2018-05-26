@@ -131,12 +131,13 @@ export class PlayerService {
           // host: 'https://www.youtube.com',
           playerVars: {
             enablejsapi: 1,
-            modestbranding: 0,
+            modestbranding: 1,
             showinfo: 0,
             controls: controls ? 1 : 0,
             disablekb: controls ? 1 : 0,
             autoplay: 0,
-            rel: 0
+            rel: 0,
+            iv_load_policy: 0
           },
           height: '100%',
           width: '100%',
@@ -152,6 +153,9 @@ export class PlayerService {
               if(event.data == window["YT"].PlayerState.ENDED){
                 this.next();
               }
+            },
+            'onError': (error) => {
+              console.error('yt player onError:',error);
             }
           }
         }); 

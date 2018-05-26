@@ -71,11 +71,11 @@ export class YTSearchService {
 
 
 
-  search(q: string, nextPageToken?: string): Promise<any> {
+  search(q: string, nextPageToken?: string, maxResults?: number): Promise<any> {
   	//#todo: model window objectz?
 	  const request = window["gapi"].client.youtube.search.list({
 	    q: q,
-      maxResults: 50,
+      maxResults: maxResults,
       videoEmbeddable: true,
       type: 'video',
 	    part: 'snippet',
@@ -90,7 +90,7 @@ export class YTSearchService {
 	}
 
   nextPage(q: string, nextPageToken: string): Promise<any>{
-    return this.search(q, nextPageToken);
+    return this.search(q, nextPageToken, 50);
   }
 
 }

@@ -1,5 +1,6 @@
-import { Component, OnInit, AfterContentInit, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterContentInit, ViewChild, HostBinding } from '@angular/core';
 import { MatSidenav } from '@angular/material';
+import { OverlayContainer} from '@angular/cdk/overlay';
 
 import { AppToolbarService } from './app-toolbar.service';
 import { SettingsService } from './settings/settings.service';
@@ -14,6 +15,8 @@ import { Playlist } from './playlist/playlist';
 })
 export class AppComponent {
   
+  @HostBinding('class') componentCssClass;
+
   @ViewChild('leftNav') leftNav: MatSidenav;
   @ViewChild('rightNav') rightNav: MatSidenav;
   leftNavOpened: boolean;
@@ -25,11 +28,13 @@ export class AppComponent {
   settings: Settings[] = [];
   selectedPlaylistId: number;
   playlists: Playlist[] = [];
+  theme: string;
 
   constructor(
     private appToolbarService: AppToolbarService,
     private playlistService: PlaylistService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private overlayContainer: OverlayContainer
   ) { }
 
   ngOnInit(){
@@ -67,6 +72,13 @@ export class AppComponent {
       && this.rightNavOpened != rNav.opened){
       this.rightNavOpened = rNav.opened;
     }
+
+    const theme = settings.find(s => s.name == 'theme');
+    if(theme){
+      this.theme = theme.description;
+      this.switchTheme(theme.description, false);
+    }
+
     this.loading = false;
   }
 
@@ -93,6 +105,16 @@ export class AppComponent {
     this.rightNav.toggle();
     this.rightNavOpened = !this.rightNavOpened;
     this.settingsService.toggleNav('rightNav');
+  }
+
+  switchTheme(theme:string, needsPersist?:boolean){
+    console.log('gonna set theme:',theme);
+    this.theme = theme;
+    this.overlayContainer.getContainerElement().classList.add(theme);
+    this.componentCssClass = theme;
+    if(needsPersist){
+      this.settingsService.switchTheme(theme);
+    }
   }
 
 }

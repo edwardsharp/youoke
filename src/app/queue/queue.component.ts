@@ -66,7 +66,7 @@ import { PlayerService } from '../player/player.service';
 `, styles: [
 	'#rows{overflow:scroll; height:calc(100vh - 64px - 40px - 100px);}',
 	'.item{display:flex; justify-content:flex-end; align-items:center; border-bottom:thin solid #eaeaea; height: 50px; margin-right: 1em;}',
-  '#q-ctrl{position:sticky; z-index:2; bottom:0; background-color:white; display:flex; justify-content:space-around;}',
+  '#q-ctrl{position:sticky; z-index:2; bottom:0; display:flex; justify-content:space-around;}',
   'mat-slider{height: 70px; top:15px}',
   '.video{overflow:hidden; text-overflow:ellipsis; min-height:40px; max-height:54px; padding:0 5px; width:100%; display:inline-grid; align-items:center;}'
  ]

@@ -43,6 +43,13 @@ export class SettingsService {
           this.needsRefresh.next(true);
         }
       });
+      this.db.settings.where({name: 'theme'}).first().then(setting => {
+        if(!setting){
+          setting = new Settings("theme", "dark-theme");
+          this.db.settings.put(setting);
+          this.needsRefresh.next(true);
+        }
+      });
     }).catch((error:any) => {
       console.error("Errod during connecting to database : " + error);
     });
@@ -81,7 +88,14 @@ export class SettingsService {
     this.db.settings.where('name').equals(name).first( setting => {
       setting["opened"] = !setting["opened"];
       this.db.settings.put(setting);
-    })
+    });
+  }
+
+  switchTheme(theme: string){
+    this.db.settings.where('name').equals('theme').first( (setting:Settings) => {
+      setting.description = theme;
+      this.db.settings.put(setting);
+    });
   }
 
 }
