@@ -91,10 +91,13 @@ export class SettingsService {
     });
   }
 
+  getTheme(){
+    return this.db.settings.where('name').equals('theme');
+  }
   switchTheme(theme: string){
     this.db.settings.where('name').equals('theme').first( (setting:Settings) => {
       setting.description = theme;
-      this.db.settings.put(setting);
+      this.db.settings.put(setting).then( ok => this.needsRefresh.next(true));
     });
   }
 

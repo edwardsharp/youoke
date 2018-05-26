@@ -9,7 +9,7 @@ import { PlayerService } from '../player/player.service';
 import { Video } from '../player/video';
 
 @Component({
-  selector: 'app-settings',
+  selector: 'app-dashboard',
   template:`
 
 <mat-tab-group (selectedTabChange)="selectedTabChange($event)">
@@ -64,6 +64,10 @@ import { Video } from '../player/video';
 
     <div id="showMoreFix" *ngIf="nextPageToken">&nbsp;</div>
     </div>
+  </mat-tab>
+
+  <mat-tab label="Settings">
+    <app-settings></app-settings>
   </mat-tab>
 
 

@@ -39,22 +39,14 @@
         matTooltip="Toggle Playlists"
         mat-icon-button
         (click)="leftNavToggle()">
-        <mat-icon *ngIf="leftNavOpened" aria-label="playlist">chevron_left</mat-icon>
+        <mat-icon *ngIf="leftNavOpened" aria-label="playlist">menu</mat-icon>
         <mat-icon *ngIf="!leftNavOpened" aria-label="playlist">clear_all</mat-icon>
       </button>
       <span class="flexfill">&nbsp;</span>
       <span><a routerLink="/dashboard" class="base">YOUOKE</a></span>
       <span class="flexfill">&nbsp;</span>
-      <button mat-icon-button routerLink="/settings" routerLinkActive="active" matTooltip="Settings"><mat-icon>settings</mat-icon></button>
+      <!-- <button mat-icon-button routerLink="/settings" routerLinkActive="active" matTooltip="Settings"><mat-icon>settings</mat-icon></button> -->
       <!-- <button mat-icon-button matTooltip="User"><mat-icon>account_circle</mat-icon></button> -->
-      <mat-menu #themeMenu="matMenu">
-        <button mat-menu-item (click)="switchTheme('dark-theme', true)" [disabled]="theme == 'dark-theme'">Dark Theme</button>
-        <button mat-menu-item (click)="switchTheme('light-theme', true)" [disabled]="theme == 'light-theme'">Light Theme</button>
-      </mat-menu>
-
-      <button mat-icon-button [matMenuTriggerFor]="themeMenu">
-        <mat-icon>format_paint</mat-icon>
-      </button>
 
       <span class="btn-spacing">&nbsp;</span>
       <button
