@@ -13,11 +13,12 @@ karatube? youaoke? karayouoketube?? dunno. create a queue of youtube videos, may
 {% for release in site.github.releases %}
   * {{release.tag_name}} ({{ release.published_at | date_to_string }})  
     {%- for asset in release.assets %}  
-    :tv: [{{ asset.name }}]({{ asset.browser_download_url }})
+    [:arrow_down: {{ asset.name }}]({{ asset.browser_download_url }})
     {%- endfor %}
-{% endfor %}
+{% endfor %}  
+___
 
-## Dev notes
+## README {#hackerz :feelsgood:}
 
 ### Google API
 
