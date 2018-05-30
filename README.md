@@ -3,10 +3,10 @@
 karatube? youaoke? karayouoketube?? dunno. create a queue of youtube videos, maybe they're karaoke videoz. maybe you got a mic. ...maybe
 
 ## Download  
-{% if site.github.latest_release %}
+{% if site.github.latest_release %}  
 ### Latest release {{ site.github.latest_release.tag_name }} ({{ site.github.latest_release.published_at }})
 {% for asset in site.github.latest_release.assets %}
-  * [{{ asset.name }}]({{ asset.browser_download_url }})
+  * [{{ asset.name }}]({{ asset.browser_download_url }})  
 {% endfor %}
 {% endif %}  
 ### All Releases  
