@@ -18,9 +18,26 @@
 
 	<p>Latest release {{ site.github.latest_release.tag_name }} ({{ site.github.latest_release.published_at }})</p>
 
-	{% for release in site.github.latest_release.assets %}
-	  <div> [{{ release.name }}]({{ release.browser_download_url }})</div>
+	{% for asset in site.github.latest_release.assets %}
+	  <div> <a href="{{ asset.browser_download_url }}" title="{{ asset.browser_download_url }}">{{ asset.name }}</a></div>
 	{% endfor %}
+</div>
+
+<div>
+	<h2>All Releases</h2>
+
+	{% for release in site.github.releases %}
+		<div>
+			<b>{{ release.tag_name }} ({{ release.published_at }})</b>
+
+			{% for asset in release.assets %}
+		  <div> <a href="{{ asset.browser_download_url }}" title="{{ asset.browser_download_url }}">{{ asset.name }}</a></div>
+			{% endfor %}
+
+		</div>
+	{% endfor %}
+
+
 </div>
 
 </body>
