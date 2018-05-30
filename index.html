@@ -1,3 +1,6 @@
+---
+# empty front matter
+---
 <!doctype html>
 <html lang="en">
 <head>
@@ -13,15 +16,12 @@
 <div>
 	<h2>Download</h2>
 
-	<p>Latest release {{ site.latest_release.tag_name }} ({{ site.latest_release.published_at }})</p>
+	<p>Latest release {{ site.github.latest_release.tag_name }} ({{ site.github.latest_release.published_at }})</p>
 
-	{% for release in site.latest_release.assets %}
+	{% for release in site.github.latest_release.assets %}
 	  <div> [{{ release.name }}]({{ release.browser_download_url }})</div>
 	{% endfor %}
 </div>
-
-{% capture readme %}{% include README.md %}{% endcapture %}
-{{ readme | markdownify }}
 
 </body>
 </html>
