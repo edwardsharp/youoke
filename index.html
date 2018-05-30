@@ -13,6 +13,7 @@
 
 <h1>YOUOKE :microphone:</h1>
 
+{% if site.github.latest_release %}
 <div>
 	<h2>Download</h2>
 
@@ -22,13 +23,14 @@
 	  <div> <a href="{{ asset.browser_download_url }}" title="{{ asset.browser_download_url }}">{{ asset.name }}</a></div>
 	{% endfor %}
 </div>
+{% endif %}
 
 <div>
 	<h2>All Releases</h2>
 
 	{% for release in site.github.releases %}
 		<div>
-			<b>{{ release.tag_name }} ({{ release.published_at }})</b>
+			<b>{{ release.tag_name }} ({{ release.published_at | date_to_string }})</b>
 
 			{% for asset in release.assets %}
 		  <div> <a href="{{ asset.browser_download_url }}" title="{{ asset.browser_download_url }}">{{ asset.name }}</a></div>
