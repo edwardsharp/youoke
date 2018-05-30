@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>YOUOKE</title>
+  <meta name="description" content="YOUOKE on GitHub">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+</head>
+<body>
+
+<h1>YOUOKE :microphone:</h1>
+
+<div>
+	<h2>Download</h2>
+
+	<p>Latest release {{ site.latest_release.tag_name }} ({{ site.latest_release.published_at }})</p>
+
+	{% for release in site.latest_release.assets %}
+	  <div> [{{ release.name }}]({{ release.browser_download_url }})</div>
+	{% endfor %}
+</div>
+
+{% capture readme %}{% include README.md %}{% endcapture %}
+{{ readme | markdownify }}
+
+</body>
+</html>
