@@ -1,4 +1,12 @@
 theme: jekyll-theme-minimal
-show_downloads: true
+exclude:
+  - .credentials/
+  - e2e/
+  - node_modules/
+  - src/
+  - dist/
+  - release/
+logo: youoke.png
+title: " "
 plugins:
   - jemoji

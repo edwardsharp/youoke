@@ -15,9 +15,9 @@ karatube? youaoke? karayouoketube?? dunno. create a queue of youtube videos, may
 ### All Releases
 
 {% for release in site.github.releases %}
-  * ({{ release.published_at | date_to_string }})
-		{%- for asset in release.assets %}
-  	* [{{ asset.name }}]({{ asset.browser_download_url }})
+  * ({{ release.published_at | date_to_string }})  
+		{%- for asset in release.assets %}  
+  	:tv: [{{ asset.name }}]({{ asset.browser_download_url }})
 		{%- endfor %}
 {% endfor %}
 
