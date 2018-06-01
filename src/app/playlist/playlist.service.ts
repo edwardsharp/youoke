@@ -34,7 +34,7 @@ export class PlaylistService {
 
   connectToDatabase(): void {
     this.db.open().catch((error:any) => {
-      alert("Errod during connecting to database : " + error);
+      console.error("Errod during connecting to Playlist database : " + error);
     });
   }
 

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { MatTabChangeEvent } from '@angular/material';
+import { MatTabChangeEvent, MatSnackBar } from '@angular/material';
 
 // import { PlaylistService } from '../playlist/playlist.service';
 import { YTSearchService } from '../ytsearch.service';
@@ -7,6 +7,7 @@ import { PlaylistService } from '../playlist/playlist.service';
 import { Playlist } from '../playlist/playlist';
 import { PlayerService } from '../player/player.service';
 import { Video } from '../player/video';
+import { LibraryService } from '../library/library.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,7 +17,7 @@ import { Video } from '../player/video';
   
   <mat-tab label="Library">
     <div class="flex-col-center">
-      <h2>Nothing in your library yet...</h2>
+      <app-library></app-library>
     </div>
   </mat-tab>
 
@@ -55,6 +56,9 @@ import { Video } from '../player/video';
           </button>
           <button mat-icon-button matTooltip="Add To Queue" (click)="queue(item)">
             <mat-icon>add_to_queue</mat-icon>
+          </button>
+          <button mat-icon-button matTooltip="Add To Library" (click)="addToLibrary(item)">
+            <mat-icon>library_add</mat-icon>
           </button>
         </div>
         
@@ -98,7 +102,9 @@ export class DashboardComponent implements OnInit {
   constructor(
     private ytSearchService: YTSearchService,
     private playlistService: PlaylistService,
-    private playerService: PlayerService
+    private playerService: PlayerService,
+    private libraryService: LibraryService,
+    private snackBar: MatSnackBar
   ){ }
 
   ngOnInit(): void {
@@ -106,6 +112,7 @@ export class DashboardComponent implements OnInit {
     this.playlistService.needsRefresh.subscribe( ok => {
       this.getPlaylists();
     });
+
   }
 
   ngOnDestroy(): void{
@@ -164,6 +171,15 @@ export class DashboardComponent implements OnInit {
     playlist.items.push(_video);
     this.playlistService.updatePlaylist(playlist);
     this.playlistService.playlistSelectionChange.next(playlist.id);
+    let msg;
+    if(_video.name.length > 50){
+      msg = `${_video.name.substring(0, 50)}... Added to Playlist`;
+    }else{
+      msg = `${_video.name} Added to Playlist`;
+    }
+    this.snackBar.open(msg, '', {
+      duration: 2000,
+    }); 
   }
 
   addItemToNewPlaylist(item: any){
@@ -174,6 +190,16 @@ export class DashboardComponent implements OnInit {
     _video.value = item.id.videoId;
     _playlist.items.push(_video);
     this.playlistService.addRow(_playlist).then(id => {
+      let msg;
+      if(_video.name.length > 50){
+        msg = `${_video.name.substring(0, 50)}... Added to Playlist`;
+      }else{
+        msg = `${_video.name} Added to Playlist`;
+      }
+      this.snackBar.open(msg, '', {
+        duration: 2000,
+      }); 
+
       _playlist.id = id;
       this.playlistService.needsRefresh.next(true);
       window.setTimeout(() => {
@@ -192,6 +218,22 @@ export class DashboardComponent implements OnInit {
   //hhhhhhhhack
   openPlaylistMenu(id){
     document.getElementById(id).scrollIntoView(true);
+  }
+
+  addToLibrary(item: any){
+    let _video = new Video(item.snippet.title);
+    _video.value = item.id.videoId;
+    this.libraryService.addVideo(_video).then( ok => {
+      let msg;
+      if(_video.name.length > 50){
+        msg = `${_video.name.substring(0, 50)}... Added to Library`;
+      }else{
+        msg = `${_video.name} Added to Library`;
+      }
+      this.snackBar.open(msg, '', {
+        duration: 2000,
+      });  
+    });
   }
 
 }

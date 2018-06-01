@@ -74,7 +74,7 @@ export class PlayerService {
     });
 
     this.db.open().catch((error:any) => {
-      alert("Errod during connecting to database : " + error);
+      console.error("Errod during connecting to Player database : " + error);
     });
   }
 

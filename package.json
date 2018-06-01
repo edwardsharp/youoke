@@ -25,6 +25,10 @@
   "build": {
     "directories": {
       "output": "release"
+    },
+    "appId": "org.edwardsharp.youoke",
+    "mac": {
+      "category": "public.app-category.entertainment"
     }
   },
   "private": true,

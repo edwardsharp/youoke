@@ -13,6 +13,7 @@ import { SettingsComponent } from './settings/settings.component';
 import { PlayerComponent } from './player/player.component';
 import { QueueComponent } from './queue/queue.component';
 import { VideoPlayerComponent } from './video-player/video-player.component';
+import { LibraryComponent } from './library/library.component';
 
 
 const appRoutes: Routes = [
@@ -42,7 +43,8 @@ const appRoutes: Routes = [
     SettingsComponent,
     PlayerComponent,
     QueueComponent,
-    VideoPlayerComponent
+    VideoPlayerComponent,
+    LibraryComponent
   ],
   imports: [
   	RouterModule.forRoot(
