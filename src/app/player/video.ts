@@ -5,6 +5,7 @@ export class Video {
 	public ytId?: string;
 	public file?: string;
 	public requestedBy?: string;
+	public position?: number;
 
   constructor(name: string) {
   	this.name = name || "";

@@ -6,7 +6,7 @@ mat-spinner{
   min-height: 100vh;
 }
 .qnav {
-  width: 200px;
+  width: 350px;
   overflow: hidden;
   position: fixed;
 }
@@ -49,6 +49,11 @@ mat-spinner{
 .base:hover{
 	text-decoration: underline;
 }
+
+#preview-video-player{
+	height: 260px;
+}
+
 app-video-player{
 	position: sticky;
 	top: 86px;

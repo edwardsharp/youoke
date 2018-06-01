@@ -170,6 +170,7 @@ export class DashboardComponent implements OnInit {
     _video.value = item.id.videoId;
     playlist.items.push(_video);
     this.playlistService.updatePlaylist(playlist);
+    this.libraryService.addVideo(_video);
     this.playlistService.playlistSelectionChange.next(playlist.id);
     let msg;
     if(_video.name.length > 50){
@@ -189,6 +190,7 @@ export class DashboardComponent implements OnInit {
     let _video = new Video(item.snippet.title);
     _video.value = item.id.videoId;
     _playlist.items.push(_video);
+    this.libraryService.addVideo(_video);
     this.playlistService.addRow(_playlist).then(id => {
       let msg;
       if(_video.name.length > 50){

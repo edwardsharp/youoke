@@ -20,6 +20,7 @@ export class PlayerService {
   public player: any;
   public playerChange = new Subject<any>();
   public playerNext = new Subject<boolean>();
+  public count: number;
 
   private hasControl: boolean;
 
@@ -31,7 +32,7 @@ export class PlayerService {
   makeDatabase(): void {
     this.db = new Dexie('Player');
     this.db.version(1).stores({
-      player: '++id, yId, name' //only list indexed attrz here...
+      player: '++id, yId, name, position' //only list indexed attrz here...
     });
     
   }
@@ -39,6 +40,7 @@ export class PlayerService {
   connectToDatabase(): void {
     
   	this.db.on('changes', changes => {
+      this.db.player.count().then( count => this.count = count );
       changes.forEach(change => {
         this.playerChange.next(change);
         switch (change.type) {
@@ -83,7 +85,7 @@ export class PlayerService {
   }
 
   getRows(): Promise<any>{
-  	return this.db.player.toArray();
+  	return this.db.player.orderBy('position').toArray();
   }
 
   updatePlayer(player: any) {
@@ -94,13 +96,16 @@ export class PlayerService {
   addPlaylist(playlist: Playlist): void{
     // #todo: addPlaylists()
     // this.db.player.bulkAdd(playlist.items.map(i => i.value))
+    let i = this.count;
     for(let item of playlist.items){
-    	
-      this.db.player.add(new Video(item.value));
+      item.position = i;
+      i += 1;
+      this.db.player.add(item);
     } 
   }
 
   addPlaylistItem(video: Video): Promise<number>{
+    video.position = this.count;
     return this.db.player.add(video);
   }
 

@@ -19,7 +19,6 @@ import { PlayerService } from '../player/player.service';
   <mat-list-item *ngFor="let video of library" id="{{video.id}}">
     <h3 matLine matTooltip="{{video.name}}"> {{video.name}} </h3>
     <div matLine class="flex">
-      <mat-chip-list><mat-chip>youoke</mat-chip></mat-chip-list>
       <span class="flexfill">&nbsp;</span>
       <button mat-icon-button matTooltip="Remove From Library" (click)="removeFromLibrary(video)">
         <mat-icon>delete</mat-icon>
