@@ -14,6 +14,7 @@ import { PlayerComponent } from './player/player.component';
 import { QueueComponent } from './queue/queue.component';
 import { VideoPlayerComponent } from './video-player/video-player.component';
 import { LibraryComponent } from './library/library.component';
+import { YTSearchComponent } from './ytsearch/ytsearch.component';
 
 
 const appRoutes: Routes = [
@@ -44,7 +45,8 @@ const appRoutes: Routes = [
     PlayerComponent,
     QueueComponent,
     VideoPlayerComponent,
-    LibraryComponent
+    LibraryComponent,
+    YTSearchComponent
   ],
   imports: [
   	RouterModule.forRoot(

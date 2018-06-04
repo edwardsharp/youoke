@@ -19,7 +19,9 @@
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "partylinebuild": "ng build --prod partyline",
+    "partylinedev": "ng serve partyline"
   },
   "main": "main.js",
   "build": {
