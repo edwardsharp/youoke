@@ -147,7 +147,9 @@
               "projects/partyline/src/assets"
             ],
             "styles": [
-              "projects/partyline/src/styles.css"
+              "projects/partyline/src/styles.css",
+              "src/material-theme.scss",
+              "node_modules/material-design-icons-iconfont/dist/material-design-icons.css"
             ],
             "scripts": []
           },

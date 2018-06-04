@@ -20,8 +20,9 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "partylinebuild": "ng build --prod partyline",
-    "partylinedev": "ng serve partyline"
+    "webbuild": "ng build --aot --prod --base-href=/app/",
+    "partylinebuild": "ng build --aot --prod partyline",
+    "partylinedev": "ng serve partyline --port 4201"
   },
   "main": "main.js",
   "build": {

@@ -1,14 +1,19 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-root',
   template: `
-<h1>YOUOKE PARTYLINE</h1>
+<mat-toolbar><span>YOUOKE</span></mat-toolbar>
 
+<app-channel></app-channel>
 
   `,
-  styles: []
+  styles: ['mat-toolbar span{margin: 0 auto;}']
 })
 export class AppComponent {
-  title = 'app';
+
+  constructor(){}
+
+  ngOnInit(){
+  }
 }
