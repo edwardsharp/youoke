@@ -94,8 +94,6 @@ export class PlayerService {
   }
 
   addPlaylist(playlist: Playlist): void{
-    // #todo: addPlaylists()
-    // this.db.player.bulkAdd(playlist.items.map(i => i.value))
     let i = this.count;
     for(let item of playlist.items){
       item.position = i;
