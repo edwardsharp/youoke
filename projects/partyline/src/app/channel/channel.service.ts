@@ -18,34 +18,15 @@ export class ChannelService {
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
   }
 
-  connect(): Subject<MessageEvent> {
-
+  connect(): void {
     this.socket = io(environment.ws_url);
-
-    // define an observable which will observe any incoming messages
-    // from a socket.io server.
-    let observable = new Observable(observer => {
-	    this.socket.on('message', (data) => {
-	      console.log("received message from WSS",data);
-	      observer.next(data);
-	    })
-	    return () => {
-	      this.socket.disconnect();
-	    }
+    this.socket.on('message', (data) => {
+      console.log("received message from WSS",data);
     });
-    
-    // define an Observer which will listen to messages
-    // from other components and send messages back to a
-    // socket server whenever the `next()` method is called.
-    let observer = {
-      next: (data: Object) => {
-        this.socket.emit('message', JSON.stringify(data));
-      }
-    };
+  }
 
-    // return a Rx.Subject which is a combination
-    // of both an observer and observable.
-    return Subject.create(observer, observable);
+  sendMsg(msg: string){
+    this.socket.emit('event', msg);
   }
 
 }

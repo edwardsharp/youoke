@@ -44,19 +44,10 @@ export class ChannelComponent implements OnInit {
   constructor(
     private ytSearchService: YTSearchService,
     private channelService: ChannelService
-  ) { 
-    this.messages = <Subject<any>>channelService
-    .connect()
-    .pipe(
-      map((response: any): any => {
-        console.log('channelService response:',response);
-        return response;
-      })
-    );
-  }
+  ) { }
 
   ngOnInit() {
-
+    this.channelService.connect()
   }
 
   inputChange(){
@@ -77,6 +68,7 @@ export class ChannelComponent implements OnInit {
   }
 
   sendMsg(msg: string){
-    this.messages.next(msg);
+    // this.messages.next(msg);
+    this.channelService.sendMsg(msg);
   }
 }

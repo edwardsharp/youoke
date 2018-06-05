@@ -16,7 +16,8 @@ app.use(bodyParser.json()); // for parsing application/json
 
 const corsOptions = {
   origin: [ 
-  	'http://localhost:4200',
+  	'http://localhost:4201',
+    'http://localhost:4200',
     'http://localhost:8091',
     'https://youoke.party'],
   optionsSuccessStatus: 200 
@@ -31,7 +32,7 @@ app.get('/*', function(req, res) {
 //SOCKET STUFF
 io.on('connection', (socket) => {
   console.log('socket connection! socket:',socket.id);
-  socket.emit('o hai', { hello: 'world' });
+  socket.emit('message', { hello: 'world' });
   // socket.broadcast.emit('hello', 'to all clients except sender');
   // socket.to('room42').emit('hello', "to all clients in 'room42' room except sender");
   socket.on('event', function(data){ console.log('event data:',data)});
