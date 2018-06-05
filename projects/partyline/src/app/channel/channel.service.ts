@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as io from 'socket.io-client';
-import { Subject, Observable } from 'rxjs';
+// import { Subject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 
@@ -9,6 +9,7 @@ import { environment } from '../../environments/environment';
 })
 export class ChannelService {
 
+  channel: string;
 	private socket;
 
   constructor() { 
@@ -25,8 +26,19 @@ export class ChannelService {
     });
   }
 
-  sendMsg(msg: string){
-    this.socket.emit('event', msg);
+  joinChannel(channel: string): Promise<boolean>{
+    return new Promise( (resolve, reject) => {
+      this.socket.on('join_channel', (ok:boolean) => {
+        console.log('channel.service join_channel ok:',ok);
+        if(ok){
+          this.channel = channel;
+          resolve(true);
+        }else{
+          reject(false);
+        }
+      });
+      this.socket.emit('join_channel', channel);
+    });
   }
 
 }

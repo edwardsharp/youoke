@@ -8,6 +8,8 @@ import { Settings } from './settings/settings';
 import { PlaylistService } from './playlist/playlist.service';
 import { Playlist } from './playlist/playlist';
 
+import { PartylineService } from './partyline.service';
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -29,16 +31,18 @@ export class AppComponent {
   selectedPlaylistId: number;
   playlists: Playlist[] = [];
   theme: string;
+  channel: string;
 
   constructor(
     private appToolbarService: AppToolbarService,
     private playlistService: PlaylistService,
     private settingsService: SettingsService,
-    private overlayContainer: OverlayContainer
+    private overlayContainer: OverlayContainer,
+    private partylineService: PartylineService
   ) { }
 
   ngOnInit(){
-    
+
   }
 
   //[style.display]
@@ -56,6 +60,20 @@ export class AppComponent {
     this.loadPlaylists();
     this.playlistService.needsRefresh.subscribe(bool => this.loadPlaylists() );
     this.playlistService.playlistSelectionChange.subscribe(id => this.selectedPlaylistId = id );
+    this.partylineService.init().then( ok => {
+      this.partylineService.connect().then( (ok:boolean) => {
+        this.partylineService.createChannel().then( (channel:string) => {
+          this.channel = channel;
+        }).catch(err => {
+          console.log('create_channel err!');
+        });
+      }).catch( err => {
+        console.log('connect err!');
+      });
+    }).catch( err => {
+      console.log('partyline init err!');
+    });
+    
   }
 
   loadSettings(settings: any): void{

@@ -25,7 +25,11 @@
     class="qnav"
     mode="side" 
     position="end">
-    <mat-toolbar id="q-toolbar">Queue <a mat-icon-button routerLink="/player" target="_blank" matTooltip="Open player in new window"><mat-icon>open_in_new</mat-icon></a></mat-toolbar>
+    <mat-toolbar id="q-toolbar">
+      Queue 
+      <span>{{channel}}</span>
+      <a mat-icon-button routerLink="/player" target="_blank" matTooltip="Open player in new window"><mat-icon>open_in_new</mat-icon></a>
+    </mat-toolbar>
     <div id="preview-video-player">
       <app-video-player [controls]="true"></app-video-player>
       <app-queue></app-queue>

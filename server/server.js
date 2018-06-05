@@ -4,7 +4,7 @@ const cors = require('cors');
 const app = express();
 const path = require('path');
 const bodyParser = require('body-parser');
-
+const crypto = require('crypto');
 
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
@@ -32,12 +32,50 @@ app.get('/*', function(req, res) {
 //SOCKET STUFF
 io.on('connection', (socket) => {
   console.log('socket connection! socket:',socket.id);
-  socket.emit('message', { hello: 'world' });
+  socket.emit('is_connected', true);
   // socket.broadcast.emit('hello', 'to all clients except sender');
   // socket.to('room42').emit('hello', "to all clients in 'room42' room except sender");
-  socket.on('event', function(data){ console.log('event data:',data)});
+  socket.on('event', (data) => { 
+    console.log('event data:',data)
+  });
+  socket.on('join_channel', (channel) => { 
+    console.log('join_channel data:',channel);
+    io.of('/').adapter.allRooms((err, channels) => {
+      console.log('all roomz err:',err,' channels:',channels);
+      if(err){
+        socket.emit('join_channel', false);
+      }else if(channels.includes(channel)){
+        socket.join(channel);
+        socket.emit('join_channel', true);
+      }else{
+        socket.emit('join_channel', false);
+      }
+    });
+  });
+  
+  socket.on('create_channel', (data) => {
+    const channel_id = crypto.randomBytes(3).toString('hex');
+    console.log('create_channel channel_id:',channel_id);
+    socket.join(channel_id);
+    socket.emit('create_channel', channel_id);
+  });
+  
+
   socket.on('disconnect', function(){ console.log('DISCONNECT! socket:',socket.id) });
+
+  // with callback ack
+  // socket.emit('ferret', 'tobi', (data) => {
+  //   console.log(data); // data will be 'woot'
+  // });
+  // the client code
+  // client.on('ferret', (name, fn) => {
+  //   fn('woot');
+  // });
+
 });
+
+
+
 
 //boot.
 server.listen(process.env.PORT || 8091);

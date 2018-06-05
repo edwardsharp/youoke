@@ -56,8 +56,12 @@ export class ChannelComponent implements OnInit {
   }
 
   joinChannel(){
-    this.sendMsg('zomg join channel '+this.channel);
-    this.channelError = true;
+    this.channelService.joinChannel(this.channel).then( ok => {
+      console.log('channel.component joinChannel ok:',ok);
+      this.channelError = false;
+    }).catch( err => {
+      this.channelError = true;
+    });
     // this.connected = true;
     // if(!this.ytInitialized){
     //   this.ytSearchService.initYtSearch();
@@ -67,8 +71,4 @@ export class ChannelComponent implements OnInit {
     // }
   }
 
-  sendMsg(msg: string){
-    // this.messages.next(msg);
-    this.channelService.sendMsg(msg);
-  }
 }
