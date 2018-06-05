@@ -47,6 +47,7 @@
     "@angular/platform-browser": "^6.0.2",
     "@angular/platform-browser-dynamic": "^6.0.2",
     "@angular/router": "^6.0.2",
+    "@types/socket.io-client": "^1.4.32",
     "core-js": "^2.5.4",
     "dexie": "^2.0.3",
     "dexie-observable": "^1.0.0-beta.4",
@@ -56,6 +57,7 @@
     "material-design-icons": "^3.0.1",
     "material-design-icons-iconfont": "^3.0.3",
     "rxjs": "^6.0.0",
+    "socket.io-client": "^2.1.1",
     "zone.js": "^0.8.26"
   },
   "devDependencies": {

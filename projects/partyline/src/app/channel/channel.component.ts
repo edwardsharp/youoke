@@ -1,22 +1,24 @@
 import { Component, OnInit } from '@angular/core';
+import { Observable, Subject } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { YTSearchService } from '../../../../../src/app/ytsearch/ytsearch.service';
-
-
-
-//
-    // 
+import { ChannelService } from './channel.service';
 
 @Component({
   selector: 'app-channel',
   template: `
 <div class="flex-col-center" *ngIf="!connected">
   <mat-form-field appearance="outline" class="channel">
-    <mat-label>Join Channel</mat-label>
-    <input matInput [(ngModel)]="channel" (keyup.enter)="joinChannel()">
-    <button mat-icon-button matSuffix *ngIf="!channel || channel == ''"><mat-icon>sentiment_satisfied</mat-icon></button>
-    <button mat-icon-button matSuffix *ngIf="channel && channel != ''" (click)="joinChannel()"><mat-icon>sentiment_very_satisfied</mat-icon></button>
-    <mat-hint>Enter a channel ID to join the party!</mat-hint>
+    <mat-label>JOIN IN THE CHANT</mat-label>
+    <input matInput [(ngModel)]="channel" (keyup.enter)="joinChannel()" (change)="inputChange()">
+    <button mat-icon-button matSuffix *ngIf="!channel || channel == '' || channelError">
+      <mat-icon *ngIf="!channelError">sentiment_satisfied</mat-icon>
+      <mat-icon *ngIf="channelError">sentiment_very_dissatisfied</mat-icon>
+    </button>
+    <button mat-icon-button matSuffix *ngIf="!channelError && channel && channel != ''" (click)="joinChannel()"><mat-icon>sentiment_very_satisfied</mat-icon></button>
+    <mat-hint *ngIf="!channelError">enter a channel to make requests</mat-hint>
+    <mat-hint *ngIf="channelError">o noz! dunno about that channel...</mat-hint>
   </mat-form-field>
 </div>
 
@@ -26,27 +28,55 @@ import { YTSearchService } from '../../../../../src/app/ytsearch/ytsearch.servic
 
   `,
   styles: [
+    // 'mat-form-field{width:275px;}',
     '.flex-col-center{height:calc(100vh - 64px); display:flex; flex-direction:column; align-items:center; justify-content:center; flex-direction:column;}'
   ]
 })
 export class ChannelComponent implements OnInit {
 
   channel: string;
+  channelError: boolean;
   connected: boolean;
   ytInitialized: boolean;
 
-  constructor(private ytSearchService: YTSearchService) { }
+  messages: Subject<any>;
+
+  constructor(
+    private ytSearchService: YTSearchService,
+    private channelService: ChannelService
+  ) { 
+    this.messages = <Subject<any>>channelService
+    .connect()
+    .pipe(
+      map((response: any): any => {
+        console.log('channelService response:',response);
+        return response;
+      })
+    );
+  }
 
   ngOnInit() {
+
+  }
+
+  inputChange(){
+    console.log('input change')
+    this.channelError = false;
   }
 
   joinChannel(){
-    this.connected = true;
-    if(!this.ytInitialized){
-      this.ytSearchService.initYtSearch();
-      this.ytSearchService.searchReady.subscribe( ready => {
-        this.ytInitialized = true;
-      });
-    }
+    this.sendMsg('zomg join channel '+this.channel);
+    this.channelError = true;
+    // this.connected = true;
+    // if(!this.ytInitialized){
+    //   this.ytSearchService.initYtSearch();
+    //   this.ytSearchService.searchReady.subscribe( ready => {
+    //     this.ytInitialized = true;
+    //   });
+    // }
+  }
+
+  sendMsg(msg: string){
+    this.messages.next(msg);
   }
 }
