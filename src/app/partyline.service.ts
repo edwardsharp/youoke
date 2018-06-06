@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import * as io from 'socket.io-client';
 import { Subject } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+
 import { environment } from '../environments/environment';
 import { PlayerService } from './player/player.service';
 
@@ -14,7 +16,9 @@ export class PartylineService {
 
 	private socket;
 
-  constructor(private playerService: PlayerService) { 
+  constructor(
+    private playerService: PlayerService,
+    private route: ActivatedRoute) { 
   	
   }
 
@@ -32,12 +36,14 @@ export class PartylineService {
 
   connect(): Promise<boolean> {
     this.socket = io(environment.ws_url);
-    this.socket.on('queue', item => {
-      console.log('[partyline.service] queue item:',item);
-      this.playerService.queueItem(item).then(ok =>{
-        console.log('[partyline.service] queue item ok!!');
-      }).catch(err => console.log('[partyline.service] queue item NOT ok!!!!'));
-    })
+    if(this.route.firstChild.component['name'] != 'PlayerComponent'){
+      this.socket.on('queue', item => {
+        console.log('[partyline.service] queue item:',item);
+        this.playerService.queueItem(item).then(ok =>{
+          console.log('[partyline.service] queue item ok!!');
+        }).catch(err => console.log('[partyline.service] queue item NOT ok!!!!'));
+      })
+    }
     return new Promise( (resolve, reject) => {
     	this.socket.on('is_connected', (ok:boolean) => {
 	      console.log("is_connected:",ok);
