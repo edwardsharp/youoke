@@ -6,7 +6,6 @@ import { ChannelService } from './channel/channel.service';
   selector: 'app-root',
   template: `
 <mat-toolbar>
-	<span class="flexfill"></span>
 	<span>YOUOKE</span>
 	<span class="flexfill"></span>
 	<span>{{channel}}</span>
@@ -21,7 +20,7 @@ import { ChannelService } from './channel/channel.service';
 <app-channel></app-channel>
 
   `,
-  styles: ['mat-toolbar{display:flex;}']
+  styles: ['mat-toolbar{display:flex; position:sticky; top:0; z-index:1;}']
 })
 export class AppComponent {
 
