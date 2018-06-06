@@ -30,7 +30,6 @@ export class ChannelService {
     this.db.version(1).stores({
       channel: '++id, name' //only list indexed attrz here...
     });
-
   }
 
   connectToDatabase(): void {
@@ -52,14 +51,6 @@ export class ChannelService {
     });
   }
 
-  // clearRows(): any{
-  //   return this.db.channel.clear();
-  // }
-  // getChannel(){
-  //   this.db.channel.where('name').equals('channel').first( channel => {
-  //     this.channel = channel.description;
-  //   });
-  // }
   setChannel(channel:string){
     this.channel = channel;
     this.db.channel.where('name').equals('channel').first( _channel => {
@@ -78,7 +69,6 @@ export class ChannelService {
         this.socket = io(environment.ws_url);
         this.socket.on('is_connected', (data) => {
           console.log("received is_connected from WSS",data);
-          
           resolve(this.channel);
         });
       }

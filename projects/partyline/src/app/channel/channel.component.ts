@@ -55,10 +55,10 @@ export class ChannelComponent implements OnInit {
       .then( _channel => {
         console.log('init channelService.connect channel:',_channel);
         this.channel = _channel;
+        this.channelError = false;
         if(_channel && _channel.length > 0){
           this.joinChannel();
         }else{
-          this.channelError = true;
           this.connected = false;
         }
       });

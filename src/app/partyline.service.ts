@@ -37,6 +37,8 @@ export class PartylineService {
   connect(): Promise<boolean> {
     this.socket = io(environment.ws_url);
     if(this.route.firstChild.component['name'] != 'PlayerComponent'){
+      // this.socket.removeAllListeners(['queue']); //ugh! this is not working.
+      //#todo: setup player index with current minute composite key to prevent duplicates. 
       this.socket.on('queue', item => {
         console.log('[partyline.service] queue item:',item);
         this.playerService.queueItem(item).then(ok =>{
