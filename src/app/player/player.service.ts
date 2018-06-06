@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
-
 import Dexie from 'dexie';
 import 'dexie-observable';
 
@@ -32,17 +31,16 @@ export class PlayerService {
   makeDatabase(): void {
     this.db = new Dexie('Player');
     this.db.version(1).stores({
-      player: '++id, yId, name, position' //only list indexed attrz here...
+      player: '++id, position' //only list indexed attrz here...
     });
-    
   }
 
   connectToDatabase(): void {
     
   	this.db.on('changes', changes => {
       this.db.player.count().then( count => this.count = count );
+      this.playerChange.next(true);
       changes.forEach(change => {
-        this.playerChange.next(change);
         switch (change.type) {
           case 1: // CREATED
             // console.log('An object was created: ' + JSON.stringify(change.obj));
@@ -94,16 +92,19 @@ export class PlayerService {
   }
 
   addPlaylist(playlist: Playlist): void{
-    let i = this.count;
+    let i = this.count || 0;
     for(let item of playlist.items){
       item.position = i;
+      delete item.id;
       i += 1;
+      console.log('[player.service] gonna add playlist item:',item);
       this.db.player.add(item);
     } 
   }
 
   addPlaylistItem(video: Video): Promise<number>{
-    video.position = this.count;
+    video.position = this.count || 0;
+    delete video.id;
     return this.db.player.add(video);
   }
 
@@ -209,6 +210,18 @@ export class PlayerService {
 
   getVolume(){
     return this.player.getVolume();
+  }
+
+  queueItem(item: any): Promise<Video>{
+    return new Promise( (resolve, reject) => {
+      let _video = new Video(item.snippet.title);
+      _video.value = item.id.videoId;
+      this.addPlaylistItem(_video).then(ok => {
+        resolve(_video);
+      }).catch(err => {
+        reject(err);
+      });
+    })
   }
 
 }

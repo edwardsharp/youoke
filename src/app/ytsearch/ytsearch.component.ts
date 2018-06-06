@@ -1,12 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { MatSnackBar } from '@angular/material';
+import { Component, OnInit, EventEmitter, Input, Output } from '@angular/core';
 
-import { PlaylistService } from '../playlist/playlist.service';
-import { Playlist } from '../playlist/playlist';
-import { PlayerService } from '../player/player.service';
-import { Video } from '../player/video';
-import { LibraryService } from '../library/library.service';
 import { YTSearchService } from './ytsearch.service';
+import { Playlist } from '../playlist/playlist';
 
 
 @Component({
@@ -41,13 +36,18 @@ import { YTSearchService } from './ytsearch.service';
           <mat-icon>playlist_add</mat-icon> {{playlist.name}}
         </button>
       </mat-menu>
-      <button mat-icon-button matTooltip="Add To Playlist" [matMenuTriggerFor]="playlistMenu" (click)="openPlaylistMenu(item.id.videoId)">
+      <button mat-icon-button matTooltip="Add To Playlist" 
+        *ngIf="showAddToPlaylist"
+        [matMenuTriggerFor]="playlistMenu" 
+        (click)="openPlaylistMenu(item.id.videoId)">
         <mat-icon>playlist_add</mat-icon>
       </button>
       <button mat-icon-button matTooltip="Add To Queue" (click)="queue(item)">
-        <mat-icon>add_to_queue</mat-icon>
+        <mat-icon class="large-icon">add_to_queue</mat-icon>
       </button>
-      <button mat-icon-button matTooltip="Add To Library" (click)="addToLibrary(item)">
+      <button mat-icon-button matTooltip="Add To Library" 
+        *ngIf="showAddToLibrary"
+        (click)="addToLibrary(item)">
         <mat-icon>library_add</mat-icon>
       </button>
     </div>
@@ -71,29 +71,29 @@ import { YTSearchService } from './ytsearch.service';
 })
 export class YTSearchComponent implements OnInit {
 
+  @Input() showAddToPlaylist: boolean;
+  @Input() showAddToLibrary: boolean;
+  @Input() playlists: Array<Playlist>;
+  @Output() addItemToPlaylistEvent = new EventEmitter<{item: any, playlist: Playlist}>();
+  @Output() addItemToNewPlaylistEvent = new EventEmitter<any>();
+  @Output() queueEvent = new EventEmitter<any>();
+  @Output() addToLibraryEvent = new EventEmitter<any>();
+
   ytInitialized: boolean;
   searchReady: boolean;
   q: string;
   nextPageToken: string;
   searchItems: Array<any> = [];
-  playlists: Array<Playlist>;
+  
 
   constructor(
-    private ytSearchService: YTSearchService,
-    private playlistService: PlaylistService,
-    private playerService: PlayerService,
-    private libraryService: LibraryService,
-    private snackBar: MatSnackBar) { }
+    private ytSearchService: YTSearchService
+  ) { }
 
   ngOnInit() {
     this.ytSearchService.searchReady.subscribe( ready => {
       this.searchReady = ready;
       this.ytInitialized = true;
-    });
-
-    this.getPlaylists();
-    this.playlistService.needsRefresh.subscribe( ok => {
-      this.getPlaylists();
     });
   }
 
@@ -124,84 +124,25 @@ export class YTSearchComponent implements OnInit {
     });
   }
 
-  getPlaylists(){
-    this.playlistService.getRows().then( (playlists) => {
-      this.playlists = playlists;
-    });
-  }
-
-  addItemToPlaylist(item: any, playlist: Playlist){
-    playlist.items = playlist.items || [];
-    let _video = new Video(item.snippet.title);
-    _video.value = item.id.videoId;
-    playlist.items.push(_video);
-    this.playlistService.updatePlaylist(playlist);
-    this.libraryService.addVideo(_video);
-    this.playlistService.playlistSelectionChange.next(playlist.id);
-    let msg;
-    if(_video.name.length > 50){
-      msg = `${_video.name.substring(0, 50)}... Added to Playlist`;
-    }else{
-      msg = `${_video.name} Added to Playlist`;
-    }
-    this.snackBar.open(msg, '', {
-      duration: 2000,
-    }); 
-  }
-
-  addItemToNewPlaylist(item: any){
-    let _playlist = new Playlist();
-    _playlist.name = "New Playlist"
-    _playlist.items = [];
-    let _video = new Video(item.snippet.title);
-    _video.value = item.id.videoId;
-    _playlist.items.push(_video);
-    this.libraryService.addVideo(_video);
-    this.playlistService.addRow(_playlist).then(id => {
-      let msg;
-      if(_video.name.length > 50){
-        msg = `${_video.name.substring(0, 50)}... Added to Playlist`;
-      }else{
-        msg = `${_video.name} Added to Playlist`;
-      }
-      this.snackBar.open(msg, '', {
-        duration: 2000,
-      }); 
-
-      _playlist.id = id;
-      this.playlistService.needsRefresh.next(true);
-      window.setTimeout(() => {
-        this.playlistService.playlistSelectionChange.next(id);
-      }, 250);
-    });
-
-  }
-
-  queue(item: any){
-    let _video = new Video(item.snippet.title);
-    _video.value = item.id.videoId;
-    this.playerService.addPlaylistItem(_video);
-  }
-
   //hhhhhhhhack
   openPlaylistMenu(id){
     document.getElementById(id).scrollIntoView(true);
   }
 
+  addItemToPlaylist(item: any, playlist: Playlist){
+    this.addItemToPlaylistEvent.next({item: item, playlist: playlist});
+  }
+
+  addItemToNewPlaylist(item: any){
+    this.addItemToNewPlaylistEvent.next(item);
+  }
+
+  queue(item: any){
+    this.queueEvent.next(item);
+  }
+
   addToLibrary(item: any){
-    let _video = new Video(item.snippet.title);
-    _video.value = item.id.videoId;
-    this.libraryService.addVideo(_video).then( ok => {
-      let msg;
-      if(_video.name.length > 50){
-        msg = `${_video.name.substring(0, 50)}... Added to Library`;
-      }else{
-        msg = `${_video.name} Added to Library`;
-      }
-      this.snackBar.open(msg, '', {
-        duration: 2000,
-      });  
-    });
+    this.addToLibraryEvent.next(item);
   }
 
 }

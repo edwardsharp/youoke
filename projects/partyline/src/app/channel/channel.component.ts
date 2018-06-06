@@ -23,7 +23,10 @@ import { ChannelService } from './channel.service';
 </div>
 
 <div *ngIf="connected">
-  <app-ytsearch></app-ytsearch>
+  <app-ytsearch 
+    [showAddToPlaylist]="false"
+    [showAddToLibrary]="false"
+    (queueEvent)="queue($event)"></app-ytsearch>
 </div>
 
   `,
@@ -47,7 +50,19 @@ export class ChannelComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.channelService.connect()
+    this.channelService.channelReady.subscribe( (channel:string) => {
+      this.channelService.connect()
+      .then( _channel => {
+        console.log('init channelService.connect channel:',_channel);
+        this.channel = _channel;
+        if(_channel && _channel.length > 0){
+          this.joinChannel();
+        }else{
+          this.channelError = true;
+          this.connected = false;
+        }
+      });
+    });
   }
 
   inputChange(){
@@ -56,6 +71,7 @@ export class ChannelComponent implements OnInit {
   }
 
   joinChannel(){
+    console.log('gonna joinChannel', this.channel);
     this.channelService.joinChannel(this.channel).then( ok => {
       console.log('channel.component joinChannel ok:',ok);
       this.channelError = false;
@@ -70,7 +86,10 @@ export class ChannelComponent implements OnInit {
       this.channelError = true;
       this.connected = false;
     });
-    
+  }
+
+  queue(item:any){
+    this.channelService.queue(item);
   }
 
 }

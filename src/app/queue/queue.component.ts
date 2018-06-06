@@ -5,7 +5,7 @@ import { PartylineService } from '../partyline.service';
 @Component({
   selector: 'app-queue',
   template: `
-<div id="rows">
+<div [id]="hideCtrl ? 'playerRows' : 'rows'">
 	<div *ngFor="let item of rows" class="item" class="flex">
     <div class="video">
       <span *ngIf="item && (item.title || item.name);else NoNameNoSlogan">{{item.title}} <br>
@@ -71,7 +71,7 @@ import { PartylineService } from '../partyline.service';
 	'#rows{overflow:scroll; height:calc(100vh - 64px - 40px - 260px);}',
 	'.item{display:flex; justify-content:flex-end; align-items:center; border-bottom:thin solid #eaeaea; height: 50px; margin-right: 1em;}',
   '#q-ctrl{position:sticky; z-index:2; bottom:0; display:flex; justify-content:space-around;}',
-  '#q-channel{position:absolute; bottom:0; padding-left:15px;}',
+  '#q-channel{position:absolute; bottom:0; padding-left:15px; width:100%;}',
   'mat-slider{height: 70px; top:15px}',
   '.video{overflow:hidden; text-overflow:ellipsis; min-height:40px; max-height:54px; padding:0 5px; width:100%; display:inline-grid; align-items:center;}'
  ]
@@ -97,8 +97,10 @@ export class QueueComponent implements OnInit {
   	});
 
     this.playerService.playerChange.subscribe(change => {
-    	this.playerService.getRows().then(rows => {
-    		this.rows = rows
+    	console.log('[queue.component] playerService.playerChange! gonna getRows()');
+      this.playerService.getRows().then(rows => {
+    		console.log('[queue.component] playerService.playerChange got rowz:',rows);
+        this.rows = rows
     		if(!this.currentlyPlaying && rows[0]){
     			this.currentlyPlaying = rows[0];
     		}else if(rows[0] && rows[0].id && this.currentlyPlaying.id != rows[0].id){

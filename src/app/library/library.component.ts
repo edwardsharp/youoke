@@ -133,7 +133,23 @@ export class LibraryComponent implements OnInit {
   }
 
   queue(video: Video){
-    this.playerService.addPlaylistItem(video);
+    this.playerService.addPlaylistItem(video)
+    .then( ok => {
+      let msg;
+      if(video.name.length > 50){
+        msg = `${video.name.substring(0, 50)}... Queued`;
+      }else{
+        msg = `${video.name} Queued`;
+      }
+      this.snackBar.open(msg, '', {
+        duration: 2000,
+      }); 
+    })
+    .catch( err => {
+      this.snackBar.open('Could not queue video!', '', {
+        duration: 3500,
+      }); 
+    });
   }
 
   //hhhhhhhhack

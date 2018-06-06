@@ -9,3 +9,9 @@ body{
 	background: black;
 	color: white;
 }
+
+.large-icon{font-size:40px!important; height:35px!important; width:35px!important;}
+
+.flexfill {
+	flex: 1 1 auto;
+}

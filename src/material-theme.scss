@@ -17,7 +17,7 @@ $light-theme: mat-light-theme($light-primary, $light-accent, $light-warn);
 .light-theme {
   @include angular-material-theme($light-theme);
   a{color: black;}
-  #q-ctrl, .playlist-nav, mat-sidenav, .mat-drawer {background-color: white}
+  #q-ctrl, .playlist-nav, mat-sidenav, .mat-drawer, #q-channel {background-color: white}
 }
 
 // Dark Theme
@@ -38,7 +38,7 @@ $dark-theme: mat-dark-theme($dark-primary, $dark-accent, $dark-warn);
 .dark-theme{
   @include angular-material-theme($dark-theme);
   a{color: white;}
-  #q-ctrl, .playlist-nav, mat-sidenav, .mat-drawer, app-queue { background-color: black}
+  #q-ctrl, .playlist-nav, mat-sidenav, .mat-drawer, app-queue, #q-channel { background-color: black}
 }
 
 [mat-button]:hover, [mat-icon-button]:hover, .mat-tab-label:hover{

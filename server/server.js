@@ -41,7 +41,7 @@ io.on('connection', (socket) => {
   socket.on('join_channel', (channel) => { 
     console.log('join_channel data:',channel);
     io.of('/').adapter.allRooms((err, channels) => {
-      console.log('all roomz err:',err,' channels:',channels);
+      // console.log('all roomz err:',err,' channels:',channels);
       if(err){
         socket.emit('join_channel', false);
       }else if(channels.includes(channel)){
@@ -65,6 +65,16 @@ io.on('connection', (socket) => {
     console.log('create_channel channel_id:',channel_id);
     socket.join(channel_id);
     socket.emit('create_channel', channel_id);
+  });
+
+  socket.on('queue', (data) => {
+    console.log('socket queue! socket.rooms:', Object.keys(socket.rooms));
+    for(let room of Object.keys(socket.rooms)){
+      if(room != socket.id){
+        console.log('socket queue! gonna emit to:',room);
+        socket.to(room).emit('queue', data);
+      }
+    }
   });
   
 

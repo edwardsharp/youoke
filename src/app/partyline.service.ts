@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import * as io from 'socket.io-client';
 import { Subject } from 'rxjs';
 import { environment } from '../environments/environment';
-
+import { PlayerService } from './player/player.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +14,7 @@ export class PartylineService {
 
 	private socket;
 
-  constructor() { 
+  constructor(private playerService: PlayerService) { 
   	
   }
 
@@ -31,8 +31,14 @@ export class PartylineService {
   }
 
   connect(): Promise<boolean> {
+    this.socket = io(environment.ws_url);
+    this.socket.on('queue', item => {
+      console.log('[partyline.service] queue item:',item);
+      this.playerService.queueItem(item).then(ok =>{
+        console.log('[partyline.service] queue item ok!!');
+      }).catch(err => console.log('[partyline.service] queue item NOT ok!!!!'));
+    })
     return new Promise( (resolve, reject) => {
-    	this.socket = io(environment.ws_url);
     	this.socket.on('is_connected', (ok:boolean) => {
 	      console.log("is_connected:",ok);
 	      if(ok){
@@ -79,4 +85,5 @@ export class PartylineService {
   reloadChannel(): Promise<string>{
     return this.createChannel();
   }
+
 }
