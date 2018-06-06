@@ -12,7 +12,7 @@ export class SettingsService {
 
 	db: any;
   public needsRefresh = new Subject<boolean>();
-
+  public needsChannelRefresh = new Subject<boolean>();
   constructor() {
   	this.makeDatabase();
     this.connectToDatabase();
@@ -29,7 +29,12 @@ export class SettingsService {
 
     this.db.on('changes', changes => {
       changes.forEach(change => {
-        this.needsRefresh.next(true);
+        console.warn('settings change:',change);
+        if(change.obj && change.obj.name == "channel"){
+          this.needsChannelRefresh.next(true);
+        }else{
+          this.needsRefresh.next(true);
+        }
       });
     });
 

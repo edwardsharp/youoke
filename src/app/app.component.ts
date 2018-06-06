@@ -52,10 +52,18 @@ export class AppComponent {
       this.toolbarHidden = hidden;
     });
 
-    this.settingsService.getSettings().then(settings => this.loadSettings(settings) );
+    this.settingsService.getSettings().then(settings => {
+      this.loadChannel(settings);
+      this.loadSettings(settings);
+    });
     this.settingsService.needsRefresh.subscribe( bool => {
       this.settingsService.getSettings().then(settings => this.loadSettings(settings) );
     });
+    this.settingsService.needsChannelRefresh.subscribe( ok => {
+      this.settingsService.getSettings().then(settings => {
+        this.loadChannel(settings);
+      });
+    })
 
     this.loadPlaylists();
     this.playlistService.needsRefresh.subscribe(bool => this.loadPlaylists() );
@@ -85,6 +93,10 @@ export class AppComponent {
       this.switchTheme(theme.description, false);
     }
 
+    this.loading = false;
+  }
+
+  loadChannel(settings:any):void{
     const _channel = settings.find(s => s.name == 'channel');
     console.log('[app.component] loadSettings _channel:',_channel);
     if(_channel && _channel.description){
@@ -109,8 +121,6 @@ export class AppComponent {
         console.log('partylineService err!');
       });
     }
-
-    this.loading = false;
   }
 
   loadPlaylists(): void {
