@@ -2,18 +2,26 @@ import { Component, OnInit } from '@angular/core';
 
 import { SettingsService } from './settings.service';
 import { Settings } from './settings';
+import { PartylineService } from '../partyline.service';
 
 @Component({
   selector: 'app-settings',
   template:`
 <div class="settings-container">
-  <h1><mat-icon>settings</mat-icon> Settings</h1>
+  <h1>Settings</h1>
 
   <mat-list role="list">
     <mat-list-item role="listitem">
       <h3 matLine><mat-icon>format_paint</mat-icon> Theme</h3>
       <p matLine>
         Dark <mat-slide-toggle (change)="switchTheme()" [(ngModel)]="isLightTheme">Light</mat-slide-toggle>
+      </p>
+    </mat-list-item>
+
+    <mat-list-item role="listitem">
+      <h3 matLine><mat-icon>live_tv</mat-icon> Channel</h3>
+      <p matLine>
+        {{channel}} <button mat-icon-button (click)="reloadChannel()" matTooltip="Generate a new channel ID"><mat-icon>refresh</mat-icon></button>
       </p>
     </mat-list-item>
   </mat-list>
@@ -33,14 +41,19 @@ export class SettingsComponent implements OnInit {
   newSettings: Settings = new Settings("", "");
   rows: Settings[] = [];
   isLightTheme: boolean;
+  channel: string;
 
-  constructor(private settingsService: SettingsService){}
+  constructor(
+    private settingsService: SettingsService,
+    private partylineService: PartylineService
+  ){}
 
   ngOnInit(): void {
     this.loadRows();
     this.settingsService.getTheme().first( (theme:Settings) => {
        this.isLightTheme = theme.description == 'light-theme' ? true : false;
     });
+    this.settingsService.getChannel().first( (channel:Settings) => this.channel = channel.description );
   }
   loadRows(): void {
     this.settingsService.getSettings().then(p => this.rows = p);
@@ -63,6 +76,13 @@ export class SettingsComponent implements OnInit {
   switchTheme(){
     const _theme = this.isLightTheme ? 'light-theme' : 'dark-theme'
     this.settingsService.switchTheme(_theme);
+  }
+
+  reloadChannel(){
+    this.partylineService.reloadChannel().then( channel => {
+      this.channel = channel;
+      this.settingsService.setChannel(channel);
+    });
   }
 
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as io from 'socket.io-client';
-// import { Subject, Observable } from 'rxjs';
+import { Subject } from 'rxjs';
 import { environment } from '../environments/environment';
 
 
@@ -10,6 +10,8 @@ import { environment } from '../environments/environment';
 export class PartylineService {
 
   channel: string;
+  public channelChange = new Subject<string>();
+
 	private socket;
 
   constructor() { 
@@ -48,6 +50,7 @@ export class PartylineService {
         console.log('channel.service create_channel channel:',channel);
         if(channel && channel.length > 0){
           this.channel = channel;
+          this.channelChange.next(channel);
           resolve(channel);
         }else{
           reject(undefined);
@@ -57,4 +60,23 @@ export class PartylineService {
     });
   }
 
+  joinOrCreateChannel(channel: string): Promise<boolean>{
+    return new Promise( (resolve, reject) => {
+      this.socket.on('join_or_create_channel', (ok:boolean) => {
+        console.log('channel.service join_or_create_channel ok:',ok);
+        if(ok){
+          this.channel = channel;
+          this.channelChange.next(channel);
+          resolve(true);
+        }else{
+          reject(false);
+        }
+      });
+      this.socket.emit('join_or_create_channel', channel);
+    });
+  }
+
+  reloadChannel(): Promise<string>{
+    return this.createChannel();
+  }
 }

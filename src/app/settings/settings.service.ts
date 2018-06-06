@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import Dexie from 'dexie';
+import 'dexie-observable';
 import { Subject } from 'rxjs';
 
 import { Settings } from './settings';
@@ -25,6 +26,13 @@ export class SettingsService {
   }
 
   connectToDatabase(): void {
+
+    this.db.on('changes', changes => {
+      changes.forEach(change => {
+        this.needsRefresh.next(true);
+      });
+    });
+
     this.db.open().then( ok => {
       //init some default stuff...
       this.db.settings.where({name: 'leftNav'}).first().then(setting => {
@@ -46,6 +54,14 @@ export class SettingsService {
       this.db.settings.where({name: 'theme'}).first().then(setting => {
         if(!setting){
           setting = new Settings("theme", "dark-theme");
+          this.db.settings.put(setting);
+          this.needsRefresh.next(true);
+        }
+      });
+
+      this.db.settings.where({name: 'channel'}).first().then(setting => {
+        if(!setting){
+          setting = new Settings("channel", undefined);
           this.db.settings.put(setting);
           this.needsRefresh.next(true);
         }
@@ -99,6 +115,16 @@ export class SettingsService {
       setting.description = theme;
       this.db.settings.put(setting).then( ok => this.needsRefresh.next(true));
     });
+  }
+
+  getChannel(){
+    return this.db.settings.where('name').equals('channel');
+  }
+  setChannel(channel:string){
+    this.db.settings.where('name').equals('channel').first( (setting:Settings) => {
+      setting.description = channel;
+      this.db.settings.put(setting).then( ok => { this.needsRefresh.next(true) });
+    })
   }
 
 }

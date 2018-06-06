@@ -12,7 +12,7 @@ import { PlayerService } from './player.service';
 </div>
 `, styles: [
   'app-video-player{flex: 2}', 
-  'app-queue{ flex: 1; max-width: 150px; max-height: 90vh; overflow: scroll;}']
+  'app-queue{ flex: 1; max-width: 150px; height: 100vh; overflow: scroll;}']
 })
 export class PlayerComponent implements OnInit {
 

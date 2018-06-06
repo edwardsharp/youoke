@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { PlayerService } from '../player/player.service';
+import { PartylineService } from '../partyline.service';
 
 @Component({
   selector: 'app-queue',
@@ -13,6 +14,9 @@ import { PlayerService } from '../player/player.service';
     </div>
     <button *ngIf="!hideCtrl" (click)="removeItem(item)" mat-icon-button matTooltip="Remove {{item.name}}"><mat-icon>remove_from_queue</mat-icon></button>
 	</div>
+</div>
+<div id="q-channel" *ngIf="hideCtrl">
+  <h1>{{channel}}</h1>
 </div>
 <div id="q-ctrl" *ngIf="!hideCtrl && currentlyPlaying && rows && rows.length > 0">
 	<button mat-icon-button 
@@ -67,6 +71,7 @@ import { PlayerService } from '../player/player.service';
 	'#rows{overflow:scroll; height:calc(100vh - 64px - 40px - 260px);}',
 	'.item{display:flex; justify-content:flex-end; align-items:center; border-bottom:thin solid #eaeaea; height: 50px; margin-right: 1em;}',
   '#q-ctrl{position:sticky; z-index:2; bottom:0; display:flex; justify-content:space-around;}',
+  '#q-channel{position:absolute; bottom:0; padding-left:15px;}',
   'mat-slider{height: 70px; top:15px}',
   '.video{overflow:hidden; text-overflow:ellipsis; min-height:40px; max-height:54px; padding:0 5px; width:100%; display:inline-grid; align-items:center;}'
  ]
@@ -77,9 +82,13 @@ export class QueueComponent implements OnInit {
 	rows: Array<any> = [];
 	currentlyPlaying: any;
 
+  channel: string;
 	private level: number;
 
-  constructor(private playerService: PlayerService) { }
+  constructor(
+    private playerService: PlayerService,
+    private partylineService: PartylineService
+  ) { }
 
   ngOnInit() {
   	this.playerService.getRows().then(rows => {
@@ -111,6 +120,8 @@ export class QueueComponent implements OnInit {
   			this.playerService.loadYtVideo(undefined);
   		}
     });
+
+    this.partylineService.channelChange.subscribe( channel => this.channel = channel);
   }
 
   clearQ(){

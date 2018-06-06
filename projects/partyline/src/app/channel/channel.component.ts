@@ -59,16 +59,18 @@ export class ChannelComponent implements OnInit {
     this.channelService.joinChannel(this.channel).then( ok => {
       console.log('channel.component joinChannel ok:',ok);
       this.channelError = false;
+      this.connected = true;
+      if(!this.ytInitialized){
+        this.ytSearchService.initYtSearch();
+        this.ytSearchService.searchReady.subscribe( ready => {
+          this.ytInitialized = true;
+        });
+      }
     }).catch( err => {
       this.channelError = true;
+      this.connected = false;
     });
-    // this.connected = true;
-    // if(!this.ytInitialized){
-    //   this.ytSearchService.initYtSearch();
-    //   this.ytSearchService.searchReady.subscribe( ready => {
-    //     this.ytInitialized = true;
-    //   });
-    // }
+    
   }
 
 }

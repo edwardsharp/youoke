@@ -60,20 +60,8 @@ export class AppComponent {
     this.loadPlaylists();
     this.playlistService.needsRefresh.subscribe(bool => this.loadPlaylists() );
     this.playlistService.playlistSelectionChange.subscribe(id => this.selectedPlaylistId = id );
-    this.partylineService.init().then( ok => {
-      this.partylineService.connect().then( (ok:boolean) => {
-        this.partylineService.createChannel().then( (channel:string) => {
-          this.channel = channel;
-        }).catch(err => {
-          console.log('create_channel err!');
-        });
-      }).catch( err => {
-        console.log('connect err!');
-      });
-    }).catch( err => {
-      console.log('partyline init err!');
-    });
     
+    // this.partylineService.channelChange.subscribe( channel => this.channel = channel);
   }
 
   loadSettings(settings: any): void{
@@ -95,6 +83,31 @@ export class AppComponent {
     if(theme){
       this.theme = theme.description;
       this.switchTheme(theme.description, false);
+    }
+
+    const _channel = settings.find(s => s.name == 'channel');
+    console.log('[app.component] loadSettings _channel:',_channel);
+    if(_channel && _channel.description){
+      this.partylineService.init().then( ok => {
+        this.partylineService.connect().then( (ok:boolean) => {
+          this.partylineService.joinOrCreateChannel(_channel.description).then( ok => {
+            this.channel = _channel.description;
+          });
+        });
+      }).catch( err => {
+        console.log('partylineService err!');
+      });
+
+    }else{
+      this.partylineService.init().then( ok => {
+        this.partylineService.connect().then( (ok:boolean) => {
+          this.partylineService.createChannel().then( (channel:string) => {
+            this.settingsService.setChannel(channel);
+          });
+        });
+      }).catch( err => {
+        console.log('partylineService err!');
+      });
     }
 
     this.loading = false;

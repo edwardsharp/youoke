@@ -52,6 +52,13 @@ io.on('connection', (socket) => {
       }
     });
   });
+
+  socket.on('join_or_create_channel', (channel) => { 
+    console.log('join_or_create_channel data:',channel);
+    socket.join(channel);
+    socket.emit('join_or_create_channel', true);
+  });
+  
   
   socket.on('create_channel', (data) => {
     const channel_id = crypto.randomBytes(3).toString('hex');
