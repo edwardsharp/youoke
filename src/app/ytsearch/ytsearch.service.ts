@@ -8,12 +8,10 @@ import { Settings } from '../settings/settings';
   providedIn: 'root'
 })
 export class YTSearchService {
-
-	public ready: boolean;
+  
 	public searchReady = new Subject<any>();
-
+  private ready: boolean;
   private yt_api_key: string;
-
 
   // The client ID is obtained from the {{ Google Cloud Console }}
   // at {{ https://cloud.google.com/console }}.
@@ -77,7 +75,7 @@ export class YTSearchService {
   }
 
   search(q: string, nextPageToken?: string, maxResults?: number): Promise<any> {
-  	//#todo: model window objectz?
+  	//#todo: model window objectz? avoid soft/weak window["gapi"] ref
 	  const request = window["gapi"].client.youtube.search.list({
 	    q: q,
       maxResults: maxResults,
