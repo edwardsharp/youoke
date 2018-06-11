@@ -2,6 +2,8 @@
 
 karatube? youaoke? karayouoketube?? dunno. create a queue of youtube videos, maybe they're karaoke videoz. maybe you got a mic. ...maybe
 
+[edwardsharp.github.io/youoke](https://edwardsharp.github.io/youoke/)
+
 ### Google API
 
 Turn on the YouTube Data API
