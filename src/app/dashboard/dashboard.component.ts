@@ -13,7 +13,7 @@ import { LibraryService } from '../library/library.service';
   selector: 'app-dashboard',
   template:`
 
-<mat-tab-group (selectedTabChange)="selectedTabChange($event)">
+<mat-tab-group (selectedTabChange)="selectedTabChange($event)" [(selectedIndex)]="selectedIndex">
   
   <mat-tab label="Library">
     <div class="flex-col-center">
@@ -50,6 +50,8 @@ export class DashboardComponent implements OnInit {
   ytInitialized: boolean;
   playlists: Array<Playlist>;
 
+  private selectedIndex: number;
+
   constructor(
     private ytSearchService: YTSearchService,
     private playlistService: PlaylistService,
@@ -75,8 +77,13 @@ export class DashboardComponent implements OnInit {
         this.ytSearchService.initYtSearch()
         .catch(err => {
           console.warn('initYtSearch failed!');
+          let snackRef = this.snackBar.open('You need to set a YT API Key first!', 'Settings');
+          snackRef.onAction().subscribe(() => {
+            this.selectedIndex = 2;
+          });
         });
         this.ytSearchService.searchReady.subscribe( ready => {
+          console.log('ytSearchService.searchReady ready:',ready);
           this.ytInitialized = true;
         });
       }
