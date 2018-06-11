@@ -11,6 +11,17 @@ import { PartylineService } from '../partyline.service';
   <h1>Settings</h1>
 
   <mat-list role="list">
+    
+    <mat-list-item role="listitem">
+      <h3 matLine><mat-icon>vpn_key</mat-icon> YouTube API Key</h3>
+      <p matLine>
+        
+        <mat-form-field>
+          <input matInput [(ngModel)]="yt_api_key" (change)="ytApiKeyChange()">
+        </mat-form-field>
+      </p>
+    </mat-list-item>
+
     <mat-list-item role="listitem">
       <h3 matLine><mat-icon>format_paint</mat-icon> Theme</h3>
       <p matLine>
@@ -42,6 +53,7 @@ export class SettingsComponent implements OnInit {
   rows: Settings[] = [];
   isLightTheme: boolean;
   channel: string;
+  yt_api_key: string;
 
   constructor(
     private settingsService: SettingsService,
@@ -54,24 +66,25 @@ export class SettingsComponent implements OnInit {
        this.isLightTheme = theme.description == 'light-theme' ? true : false;
     });
     this.settingsService.getChannel().first( (channel:Settings) => this.channel = channel.description );
+    this.settingsService.getYtApiKey().first( (setting:Settings) => this.yt_api_key = setting.description );
   }
   loadRows(): void {
     this.settingsService.getSettings().then(p => this.rows = p);
   }
 
-  addRow(settings: Settings): void {
-    this.settingsService.addRow({
-      name: settings.name,
-      description: settings.description
-    }).then(ok => {
-      this.loadRows();
-      this.newSettings = new Settings("", "");
-    });
-  }
+  // addRow(settings: Settings): void {
+  //   this.settingsService.addRow({
+  //     name: settings.name,
+  //     description: settings.description
+  //   }).then(ok => {
+  //     this.loadRows();
+  //     this.newSettings = new Settings("", "");
+  //   });
+  // }
 
-  clearRows(){
-    this.settingsService.clearRows();
-  }
+  // clearRows(){
+  //   this.settingsService.clearRows();
+  // }
 
   switchTheme(){
     const _theme = this.isLightTheme ? 'light-theme' : 'dark-theme'
@@ -83,6 +96,10 @@ export class SettingsComponent implements OnInit {
       this.channel = channel;
       this.settingsService.setChannel(channel);
     });
+  }
+
+  ytApiKeyChange(){
+    this.settingsService.setYtApiKey(this.yt_api_key).then( setting => this.yt_api_key = setting.description );
   }
 
 }

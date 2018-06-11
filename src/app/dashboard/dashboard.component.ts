@@ -72,7 +72,10 @@ export class DashboardComponent implements OnInit {
   selectedTabChange(event: MatTabChangeEvent){
     if(event && event.index == 1){
       if(!this.ytInitialized){
-        this.ytSearchService.initYtSearch();
+        this.ytSearchService.initYtSearch()
+        .catch(err => {
+          console.warn('initYtSearch failed!');
+        });
         this.ytSearchService.searchReady.subscribe( ready => {
           this.ytInitialized = true;
         });

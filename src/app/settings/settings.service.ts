@@ -40,6 +40,13 @@ export class SettingsService {
 
     this.db.open().then( ok => {
       //init some default stuff...
+      this.db.settings.where({name: 'yt_api_key'}).first().then(setting => {
+        if(!setting){
+          setting = new Settings("yt_api_key", undefined);
+          this.db.settings.put(setting);
+          this.needsRefresh.next(true);
+        }
+      });
       this.db.settings.where({name: 'leftNav'}).first().then(setting => {
         if(!setting){
           setting = new Settings("leftNav", "");
@@ -128,8 +135,21 @@ export class SettingsService {
   setChannel(channel:string){
     this.db.settings.where('name').equals('channel').first( (setting:Settings) => {
       setting.description = channel;
-      this.db.settings.put(setting).then( ok => { this.needsRefresh.next(true) });
+      this.db.settings.put(setting).then( ok => this.needsRefresh.next(true) );
     })
+  }
+
+  getYtApiKey(){
+    return this.db.settings.where('name').equals('yt_api_key');
+  }
+  setYtApiKey(yt_api_key:string): Promise<Settings>{
+    return new Promise( (resolve, reject) => {
+      this.db.settings.where('name').equals('yt_api_key').first( (setting:Settings) => {
+        setting.description = yt_api_key;
+        this.db.settings.put(setting).then( ok => resolve(setting) );
+      });
+    })
+    
   }
 
 }
