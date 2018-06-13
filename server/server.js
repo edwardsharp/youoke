@@ -3,16 +3,17 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const path = require('path');
-const bodyParser = require('body-parser');
 const crypto = require('crypto');
 
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
-// const io = require('socket.io')(3000);
-const redisAdapter = require('socket.io-redis');
-io.adapter(redisAdapter({ host: 'localhost', port: 6379 }));
 
-app.use(bodyParser.json()); // for parsing application/json
+// REDIS
+// const redisAdapter = require('socket.io-redis');
+// io.adapter(redisAdapter({ host: 'localhost', port: 6379 }));
+
+// const bodyParser = require('body-parser');
+// app.use(bodyParser.json()); // for parsing application/json
 
 const corsOptions = {
   origin: [ 
@@ -90,8 +91,6 @@ io.on('connection', (socket) => {
   // });
 
 });
-
-
 
 
 //boot.
