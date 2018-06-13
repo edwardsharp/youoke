@@ -34,6 +34,15 @@ _-or-_
 
 :zap:
 
+### socket server
+
+`cd server/`
+`npm start`
+
+socket server will be available, by default, on port 8091 
+
+see: [server/README.md](server/README.md)
+
 ### [Angular CLI](https://github.com/angular/angular-cli) version 6.0.3.
 
 #### Development server
