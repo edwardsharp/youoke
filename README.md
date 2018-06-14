@@ -25,11 +25,11 @@ In the future, _hopefully_, there will be more integration with the YouTube API,
 
 ### Development environment 
 
-Run `ng serve` for a the main YOUOKE project. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Run `ng serve` for the main YOUOKE project. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
 Run `ng serve partyline --port 4201` to start the partyline project that allows people to search & queue song requests.
 
-Run `npm start` to start the ElectronJS dev env.
+Run `npm start` to start the ElectronJS & Angular dev env.
 
 #### Code scaffolding
 
@@ -39,8 +39,6 @@ note: use `--module=app` e.g. `ng generate @angular/material:material-nav --name
 
 #### Build
 
-##### [Angular CLI](https://github.com/angular/angular-cli) 
-
 Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
 
 `ng build -aot --prod`
@@ -49,8 +47,8 @@ for electronjs:
 `ng build --base-href=""`  
 `ng build --aot --prod --base-href=""`
 
-_-or_  
-`npm run webbuild` which is: `ng build --aot --prod --base-href=/app/`  
+_-or-_  
+`npm run webbuild` which is: `ng build --aot --prod --base-href=''`  
 `npm run partylinebuild` which is: `ng build --aot --prod partyline`  
 `npm run partylinedev` which is: `ng serve partyline --port 4201`
 `npm run electronbuild` which is: `electron-builder . -m` (build mac osx package)
@@ -81,3 +79,12 @@ Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.
 __end-to-end tests__
 
 Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+
+#### MISC
+
+This project is built with: 
+
+* [Angular CLI](https://github.com/angular/angular-cli) 
+* [Angular Material](https://material.angular.io/)
+* [Electron](https://electronjs.org/)
+* [Dexie](http://dexie.org/)
