@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const electron = require('electron');
 const os = require('os');
 const fs = require('fs');
@@ -15,7 +15,41 @@ if (!fs.existsSync(HOMEDIR)){
   fs.mkdirSync(HOMEDIR);
 }
 
+
+const menuTemplate = [
+  {
+    label: app.getName(),
+    submenu: [
+      {role: 'hide'},
+      {role: 'hideothers'},
+      {role: 'unhide'},
+      {type: 'separator'},
+      {
+        label: 'Show Dev Tools',
+        click() {mainWindow.webContents.openDevTools()}
+      },
+      {type: 'separator'},
+      {role: 'quit'}
+    ]
+  },
+  {
+    label: "Edit",
+    submenu: [
+        { label: "Undo", accelerator: "CmdOrCtrl+Z", selector: "undo:" },
+        { label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
+        { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
+        { label: "Copy", accelerator: "CmdOrCtrl+C", selector: "copy:" },
+        { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
+        { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
+    ]
+  }
+]
+
+const menu = Menu.buildFromTemplate(menuTemplate)
+
 const createWindow = async () => {
+  Menu.setApplicationMenu(menu)
+
   // Create the browser window.
   const {width, height} = electron.screen.getPrimaryDisplay().workAreaSize;
   
