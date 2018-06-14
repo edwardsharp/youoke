@@ -29,6 +29,8 @@ Run `ng serve` for a the main YOUOKE project. Navigate to `http://localhost:4200
 
 Run `ng serve partyline --port 4201` to start the partyline project that allows people to search & queue song requests.
 
+Run `npm start` to start the ElectronJS dev env.
+
 #### Code scaffolding
 
 Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
@@ -46,6 +48,12 @@ Run `ng build` to build the project. The build artifacts will be stored in the `
 for electronjs:  
 `ng build --base-href=""`  
 `ng build --aot --prod --base-href=""`
+
+_-or_  
+`npm run webbuild` which is: `ng build --aot --prod --base-href=/app/`  
+`npm run partylinebuild` which is: `ng build --aot --prod partyline`  
+`npm run partylinedev` which is: `ng serve partyline --port 4201`
+`npm run electronbuild` which is: `electron-builder . -m` (build mac osx package)
 
 ##### electronjs
 

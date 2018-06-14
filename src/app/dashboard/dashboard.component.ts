@@ -49,8 +49,7 @@ export class DashboardComponent implements OnInit {
 
   ytInitialized: boolean;
   playlists: Array<Playlist>;
-
-  private selectedIndex: number;
+  selectedIndex: number;
 
   constructor(
     private ytSearchService: YTSearchService,

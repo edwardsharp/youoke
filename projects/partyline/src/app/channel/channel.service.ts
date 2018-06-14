@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import * as io from 'socket.io-client';
-// import { Subject, Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
 import Dexie from 'dexie';
 import { Subject } from 'rxjs';
+
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'

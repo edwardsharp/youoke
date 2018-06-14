@@ -1,6 +1,6 @@
 {
   "name": "youoke",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "productName": "youoke",
   "author": "3dwardsharp",
   "license": "GPL-3.0",
@@ -20,9 +20,10 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "webbuild": "ng build --aot --prod --base-href=/app/",
+    "webbuild": "ng build --aot --prod --base-href=''",
     "partylinebuild": "ng build --aot --prod partyline",
-    "partylinedev": "ng serve partyline --port 4201"
+    "partylinedev": "ng serve partyline --port 4201",
+    "electronbuild": "electron-builder . -m"
   },
   "main": "main.js",
   "build": {
