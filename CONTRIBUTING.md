@@ -2,9 +2,14 @@
 
 ohai! :wave: Thanks for considering contributing to YOUOKE. Please have a quick look at the [Code Of Conduct](CODE_OF_CONDUCT.md) and the rest of this document before diving in.
 
+Keep in mind:  
+1. [@edwardsharp](https://github.com/edwardsharp) is pretty much the BDFL
+2. this project is not inteded to make money or be used to make money
+3. this project IS intended to be FUN & FUNNY; please keep a light heart and open mind
+
 ## What kinds of contributions is YOUOKE looking for?
 
-This is an open source project that's intended to be FUN & FUNNY! Please keep a light heart and open mind. There are many way to contribute: improving documentation, submitted bug reports or freature requests, or writing code.
+There are many way to contribute: improving documentation, submitted bug reports or freature requests, or writing code.
 
 # Your First Contribution
 
