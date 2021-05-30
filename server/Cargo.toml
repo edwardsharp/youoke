@@ -11,3 +11,5 @@ tungstenite = "0.13.0"
 log = "0.4.14"
 env_logger = "0.8.3"
 url = "2.2.2"
+serde_json = "1.0"
+serde = {version = "1.0", features = ["derive"]}

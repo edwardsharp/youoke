@@ -1,10 +1,18 @@
+use log::*;
+use serde::{Deserialize, Serialize};
+// use serde_json;
 use std::{
     net::{TcpListener, TcpStream},
     thread::spawn,
 };
-
-use log::*;
 use tungstenite::{accept, handshake::HandshakeRole, Error, HandshakeError, Message, Result};
+
+#[derive(Serialize, Deserialize)]
+struct Room {
+    room_id: String,
+    queue: Vec<String>,
+    info: String,
+}
 
 fn must_not_block<Role: HandshakeRole>(err: HandshakeError<Role>) -> Error {
     match err {
@@ -18,7 +26,8 @@ fn must_not_block<Role: HandshakeRole>(err: HandshakeError<Role>) -> Error {
 
 fn handle_client(stream: TcpStream) -> Result<()> {
     let mut socket = accept(stream).map_err(must_not_block)?;
-    info!("Running test");
+    info!("socket server ready to handle_client!");
+
     loop {
         match socket.read_message()? {
             msg @ Message::Text(_) | msg @ Message::Binary(_) => {
@@ -61,35 +70,58 @@ mod tests {
 
     #[test]
     fn test_local() {
-        // env_logger::init();
-        println!("gonna test main!");
-        // let main = main();
         spawn(|| {
             main();
         });
 
-        // give the spawn threada a lil time to start...
+        // give the spawn thread a lil time to start...
         sleep(Duration::from_millis(100));
 
-        println!("zomg, okay, done with main");
-
-        let (mut socket, response) =
+        let (mut socket, _) =
             connect(Url::parse("ws://127.0.0.1:9002").unwrap()).expect("Can't connect");
 
-        println!("Connected to the server");
-        println!("Response HTTP code: {}", response.status());
-        println!("Response contains the following headers:");
-        for (ref header, _value) in response.headers() {
-            println!("* {}", header);
-        }
+        // println!("Connected to the server");
+        // println!("Response HTTP code: {}", response.status());
+        // println!("Response contains the following headers:");
+        // for (ref header, _value) in response.headers() {
+        //     println!("* {}", header);
+        // }
 
         socket
             .write_message(Message::Text("Hello WebSocket".into()))
             .unwrap();
 
-        let msg = socket.read_message().expect("Error reading message");
-        println!("Received: {}", msg);
+        let msg = socket
+            .read_message()
+            .expect("Panic! reading socket message");
+        // println!("Received: {}", msg);
         assert_eq!(msg, Message::Text("Hello WebSocket".into()));
+
+        let address = Room {
+            room_id: "some-room".to_owned(),
+            queue: vec!["some".to_owned(), "queue".to_owned()],
+            info: "zomg this info".to_owned(),
+        };
+
+        socket
+            .write_message(Message::Text(serde_json::to_string(&address).unwrap()))
+            .unwrap();
+        let msg = socket
+            .read_message()
+            .expect("Panic! reading socket message");
+        let msg = match msg {
+            tungstenite::Message::Text(s) => s,
+            _ => {
+                panic!()
+            }
+        };
+        let parsed: serde_json::Value = serde_json::from_str(&msg).expect("Can't parse to JSON");
+        println!("parsed: {:?}", parsed);
+
+        // let s = serde_json::to_string(&address).unwrap();
+
+        assert_eq!(serde_json::to_value(&address).unwrap(), parsed);
+
         socket.close(None).unwrap()
     }
 }
