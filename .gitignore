@@ -45,3 +45,5 @@ Thumbs.db
 /release
 /Gemfile.lock
 /Gemfile
+/server/target
+/target
