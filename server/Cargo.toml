@@ -8,6 +8,10 @@ edition = "2018"
 
 [dependencies]
 tungstenite = "0.13.0"
+tokio-tungstenite = "0.14.0"
+futures-channel = "0.3.15"
+futures-util = "0.3.15"
+tokio = { version = "1.6.1", features = ["full"] }
 log = "0.4.14"
 env_logger = "0.8.3"
 url = "2.2.2"

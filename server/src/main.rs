@@ -1,11 +1,20 @@
-use log::*;
+use std::{
+    collections::HashMap,
+    env,
+    io::Error as IoError,
+    net::SocketAddr,
+    sync::{Arc, Mutex},
+};
+
+use futures_channel::mpsc::{unbounded, UnboundedSender};
+use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
+
+use tokio::net::{TcpListener, TcpStream};
+use tungstenite::protocol::Message;
+
 use serde::{Deserialize, Serialize};
 // use serde_json;
-use std::{
-    net::{TcpListener, TcpStream},
-    thread::spawn,
-};
-use tungstenite::{accept, handshake::HandshakeRole, Error, HandshakeError, Message, Result};
+use log::*;
 
 #[derive(Serialize, Deserialize)]
 struct Room {
@@ -14,56 +23,71 @@ struct Room {
     info: String,
 }
 
-fn must_not_block<Role: HandshakeRole>(err: HandshakeError<Role>) -> Error {
-    match err {
-        HandshakeError::Interrupted(_) => panic!("Bug: blocking socket would block"),
-        HandshakeError::Failure(f) => {
-            info!("handshake err? {:?}", f);
-            f
+type Tx = UnboundedSender<Message>;
+type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
+
+async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: SocketAddr) {
+    info!("incoming TCP connection from: {}", addr);
+    let ws_stream = tokio_tungstenite::accept_async(raw_stream)
+        .await
+        .expect("error during the websocket handshake occurred");
+    info!("WebSocket connection established: {}", addr);
+    let (tx, rx) = unbounded();
+    // insert the write (tx) part of this peer to the peer map.
+    peer_map.lock().unwrap().insert(addr, tx);
+    let (outgoing, incoming) = ws_stream.split();
+    let broadcast_incoming = incoming.try_for_each(|msg| {
+        info!(
+            "ohey! received a message from {}: {}",
+            addr,
+            msg.to_text().unwrap()
+        );
+        let peers = peer_map.lock().unwrap();
+
+        // broadcast the message to everyone except ourself
+        // which i guess is the sender, too.
+        let broadcast_recipients = peers
+            .iter()
+            .filter(|(peer_addr, _)| peer_addr != &&addr)
+            .map(|(_, ws_sink)| ws_sink);
+
+        for recp in broadcast_recipients {
+            recp.unbounded_send(msg.clone()).unwrap();
         }
-    }
+
+        future::ok(())
+    });
+    let receive_from_others = rx.map(Ok).forward(outgoing);
+    pin_mut!(broadcast_incoming, receive_from_others);
+    future::select(broadcast_incoming, receive_from_others).await;
+    info!("{} disconnected", &addr);
+    peer_map.lock().unwrap().remove(&addr);
 }
 
-fn handle_client(stream: TcpStream) -> Result<()> {
-    let mut socket = accept(stream).map_err(must_not_block)?;
-    info!("socket server ready to handle_client!");
-
-    loop {
-        match socket.read_message()? {
-            msg @ Message::Text(_) | msg @ Message::Binary(_) => {
-                info!("got msg! {:?}", msg);
-                socket.write_message(msg)?;
-            }
-            Message::Ping(_) | Message::Pong(_) | Message::Close(_) => {}
-        }
+#[tokio::main]
+async fn main() -> Result<(), IoError> {
+    let addr = match env::var_os("WS_ADDRESS") {
+        Some(val) => val.into_string().unwrap(),
+        None => "127.0.0.1:9001".to_string(),
+    };
+    let state = PeerMap::new(Mutex::new(HashMap::new()));
+    // setup the event loop and TCP listener
+    let try_socket = TcpListener::bind(&addr).await;
+    let listener = try_socket.expect("onoz! failed to bind to address and port!");
+    println!("youoke ws server is listening on: {}", addr);
+    // spawn the handling of each connection in a separate task.
+    while let Ok((stream, addr)) = listener.accept().await {
+        tokio::spawn(handle_connection(state.clone(), stream, addr));
     }
-}
-
-fn main() {
-    env_logger::init();
-
-    let server = TcpListener::bind("127.0.0.1:9002").unwrap();
-
-    for stream in server.incoming() {
-        spawn(move || match stream {
-            Ok(stream) => {
-                if let Err(err) = handle_client(stream) {
-                    warn!("onoz! err: {}", err);
-                    match err {
-                        Error::ConnectionClosed | Error::Protocol(_) | Error::Utf8 => (),
-                        e => error!("test: {}", e),
-                    }
-                }
-            }
-            Err(e) => error!("Error accepting stream: {}", e),
-        });
-    }
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
     use std::thread::sleep;
+    use std::thread::spawn;
     use std::time::Duration;
     use tungstenite::{connect, Message};
     use url::Url;
@@ -71,57 +95,51 @@ mod tests {
     #[test]
     fn test_local() {
         spawn(|| {
-            main();
+            main().expect("test can spawn on main()!");
         });
 
         // give the spawn thread a lil time to start...
         sleep(Duration::from_millis(100));
 
-        let (mut socket, _) =
-            connect(Url::parse("ws://127.0.0.1:9002").unwrap()).expect("Can't connect");
+        let (mut socket, _) = connect(Url::parse("ws://127.0.0.1:9001").unwrap())
+            .expect("test can't connect to socket!");
 
-        // println!("Connected to the server");
-        // println!("Response HTTP code: {}", response.status());
-        // println!("Response contains the following headers:");
-        // for (ref header, _value) in response.headers() {
-        //     println!("* {}", header);
-        // }
+        let (mut socket2, _) = connect(Url::parse("ws://127.0.0.1:9001").unwrap())
+            .expect("test can't connect to socket!");
 
         socket
             .write_message(Message::Text("Hello WebSocket".into()))
             .unwrap();
 
-        let msg = socket
+        let msg = socket2
             .read_message()
-            .expect("Panic! reading socket message");
-        // println!("Received: {}", msg);
+            .expect("test panic! reading socket message");
         assert_eq!(msg, Message::Text("Hello WebSocket".into()));
 
-        let address = Room {
+        let room = Room {
             room_id: "some-room".to_owned(),
             queue: vec!["some".to_owned(), "queue".to_owned()],
-            info: "zomg this info".to_owned(),
+            info: "zomg this is info".to_owned(),
         };
 
         socket
-            .write_message(Message::Text(serde_json::to_string(&address).unwrap()))
+            .write_message(Message::Text(serde_json::to_string(&room).unwrap()))
             .unwrap();
-        let msg = socket
+        let msg = socket2
             .read_message()
-            .expect("Panic! reading socket message");
+            .expect("test panic! reading socket message");
         let msg = match msg {
             tungstenite::Message::Text(s) => s,
             _ => {
                 panic!()
             }
         };
-        let parsed: serde_json::Value = serde_json::from_str(&msg).expect("Can't parse to JSON");
-        println!("parsed: {:?}", parsed);
+        let parsed: serde_json::Value =
+            serde_json::from_str(&msg).expect("test panic! can't parse to JSON");
 
-        // let s = serde_json::to_string(&address).unwrap();
+        assert_eq!(serde_json::to_value(&room).unwrap(), parsed);
 
-        assert_eq!(serde_json::to_value(&address).unwrap(), parsed);
-
-        socket.close(None).unwrap()
+        socket.close(None).unwrap();
+        socket2.close(None).unwrap();
     }
 }

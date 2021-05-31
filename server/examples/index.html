@@ -6,7 +6,7 @@
 	</head>
 	<body>
 		<script>
-			var socket = new WebSocket("ws://localhost:9002");
+			var socket = new WebSocket("ws://localhost:9001");
 			socket.onmessage = function (event) {
 				var received = document.getElementById("received");
 				var br = document.createElement("BR");
