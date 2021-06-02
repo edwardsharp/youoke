@@ -51,27 +51,45 @@ enum Request {
     Queue { id: String, singer: String },
     DeQueue { id: String },
     QueuePosition { id: String, position: i32 },
+    Error,
 }
 
-fn parse_room_message() -> serde_json::Result<()> {
-    // Some JSON input data as a &str. Maybe this comes from the user.
-    let data = r#"
-        {
-            "room_id": "default",
-            "queue": ["some", "queue"],
-            "info": "oh heyyyy"
-        }"#;
-
-    // parse the string of data into a Room object.
-    // note: this will make all fields requied
-    // will throw error if not included
-    // but extra fields don't matter.
-    let room: Room = serde_json::from_str(data)?;
-
-    println!(
-        "room: {} top-0-queue item: {:#?}",
-        room.room_id, room.queue[0]
+fn parse_message(
+    msg: Message,
+    peer_map: PeerMap,
+    room_mutex: RoomMutex,
+    addr: SocketAddr,
+) -> Result<(), Box<dyn std::error::Error>> {
+    info!(
+        "ohey! parse_message received a message from {}: {}",
+        addr,
+        msg.to_text().unwrap()
     );
+    let request: Request = serde_json::from_str(msg.to_text().unwrap()).unwrap_or(Request::Error);
+
+    match request {
+        Request::Error => error!("zomg request was error!"),
+        Request::GetQueue => info!("GetQueue"),
+        Request::Queue { id, singer } => info!("Queue id:{} singer:{}", id, singer),
+        Request::DeQueue { id } => info!("DeQueue id:{}", id),
+        Request::QueuePosition { id, position } => {
+            info!("QueuePosition id:{} position:{}", id, position)
+        }
+    }
+
+    let peers = peer_map.lock().unwrap();
+    let room = room_mutex.clone();
+    info!("room clone: {:#?}", room);
+
+    // broadcast the message to everyone except sender
+    let broadcast_recipients = peers
+        .iter()
+        .filter(|(peer_addr, _)| peer_addr != &&addr)
+        .map(|(_, ws_sink)| ws_sink);
+
+    for recp in broadcast_recipients {
+        recp.unbounded_send(msg.clone()).unwrap();
+    }
 
     Ok(())
 }
@@ -92,26 +110,10 @@ async fn handle_connection(
     peer_map.lock().unwrap().insert(addr, tx);
     let (outgoing, incoming) = ws_stream.split();
     let broadcast_incoming = incoming.try_for_each(|msg| {
-        info!(
-            "ohey! received a message from {}: {}",
-            addr,
-            msg.to_text().unwrap()
-        );
-
-        let peers = peer_map.lock().unwrap();
-        let room = room_mutex.clone();
-        info!("room clone: {:#?}", room);
-
-        // broadcast the message to everyone except sender
-        let broadcast_recipients = peers
-            .iter()
-            .filter(|(peer_addr, _)| peer_addr != &&addr)
-            .map(|(_, ws_sink)| ws_sink);
-
-        for recp in broadcast_recipients {
-            recp.unbounded_send(msg.clone()).unwrap();
-        }
-
+        match parse_message(msg, peer_map.clone(), room_mutex.clone(), addr) {
+            Err(e) => error!("zomg parse_message caught error: {:#?}", e),
+            Ok(_) => info!("parsed msg..."),
+        };
         future::ok(())
     });
     let receive_from_others = rx.map(Ok).forward(outgoing);
@@ -130,7 +132,7 @@ async fn main() -> Result<(), IoError> {
     };
     let peer_map = PeerMap::new(Mutex::new(HashMap::new()));
     let default_room = Room {
-        room_id: "default".to_owned(),
+        room_id: "lobby".to_owned(),
         info: "the default room".to_owned(),
         queue: vec![],
     };
@@ -163,6 +165,7 @@ mod tests {
 
     #[test]
     fn test_local() {
+        env::set_var("RUST_LOG", "info");
         spawn(|| {
             main().expect("test can spawn on main()!");
         });
@@ -185,21 +188,33 @@ mod tests {
             .expect("test panic! reading socket message");
         assert_eq!(msg, Message::Text("Hello WebSocket".into()));
 
-        let q_item = QueueItem {
-            id: "some-id".to_owned(),
-            title: "some title".to_owned(),
-            singer: "some singer".to_owned(),
-            timestamp: 1234567890,
-            status: QueueItemStatus::Pending,
-        };
-        let room = Room {
-            room_id: "some-room".to_owned(),
-            queue: vec![q_item],
-            info: "zomg this is info".to_owned(),
+        // let q_item = QueueItem {
+        //     id: "some-id".to_owned(),
+        //     title: "some title".to_owned(),
+        //     singer: "some singer".to_owned(),
+        //     timestamp: 1234567890,
+        //     status: QueueItemStatus::Pending,
+        // };
+        // let room = Room {
+        //     room_id: "some-room".to_owned(),
+        //     queue: vec![q_item],
+        //     info: "zomg this is info".to_owned(),
+        // };
+
+        let queue_req = r#"{
+            "Queue":{
+                "id":"xxx666",
+                "singer":"frankie frankie"
+            }
+        }"#;
+
+        let request: Request = Request::Queue {
+            id: "xxx666".to_owned(),
+            singer: "frankie frankie".to_owned(),
         };
 
         socket
-            .write_message(Message::Text(serde_json::to_string(&room).unwrap()))
+            .write_message(Message::Text(queue_req.to_owned()))
             .unwrap();
         let msg = socket2
             .read_message()
@@ -210,10 +225,12 @@ mod tests {
                 panic!()
             }
         };
-        let parsed: serde_json::Value =
-            serde_json::from_str(&msg).expect("test panic! can't parse to JSON");
+        let parsed: Request = serde_json::from_str(&msg).expect("test panic! can't parse to JSON");
 
-        assert_eq!(serde_json::to_value(&room).unwrap(), parsed);
+        assert_eq!(
+            serde_json::to_value(&request).unwrap(),
+            serde_json::json!(parsed)
+        );
 
         socket.close(None).unwrap();
         socket2.close(None).unwrap();
