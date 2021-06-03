@@ -22,11 +22,13 @@ use serde_json;
 #[derive(Serialize, Deserialize, Debug)]
 struct Room {
     room_id: String,
-    queue: Vec<QueueItem>,
+    queue: Queue,
     info: String,
 }
 
 type RoomMutex = Arc<Mutex<Room>>;
+
+type Queue = Vec<QueueItem>;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct QueueItem {
@@ -47,51 +49,22 @@ enum QueueItemStatus {
 
 #[derive(Serialize, Deserialize, Debug)]
 enum Request {
-    GetQueue,
     Queue { id: String, singer: String },
     DeQueue { id: String },
     QueuePosition { id: String, position: i32 },
     Error,
 }
 
-fn parse_message(
-    msg: Message,
-    peer_map: PeerMap,
-    room_mutex: RoomMutex,
-    addr: SocketAddr,
-) -> Result<(), Box<dyn std::error::Error>> {
-    info!(
-        "ohey! parse_message received a message from {}: {}",
-        addr,
-        msg.to_text().unwrap()
-    );
-    let request: Request = serde_json::from_str(msg.to_text().unwrap()).unwrap_or(Request::Error);
+#[derive(Serialize, Deserialize, Debug)]
+enum ResponseTo {
+    Sender,
+    Everyone,
+}
 
-    match request {
-        Request::Error => error!("zomg request was error!"),
-        Request::GetQueue => info!("GetQueue"),
-        Request::Queue { id, singer } => info!("Queue id:{} singer:{}", id, singer),
-        Request::DeQueue { id } => info!("DeQueue id:{}", id),
-        Request::QueuePosition { id, position } => {
-            info!("QueuePosition id:{} position:{}", id, position)
-        }
-    }
-
-    let peers = peer_map.lock().unwrap();
-    let room = room_mutex.clone();
-    info!("room clone: {:#?}", room);
-
-    // broadcast the message to everyone except sender
-    let broadcast_recipients = peers
-        .iter()
-        .filter(|(peer_addr, _)| peer_addr != &&addr)
-        .map(|(_, ws_sink)| ws_sink);
-
-    for recp in broadcast_recipients {
-        recp.unbounded_send(msg.clone()).unwrap();
-    }
-
-    Ok(())
+#[derive(Serialize, Deserialize, Debug)]
+struct Response {
+    to: ResponseTo,
+    message: String,
 }
 
 async fn handle_connection(
@@ -106,14 +79,73 @@ async fn handle_connection(
         .expect("error during the websocket handshake occurred");
     info!("WebSocket connection established: {}", addr);
     let (tx, rx) = unbounded();
+    // info!("wtf is tx: {:#?}", tx);
+    // let room = room_mutex.lock().unwrap();
+    // info!("room_mutex: {:#?} room: {:#?}", room_mutex, room);
+    // let q = &room.queue;
+    // info!("room.queue: {:#?}", room.queue);
+    // #TODO: it'd be great to send the room, here...
+    // tx.unbounded_send(Message::Text(serde_json::to_string(room).unwrap()))
+    // .unwrap();
+    tx.unbounded_send(Message::Text("ZOMG WELCOME!".to_owned()))
+        .unwrap();
     // insert the write (tx) part of this peer to the peer map.
     peer_map.lock().unwrap().insert(addr, tx);
     let (outgoing, incoming) = ws_stream.split();
     let broadcast_incoming = incoming.try_for_each(|msg| {
-        match parse_message(msg, peer_map.clone(), room_mutex.clone(), addr) {
-            Err(e) => error!("zomg parse_message caught error: {:#?}", e),
-            Ok(_) => info!("parsed msg..."),
+        info!(
+            "ohey! parse_message received a message from {}: {}",
+            addr,
+            msg.to_text().unwrap()
+        );
+        let request: Request =
+            serde_json::from_str(msg.to_text().unwrap()).unwrap_or(Request::Error);
+
+        // match request {
+        //     Request::Error => error!("zomg request was error!"),
+        //     Request::Queue { id, singer } => info!("Queue id:{} singer:{}", id, singer),
+        //     Request::DeQueue { id } => info!("DeQueue id:{}", id),
+        //     Request::QueuePosition { id, position } => {
+        //         info!("QueuePosition id:{} position:{}", id, position)
+        //     }
+        // };
+        let response: Response = match request {
+            Request::Error => Response {
+                to: ResponseTo::Sender,
+                message: "unknown command".to_owned(),
+            },
+            Request::Queue { id, singer } => Response {
+                to: ResponseTo::Everyone,
+                message: format!("Queue id:{} singer:{}", id, singer),
+            },
+            Request::DeQueue { id } => Response {
+                to: ResponseTo::Everyone,
+                message: format!("DeQueue id:{}", id),
+            },
+            Request::QueuePosition { id, position } => Response {
+                to: ResponseTo::Everyone,
+                message: format!("QueuePosition id:{} position:{}", id, position),
+            },
         };
+
+        info!("response: {:#?}", response);
+
+        let peers = peer_map.lock().unwrap();
+        // broadcast the message to everyone except sender
+        // #TODO: probbaly only certian commands will echo back to everyone
+        // otherwise, most will probably just consume, queue, and broadcast later
+        let broadcast_recipients = peers
+            .iter()
+            .filter(|(peer_addr, _)| match response.to {
+                ResponseTo::Sender => peer_addr == &&addr,
+                ResponseTo::Everyone => peer_addr != &&addr,
+            })
+            .map(|(_, ws_sink)| ws_sink);
+        for recp in broadcast_recipients {
+            recp.unbounded_send(Message::Text(response.message.clone()))
+                .unwrap();
+        }
+
         future::ok(())
     });
     let receive_from_others = rx.map(Ok).forward(outgoing);
@@ -136,6 +168,7 @@ async fn main() -> Result<(), IoError> {
         info: "the default room".to_owned(),
         queue: vec![],
     };
+    // #TODO: this RoomMutex thing is probably not what i want :/
     let room_mutex = RoomMutex::new(Mutex::new(default_room));
     // setup the event loop and TCP listener
     let try_socket = TcpListener::bind(&addr).await;
@@ -150,6 +183,9 @@ async fn main() -> Result<(), IoError> {
             addr,
         ));
     }
+
+    // ...so maybe here there needs to be an additional thread spawn'r to process
+    // youtube-dl and media library lookupz??
     Ok(())
 }
 
