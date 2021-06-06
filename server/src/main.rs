@@ -211,8 +211,8 @@ async fn main() -> Result<(), IoError> {
     let listener = try_socket.expect("onoz! failed to bind to address and port!");
     println!("youoke ws server is listening on: {}", addr);
 
-    let (broker_sender, broker_receiver) = unbounded();
-    let _broker_handle = tokio::task::spawn(q_loop(broker_receiver, peer_map.clone(), queue));
+    let (q_sender, q_receiver) = unbounded();
+    let _q_handle = tokio::task::spawn(q_loop(q_receiver, peer_map.clone(), queue));
 
     println!("ZOMG >>>CAN HANDLE_CONNECTION NOWWWWW!!!");
 
@@ -222,7 +222,7 @@ async fn main() -> Result<(), IoError> {
             peer_map.clone(),
             stream,
             addr,
-            broker_sender.clone(),
+            q_sender.clone(),
         ));
     }
 
