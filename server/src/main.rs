@@ -16,6 +16,8 @@ use log::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
 
+use std::process::Command;
+
 type Tx = UnboundedSender<Message>;
 type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
 type Queue = Vec<QueueItem>;
@@ -138,8 +140,13 @@ async fn q_loop(
                             "q_loop request to Queue (will sleep 5s) id:{} singer:{}",
                             id, singer
                         );
-                        std::thread::sleep(std::time::Duration::from_millis(5000));
-                        info!("q_loop done sleeping!!");
+                        // std::thread::sleep(std::time::Duration::from_millis(5000));
+                        // info!("q_loop done sleeping!!");
+
+                        let mut child = Command::new("sleep").arg("5").spawn().unwrap();
+                        let _result = child.wait().unwrap();
+
+                        info!("q_loop done sleeping!! result: {:#?}", _result);
                         queue.push(QueueItem {
                             id: id,
                             singer: singer,
