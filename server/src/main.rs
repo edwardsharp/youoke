@@ -3,6 +3,7 @@ use std::{
     env,
     io::Error as IoError,
     net::SocketAddr,
+    process::{Command, Stdio},
     sync::{Arc, Mutex},
 };
 
@@ -16,11 +17,10 @@ use log::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
 
-use std::process::Command;
-
 type Tx = UnboundedSender<Message>;
 type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
 type Queue = Vec<QueueItem>;
+type BrokerResult<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct QueueResponse {
@@ -45,24 +45,60 @@ enum QueueItemStatus {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-enum Request {
+enum QRequest {
     Queue { id: String, singer: String },
     DeQueue { id: String },
     QueuePosition { id: String, position: usize },
+    FileProcessingResponse { id: String, status: QueueItemStatus },
+
     Error,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Response {
-    request: Request,
-    addr: SocketAddr,
+enum FileProcessingRequest {
+    Queue { id: String },
+}
+
+#[tokio::main]
+async fn main() -> Result<(), IoError> {
+    env_logger::init();
+
+    Command::new("youtube-dl").arg("--version").stdout(Stdio::null()).spawn().expect("PANIC! cannot find youtube-dl program, please make sure it is installed and on your $PATH.");
+
+    let addr = match env::var_os("WS_ADDRESS") {
+        Some(val) => val.into_string().unwrap(),
+        None => "127.0.0.1:9001".to_string(),
+    };
+    let peer_map = PeerMap::new(Mutex::new(HashMap::new()));
+    let queue: Vec<QueueItem> = vec![];
+
+    let try_socket = TcpListener::bind(&addr).await;
+    let listener = try_socket.expect("onoz! failed to bind to address and port!");
+    println!("youoke ws server is listening on: {}", addr);
+
+    let (q_sender, q_receiver) = unbounded();
+    let (f_sender, f_receiver) = unbounded();
+    tokio::task::spawn(q_loop(q_receiver, peer_map.clone(), queue, f_sender));
+    tokio::task::spawn(file_processing(f_receiver, q_sender.clone()));
+
+    // spawn the handling of each connection in a separate task.
+    while let Ok((stream, addr)) = listener.accept().await {
+        tokio::spawn(handle_connection(
+            peer_map.clone(),
+            stream,
+            addr,
+            q_sender.clone(),
+        ));
+    }
+
+    Ok(())
 }
 
 async fn handle_connection(
     peer_map: PeerMap,
     raw_stream: TcpStream,
     addr: SocketAddr,
-    broker: UnboundedSender<Response>,
+    q_sender: UnboundedSender<QRequest>,
 ) {
     info!("incoming TCP connection from: {}", addr);
     let ws_stream = tokio_tungstenite::accept_async(raw_stream)
@@ -82,11 +118,11 @@ async fn handle_connection(
             addr,
             msg.to_text().unwrap()
         );
-        let request: Request =
-            serde_json::from_str(msg.to_text().unwrap()).unwrap_or(Request::Error);
+        let request: QRequest =
+            serde_json::from_str(msg.to_text().unwrap()).unwrap_or(QRequest::Error);
 
         match request {
-            Request::Error => {
+            QRequest::Error => {
                 error!("zomg unknown cmd!!");
                 let peers = peer_map.lock().unwrap();
                 // broadcast the error back to sender.
@@ -99,18 +135,13 @@ async fn handle_connection(
                     _ => {}
                 }
             }
-            _ => {
-                match broker.unbounded_send(Response {
-                    request: request,
-                    addr: addr,
-                }) {
-                    Err(e) => error!(
-                        "handle_connection broker.unbounded_send caught error: {:#?}",
-                        e
-                    ),
-                    _ => {}
-                }
-            }
+            _ => match q_sender.unbounded_send(request) {
+                Err(e) => error!(
+                    "handle_connection q_sender.unbounded_send caught error: {:#?}",
+                    e
+                ),
+                _ => {}
+            },
         };
 
         future::ok(())
@@ -122,110 +153,136 @@ async fn handle_connection(
     peer_map.lock().unwrap().remove(&addr);
 }
 
-type BrokerResult<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
-
 async fn q_loop(
-    mut events: UnboundedReceiver<Response>,
+    mut events: UnboundedReceiver<QRequest>,
     peer_map: PeerMap,
     mut queue: Vec<QueueItem>,
+    f_sender: UnboundedSender<FileProcessingRequest>,
 ) -> BrokerResult<()> {
-    while let Some(event) = events.next().await {
-        match event {
-            Response { request, addr } => {
-                info!("q_loop has request: {:#?}, addr: {:#?}", request, addr);
-                match request {
-                    Request::Error => break, // note: stop here if Error
-                    Request::Queue { id, singer } => {
-                        info!(
-                            "q_loop request to Queue (will sleep 5s) id:{} singer:{}",
-                            id, singer
-                        );
-                        // std::thread::sleep(std::time::Duration::from_millis(5000));
-                        // info!("q_loop done sleeping!!");
+    while let Some(request) = events.next().await {
+        info!("q_loop has request: {:#?}", request);
+        match request {
+            QRequest::Error => break, // note: stop here if Error
+            QRequest::Queue { id, singer } => {
+                info!(
+                    "q_loop request to Queue (will sleep 5s) id:{} singer:{}",
+                    id, singer
+                );
 
-                        let mut child = Command::new("sleep").arg("5").spawn().unwrap();
-                        let _result = child.wait().unwrap();
+                f_sender
+                    .unbounded_send(FileProcessingRequest::Queue { id: id.clone() })
+                    .unwrap();
 
-                        info!("q_loop done sleeping!! result: {:#?}", _result);
-                        queue.push(QueueItem {
-                            id: id,
-                            singer: singer,
-                            status: QueueItemStatus::Pending,
-                            timestamp: 0,
-                            title: "".to_owned(),
-                        });
-                    }
-                    Request::DeQueue { id } => {
-                        info!("q_loop DeQueue id:{}", id);
-                        queue.retain(|q| q.id != id);
-                    }
-                    Request::QueuePosition { id, position } => {
-                        info!("q_loop QueuePosition id:{} position:{}", id, position);
-                        match queue.iter().position(|q| q.id == id) {
-                            Some(idx) => {
-                                match queue.get(idx) {
-                                    Some(queue_item) => {
-                                        queue.insert(position, queue_item.clone());
-                                        // #TODO: ugh, this is not working, is not removed :/
-                                        queue.remove(idx);
-                                    }
-                                    None => {}
-                                }
+                queue.push(QueueItem {
+                    id: id,
+                    singer: singer,
+                    status: QueueItemStatus::Downloading,
+                    timestamp: 0,
+                    title: "".to_owned(),
+                });
+            }
+            QRequest::DeQueue { id } => {
+                info!("q_loop DeQueue id:{}", id);
+                queue.retain(|q| q.id != id);
+            }
+            QRequest::QueuePosition { id, position } => {
+                info!("q_loop QueuePosition id:{} position:{}", id, position);
+                match queue.iter().position(|q| q.id == id) {
+                    Some(idx) => {
+                        match queue.get(idx) {
+                            Some(queue_item) => {
+                                queue.insert(position, queue_item.clone());
+                                // #TODO: ugh, this is not working, is not removed :/
+                                queue.remove(idx);
                             }
                             None => {}
-                        };
+                        }
                     }
+                    None => {}
                 };
-
-                let msg = serde_json::to_value(QueueResponse {
-                    queue: queue.clone(),
-                })
-                .unwrap()
-                .to_string();
-
-                info!("q_loop msg: {:#?}", msg);
-
-                let peers = peer_map.lock().unwrap();
-                // broadcast the queue msg to everyone
-                let broadcast_recipients = peers.iter().map(|(_, ws_sink)| ws_sink);
-                for recp in broadcast_recipients {
-                    recp.unbounded_send(Message::Text(msg.clone())).unwrap();
-                }
             }
+            QRequest::FileProcessingResponse { id, status } => {
+                info!(
+                    "q_loop FileProcessingResponse id:{} status:{:#?}",
+                    id, status
+                );
+                match queue.iter().position(|q| q.id == id) {
+                    Some(idx) => match queue.get_mut(idx) {
+                        Some(queue_item) => {
+                            queue_item.status = status;
+                        }
+                        None => {}
+                    },
+                    None => {}
+                };
+            }
+        };
+
+        let msg = serde_json::to_value(QueueResponse {
+            queue: queue.clone(),
+        })
+        .unwrap()
+        .to_string();
+
+        info!("q_loop msg: {:#?}", msg);
+
+        let peers = peer_map.lock().unwrap();
+        // broadcast the queue msg to everyone
+        let broadcast_recipients = peers.iter().map(|(_, ws_sink)| ws_sink);
+        for recp in broadcast_recipients {
+            recp.unbounded_send(Message::Text(msg.clone())).unwrap();
         }
     }
     Ok(())
 }
 
-#[tokio::main]
-async fn main() -> Result<(), IoError> {
-    env_logger::init();
-    let addr = match env::var_os("WS_ADDRESS") {
-        Some(val) => val.into_string().unwrap(),
-        None => "127.0.0.1:9001".to_string(),
-    };
-    let peer_map = PeerMap::new(Mutex::new(HashMap::new()));
-    let queue: Vec<QueueItem> = vec![];
+async fn file_processing(
+    mut events: UnboundedReceiver<FileProcessingRequest>,
+    q_sender: UnboundedSender<QRequest>,
+) -> BrokerResult<()> {
+    while let Some(event) = events.next().await {
+        match event {
+            FileProcessingRequest::Queue { id } => {
+                info!("file_processing has request: {:#?}", id);
 
-    let try_socket = TcpListener::bind(&addr).await;
-    let listener = try_socket.expect("onoz! failed to bind to address and port!");
-    println!("youoke ws server is listening on: {}", addr);
+                let status: QueueItemStatus = match Command::new("youtube-dl")
+                    .arg(&id)
+                    .arg("--print-json")
+                    .output()
+                {
+                    Ok(output) => {
+                        info!("youtube-dl output: {:#?}", output);
 
-    let (q_sender, q_receiver) = unbounded();
-    let _q_handle = tokio::task::spawn(q_loop(q_receiver, peer_map.clone(), queue));
+                        match output.status.code() {
+                            Some(code) => {
+                                println!("youtube-dl Exited with status code: {}", code);
+                                if code == 0 {
+                                    QueueItemStatus::Ready
+                                } else {
+                                    QueueItemStatus::Error
+                                }
+                            }
+                            None => {
+                                println!("youtube-dl Process terminated by signal");
+                                QueueItemStatus::Error
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        error!("youtube-dl error: {:#?}", e);
+                        QueueItemStatus::Error
+                    }
+                };
 
-    println!("ZOMG >>>CAN HANDLE_CONNECTION NOWWWWW!!!");
-
-    // spawn the handling of each connection in a separate task.
-    while let Ok((stream, addr)) = listener.accept().await {
-        tokio::spawn(handle_connection(
-            peer_map.clone(),
-            stream,
-            addr,
-            q_sender.clone(),
-        ));
+                q_sender
+                    .unbounded_send(QRequest::FileProcessingResponse {
+                        id: id,
+                        status: status,
+                    })
+                    .unwrap();
+            }
+        }
     }
-
     Ok(())
 }
 
@@ -279,7 +336,7 @@ mod tests {
             title: "".to_owned(),
             singer: "frankie frankie".to_owned(),
             timestamp: 0,
-            status: QueueItemStatus::Pending,
+            status: QueueItemStatus::Downloading,
         };
         let queue = vec![q_item];
 
