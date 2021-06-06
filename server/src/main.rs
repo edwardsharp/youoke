@@ -1,8 +1,10 @@
 use std::{
     collections::HashMap,
     env,
+    fs::{canonicalize, create_dir_all},
     io::Error as IoError,
     net::SocketAddr,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::{Arc, Mutex},
 };
@@ -63,7 +65,33 @@ enum FileProcessingRequest {
 async fn main() -> Result<(), IoError> {
     env_logger::init();
 
-    Command::new("youtube-dl").arg("--version").stdout(Stdio::null()).spawn().expect("PANIC! cannot find youtube-dl program, please make sure it is installed and on your $PATH.");
+    Command::new("youtube-dl")
+    .arg("--version")
+    .stdout(Stdio::null())
+    .spawn()
+    .expect("PANIC! cannot find youtube-dl program, please make sure it is installed and on your $PATH.");
+
+    let lib_dir = match env::var_os("LIB_DIR") {
+        Some(val) => val.into_string().unwrap(),
+        None => "./library".to_string(),
+    };
+
+    if !Path::new(&lib_dir).is_dir() {
+        println!("creating new LIB_DIR: {:?}", &lib_dir);
+        create_dir_all(&lib_dir).unwrap();
+    }
+
+    let library_path = PathBuf::from(&lib_dir);
+    let library_path = canonicalize(&library_path)
+        .unwrap()
+        .into_os_string()
+        .into_string()
+        .unwrap();
+
+    info!(
+        "file_processing library_path -o flag: {:?}",
+        format!("{}/%(id)s.%(ext)s", library_path)
+    );
 
     let addr = match env::var_os("WS_ADDRESS") {
         Some(val) => val.into_string().unwrap(),
@@ -79,7 +107,7 @@ async fn main() -> Result<(), IoError> {
     let (q_sender, q_receiver) = unbounded();
     let (f_sender, f_receiver) = unbounded();
     tokio::task::spawn(q_loop(q_receiver, peer_map.clone(), queue, f_sender));
-    tokio::task::spawn(file_processing(f_receiver, q_sender.clone()));
+    tokio::task::spawn(file_processing(library_path, f_receiver, q_sender.clone()));
 
     // spawn the handling of each connection in a separate task.
     while let Ok((stream, addr)) = listener.accept().await {
@@ -237,6 +265,7 @@ async fn q_loop(
 }
 
 async fn file_processing(
+    library_path: String,
     mut events: UnboundedReceiver<FileProcessingRequest>,
     q_sender: UnboundedSender<QRequest>,
 ) -> BrokerResult<()> {
@@ -244,10 +273,17 @@ async fn file_processing(
         match event {
             FileProcessingRequest::Queue { id } => {
                 info!("file_processing has request: {:#?}", id);
-
+                info!(
+                    "file_processing library_path -o flag: {:?}",
+                    format!("{}/%(id)s.%(ext)s", library_path)
+                );
                 let status: QueueItemStatus = match Command::new("youtube-dl")
                     .arg(&id)
-                    .arg("--print-json")
+                    .arg("--restrict-filenames")
+                    .arg("--write-info-json") // --print-json
+                    .arg("--quiet")
+                    .arg("-o")
+                    .arg(format!("{}/%(id)s.%(ext)s", library_path))
                     .output()
                 {
                     Ok(output) => {
@@ -255,7 +291,7 @@ async fn file_processing(
 
                         match output.status.code() {
                             Some(code) => {
-                                println!("youtube-dl Exited with status code: {}", code);
+                                info!("youtube-dl Exited with status code: {}", code);
                                 if code == 0 {
                                     QueueItemStatus::Ready
                                 } else {
