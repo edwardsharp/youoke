@@ -6,31 +6,26 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use futures_channel::mpsc::{unbounded, UnboundedSender};
+use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 
 use tokio::net::{TcpListener, TcpStream};
 use tungstenite::protocol::Message;
 
-type Tx = UnboundedSender<Message>;
-type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
-
 use log::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Room {
-    room_id: String,
-    queue: Queue,
-    info: String,
-}
-
-type RoomMutex = Arc<Mutex<Room>>;
-
+type Tx = UnboundedSender<Message>;
+type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
 type Queue = Vec<QueueItem>;
 
 #[derive(Serialize, Deserialize, Debug)]
+struct QueueResponse {
+    queue: Queue,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 struct QueueItem {
     id: String,
     title: String,
@@ -39,7 +34,7 @@ struct QueueItem {
     status: QueueItemStatus,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 enum QueueItemStatus {
     Pending,
     Downloading,
@@ -51,27 +46,21 @@ enum QueueItemStatus {
 enum Request {
     Queue { id: String, singer: String },
     DeQueue { id: String },
-    QueuePosition { id: String, position: i32 },
+    QueuePosition { id: String, position: usize },
     Error,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-enum ResponseTo {
-    Sender,
-    Everyone,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 struct Response {
-    to: ResponseTo,
-    message: String,
+    request: Request,
+    addr: SocketAddr,
 }
 
 async fn handle_connection(
     peer_map: PeerMap,
-    room_mutex: RoomMutex,
     raw_stream: TcpStream,
     addr: SocketAddr,
+    broker: UnboundedSender<Response>,
 ) {
     info!("incoming TCP connection from: {}", addr);
     let ws_stream = tokio_tungstenite::accept_async(raw_stream)
@@ -79,17 +68,10 @@ async fn handle_connection(
         .expect("error during the websocket handshake occurred");
     info!("WebSocket connection established: {}", addr);
     let (tx, rx) = unbounded();
-    // info!("wtf is tx: {:#?}", tx);
-    // let room = room_mutex.lock().unwrap();
-    // info!("room_mutex: {:#?} room: {:#?}", room_mutex, room);
-    // let q = &room.queue;
-    // info!("room.queue: {:#?}", room.queue);
-    // #TODO: it'd be great to send the room, here...
-    // tx.unbounded_send(Message::Text(serde_json::to_string(room).unwrap()))
-    // .unwrap();
+    // TODO: maybe move this into the q_loop and send queue?
     tx.unbounded_send(Message::Text("ZOMG WELCOME!".to_owned()))
         .unwrap();
-    // insert the write (tx) part of this peer to the peer map.
+    // insert the write (tx) part of this peer to the peer map
     peer_map.lock().unwrap().insert(addr, tx);
     let (outgoing, incoming) = ws_stream.split();
     let broadcast_incoming = incoming.try_for_each(|msg| {
@@ -101,50 +83,33 @@ async fn handle_connection(
         let request: Request =
             serde_json::from_str(msg.to_text().unwrap()).unwrap_or(Request::Error);
 
-        // match request {
-        //     Request::Error => error!("zomg request was error!"),
-        //     Request::Queue { id, singer } => info!("Queue id:{} singer:{}", id, singer),
-        //     Request::DeQueue { id } => info!("DeQueue id:{}", id),
-        //     Request::QueuePosition { id, position } => {
-        //         info!("QueuePosition id:{} position:{}", id, position)
-        //     }
-        // };
-        let response: Response = match request {
-            Request::Error => Response {
-                to: ResponseTo::Sender,
-                message: "unknown command".to_owned(),
-            },
-            Request::Queue { id, singer } => Response {
-                to: ResponseTo::Everyone,
-                message: format!("Queue id:{} singer:{}", id, singer),
-            },
-            Request::DeQueue { id } => Response {
-                to: ResponseTo::Everyone,
-                message: format!("DeQueue id:{}", id),
-            },
-            Request::QueuePosition { id, position } => Response {
-                to: ResponseTo::Everyone,
-                message: format!("QueuePosition id:{} position:{}", id, position),
-            },
+        match request {
+            Request::Error => {
+                error!("zomg unknown cmd!!");
+                let peers = peer_map.lock().unwrap();
+                // broadcast the error back to sender.
+                match peers.get(&addr) {
+                    Some(peer) => {
+                        info!("zomg found peer with addr: {:#?}", addr);
+                        peer.unbounded_send(Message::Text("unknown command".to_owned()))
+                            .unwrap();
+                    }
+                    _ => {}
+                }
+            }
+            _ => {
+                match broker.unbounded_send(Response {
+                    request: request,
+                    addr: addr,
+                }) {
+                    Err(e) => error!(
+                        "handle_connection broker.unbounded_send caught error: {:#?}",
+                        e
+                    ),
+                    _ => {}
+                }
+            }
         };
-
-        info!("response: {:#?}", response);
-
-        let peers = peer_map.lock().unwrap();
-        // broadcast the message to everyone except sender
-        // #TODO: probbaly only certian commands will echo back to everyone
-        // otherwise, most will probably just consume, queue, and broadcast later
-        let broadcast_recipients = peers
-            .iter()
-            .filter(|(peer_addr, _)| match response.to {
-                ResponseTo::Sender => peer_addr == &&addr,
-                ResponseTo::Everyone => peer_addr != &&addr,
-            })
-            .map(|(_, ws_sink)| ws_sink);
-        for recp in broadcast_recipients {
-            recp.unbounded_send(Message::Text(response.message.clone()))
-                .unwrap();
-        }
 
         future::ok(())
     });
@@ -155,6 +120,76 @@ async fn handle_connection(
     peer_map.lock().unwrap().remove(&addr);
 }
 
+type BrokerResult<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
+
+async fn q_loop(
+    mut events: UnboundedReceiver<Response>,
+    peer_map: PeerMap,
+    mut queue: Vec<QueueItem>,
+) -> BrokerResult<()> {
+    while let Some(event) = events.next().await {
+        match event {
+            Response { request, addr } => {
+                info!("q_loop has request: {:#?}, addr: {:#?}", request, addr);
+                match request {
+                    Request::Error => break, // note: stop here if Error
+                    Request::Queue { id, singer } => {
+                        info!(
+                            "q_loop request to Queue (will sleep 5s) id:{} singer:{}",
+                            id, singer
+                        );
+                        std::thread::sleep(std::time::Duration::from_millis(5000));
+                        info!("q_loop done sleeping!!");
+                        queue.push(QueueItem {
+                            id: id,
+                            singer: singer,
+                            status: QueueItemStatus::Pending,
+                            timestamp: 0,
+                            title: "".to_owned(),
+                        });
+                    }
+                    Request::DeQueue { id } => {
+                        info!("q_loop DeQueue id:{}", id);
+                        queue.retain(|q| q.id != id);
+                    }
+                    Request::QueuePosition { id, position } => {
+                        info!("q_loop QueuePosition id:{} position:{}", id, position);
+                        match queue.iter().position(|q| q.id == id) {
+                            Some(idx) => {
+                                match queue.get(idx) {
+                                    Some(queue_item) => {
+                                        queue.insert(position, queue_item.clone());
+                                        // #TODO: ugh, this is not working, is not removed :/
+                                        queue.remove(idx);
+                                    }
+                                    None => {}
+                                }
+                            }
+                            None => {}
+                        };
+                    }
+                };
+
+                let msg = serde_json::to_value(QueueResponse {
+                    queue: queue.clone(),
+                })
+                .unwrap()
+                .to_string();
+
+                info!("q_loop msg: {:#?}", msg);
+
+                let peers = peer_map.lock().unwrap();
+                // broadcast the queue msg to everyone
+                let broadcast_recipients = peers.iter().map(|(_, ws_sink)| ws_sink);
+                for recp in broadcast_recipients {
+                    recp.unbounded_send(Message::Text(msg.clone())).unwrap();
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), IoError> {
     env_logger::init();
@@ -163,29 +198,27 @@ async fn main() -> Result<(), IoError> {
         None => "127.0.0.1:9001".to_string(),
     };
     let peer_map = PeerMap::new(Mutex::new(HashMap::new()));
-    let default_room = Room {
-        room_id: "lobby".to_owned(),
-        info: "the default room".to_owned(),
-        queue: vec![],
-    };
-    // #TODO: this RoomMutex thing is probably not what i want :/
-    let room_mutex = RoomMutex::new(Mutex::new(default_room));
-    // setup the event loop and TCP listener
+    let queue: Vec<QueueItem> = vec![];
+
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("onoz! failed to bind to address and port!");
     println!("youoke ws server is listening on: {}", addr);
+
+    let (broker_sender, broker_receiver) = unbounded();
+    let _broker_handle = tokio::task::spawn(q_loop(broker_receiver, peer_map.clone(), queue));
+
+    println!("ZOMG >>>CAN HANDLE_CONNECTION NOWWWWW!!!");
+
     // spawn the handling of each connection in a separate task.
     while let Ok((stream, addr)) = listener.accept().await {
         tokio::spawn(handle_connection(
             peer_map.clone(),
-            room_mutex.clone(),
             stream,
             addr,
+            broker_sender.clone(),
         ));
     }
 
-    // ...so maybe here there needs to be an additional thread spawn'r to process
-    // youtube-dl and media library lookupz??
     Ok(())
 }
 
@@ -231,11 +264,7 @@ mod tests {
         //     timestamp: 1234567890,
         //     status: QueueItemStatus::Pending,
         // };
-        // let room = Room {
-        //     room_id: "some-room".to_owned(),
-        //     queue: vec![q_item],
-        //     info: "zomg this is info".to_owned(),
-        // };
+        // let queue = vec![q_item]
 
         let queue_req = r#"{
             "Queue":{
