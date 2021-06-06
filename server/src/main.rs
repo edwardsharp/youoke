@@ -248,23 +248,33 @@ mod tests {
         let (mut socket2, _) = connect(Url::parse("ws://127.0.0.1:9001").unwrap())
             .expect("test can't connect to socket!");
 
-        socket
-            .write_message(Message::Text("Hello WebSocket".into()))
-            .unwrap();
+        // welcome message:
+        let msg = socket
+            .read_message()
+            .expect("test panic! reading socket message");
+        assert_eq!(msg, Message::Text("ZOMG WELCOME!".into()));
 
         let msg = socket2
             .read_message()
             .expect("test panic! reading socket message");
-        assert_eq!(msg, Message::Text("Hello WebSocket".into()));
+        assert_eq!(msg, Message::Text("ZOMG WELCOME!".into()));
 
-        // let q_item = QueueItem {
-        //     id: "some-id".to_owned(),
-        //     title: "some title".to_owned(),
-        //     singer: "some singer".to_owned(),
-        //     timestamp: 1234567890,
-        //     status: QueueItemStatus::Pending,
-        // };
-        // let queue = vec![q_item]
+        socket
+            .write_message(Message::Text("Hello WebSocket".into()))
+            .unwrap();
+        let msg = socket
+            .read_message()
+            .expect("test panic! reading socket message");
+        assert_eq!(msg, Message::Text("unknown command".into()));
+
+        let q_item = QueueItem {
+            id: "xxx666".to_owned(),
+            title: "".to_owned(),
+            singer: "frankie frankie".to_owned(),
+            timestamp: 0,
+            status: QueueItemStatus::Pending,
+        };
+        let queue = vec![q_item];
 
         let queue_req = r#"{
             "Queue":{
@@ -273,10 +283,12 @@ mod tests {
             }
         }"#;
 
-        let request: Request = Request::Queue {
-            id: "xxx666".to_owned(),
-            singer: "frankie frankie".to_owned(),
-        };
+        // let request: Request = Request::Queue {
+        //     id: "xxx666".to_owned(),
+        //     singer: "frankie frankie".to_owned(),
+        // };
+
+        let q_response: QueueResponse = QueueResponse { queue: queue };
 
         socket
             .write_message(Message::Text(queue_req.to_owned()))
@@ -290,10 +302,11 @@ mod tests {
                 panic!()
             }
         };
-        let parsed: Request = serde_json::from_str(&msg).expect("test panic! can't parse to JSON");
+        let parsed: QueueResponse =
+            serde_json::from_str(&msg).expect("test panic! can't parse to JSON");
 
         assert_eq!(
-            serde_json::to_value(&request).unwrap(),
+            serde_json::to_value(&q_response).unwrap(),
             serde_json::json!(parsed)
         );
 
