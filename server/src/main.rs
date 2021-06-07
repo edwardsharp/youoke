@@ -9,6 +9,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use glob::glob;
+
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 
@@ -297,10 +299,11 @@ async fn file_processing(
     while let Some(event) = events.next().await {
         match event {
             FileProcessingRequest::Queue { id } => {
-                info!("file_processing has request: {:#?}", id);
+                info!("file_processing FileProcessingRequest::Queue id: {:#?}", id);
+
                 info!(
-                    "file_processing library_path -o flag: {:?}",
-                    format!("{}/%(id)s.%(ext)s", library_path)
+                    "file_processing FileProcessingRequest::Queue gonna youtube-dl id: {:#?}",
+                    id
                 );
                 let response: QRequest = match Command::new("youtube-dl")
                     .arg(&id)
@@ -318,18 +321,40 @@ async fn file_processing(
                             Some(code) => {
                                 info!("youtube-dl Exited with status code: {}", code);
                                 if code == 0 {
-                                    let filepath = format!("{}/{}.info.json", library_path, id);
-                                    info!("file_processing reading info json file: {}", filepath);
-                                    let contents = read_to_string(filepath)
+                                    let info_filepath =
+                                        format!("{}/{}.info.json", library_path, id);
+                                    info!(
+                                        "file_processing reading info json file: {}",
+                                        info_filepath
+                                    );
+                                    let contents = read_to_string(info_filepath)
                                         .expect("TEST PANIC! ...something went wrong reading info.json file!");
 
                                     let parsed: YoutubeDlJSON = serde_json::from_str(&contents)
                                         .expect("test panic! can't parse to JSON");
+                                    let mut filepath = parsed._filename;
+                                    // #TODO: validate filename is really a path
+                                    if !Path::new(&filepath).is_file() {
+                                        info!("ugh ref file not on filesystem gonna try to find {}/{}*[!json]", &library_path, &id);
+                                        // let glob_path = ;
+                                        for entry in
+                                            glob(&format!("{}/{}*[!json]", &library_path, &id))
+                                                .unwrap()
+                                        {
+                                            if let Ok(path) = entry {
+                                                println!(
+                                                    "ZOMG FOUND new file: {:?}",
+                                                    path.display()
+                                                );
+                                                filepath = path.as_path().display().to_string();
+                                            }
+                                        }
+                                    }
 
                                     QRequest::FileProcessingResponse {
                                         id: id,
                                         status: QueueItemStatus::Ready,
-                                        filepath: parsed._filename,
+                                        filepath: filepath,
                                     }
                                 } else {
                                     QRequest::FileProcessingResponse {

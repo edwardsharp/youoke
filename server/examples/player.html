@@ -3,48 +3,102 @@
     <head>
         <meta charset="utf-8" />
         <title>WebSocket Player Test</title>
+        <style>
+            body {
+                display: flex;
+                margin: 0;
+                padding: 0;
+                background-color: black;
+                color: white;
+            }
+            video {
+                width: 80vw;
+                height: 100vh;
+            }
+            #q {
+                width: 20vw;
+                height: 100vh;
+                overflow-y: scroll;
+            }
+            #queue {
+                overflow-wrap: break-word;
+            }
+        </style>
     </head>
     <body>
-        <video id="videoEl"></video>
-        <p id="received">
-            <strong>Received Messages:</strong>
-        </p>
-        <form onsubmit="send('message'); return false">
-            <input type="text" id="message" />
-            <input type="submit" value="Send" />
-        </form>
+        <video id="videoEl" poster="youoke.png"></video>
+        <div id="q">
+            <p id="queue"></p>
+            <form onsubmit="send('message'); return false">
+                <input type="text" id="message" />
+                <input type="submit" value="Send" />
+            </form>
+        </div>
 
         <script>
+            var queue = []
+            var isPlaying = false
             var socket = new WebSocket('ws://localhost:9001')
             var videoEl = document.getElementById('videoEl')
+            var setPlaying = function () {
+                isPlaying = true
+            }
+            var setNotPlaying = function () {
+                isPlaying = false
+            }
+            videoEl.addEventListener('play', setPlaying)
+            videoEl.addEventListener('playing', setPlaying)
+            videoEl.addEventListener('ended', setNotPlaying)
+            videoEl.addEventListener('complete', setNotPlaying)
+
             socket.onmessage = function (event) {
-                var received = document.getElementById('received')
-                var hr = document.createElement('HR')
-                var text = document.createTextNode(event.data)
-                received.appendChild(hr)
-                received.appendChild(text)
+                var queueEl = document.getElementById('queue')
 
                 try {
                     var data = JSON.parse(event.data)
-                    var lastQueueItem = data.queue[data.queue.length - 1]
-                    console.log('lastQueueItem:', lastQueueItem)
-                    if (
-                        lastQueueItem.status === 'Ready' &&
-                        lastQueueItem.filepath
-                    ) {
-                        console.log(
-                            'gonna try to play video!!!',
-                            lastQueueItem.filepath
-                        )
-                        var dataTxt = document.createTextNode(
-                            lastQueueItem.filepath
-                        )
-                        received.appendChild(hr)
-                        received.appendChild(
-                            document.createTextNode('gonna play next file: ')
-                        )
-                        received.appendChild(dataTxt)
-                        videoEl.setAttribute('src', 'file://' + lastQueueItem.filepath)
+                    queue = data.queue.reverse()
+                    if (queue) {
+                        queue.forEach(function (qItem) {
+														if (qItem.status !== 'Ready'){
+															return
+														}
+                            var item = document.createElement('div')
+                            var title = document.createElement('h3')
+                            title.appendChild(
+                                document.createTextNode(
+                                    qItem.singer
+                                )
+                            )
+                            item.appendChild(title)
+                            var singer = document.createElement('div')
+                            singer.appendChild(
+                                document.createTextNode(qItem.title ? qItem.title : qItem.id)
+                            )
+                            item.appendChild(singer)
+                            queueEl.appendChild(item)
+                        })
+                    }
+
+                    if (isPlaying) {
+                        console.log('isPlaying! gonna return early...')
+                        return
+                    }
+
+                    var lastReadyQItem = queue.find(function (i) {
+                        return i.status === 'Ready' && i.filepath
+                    })
+                    console.log('lastQueueItem:', lastReadyQItem)
+
+                    if (lastReadyQItem) {
+                        var filepath = lastReadyQItem.filepath
+                        console.log('gonna try to play video!!!', filepath)
+                        // var dataTxt = document.createTextNode(filepath)
+                        // queueEl.appendChild(hr)
+                        // queueEl.appendChild(
+                        //     document.createTextNode('gonna play next file: ')
+                        // )
+                        // queueEl.appendChild(dataTxt)
+                        videoEl.setAttribute('src', 'file://' + filepath)
                         videoEl.load()
                         videoEl.play()
                     }
