@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     env,
-    fs::{canonicalize, create_dir_all},
+    fs::{canonicalize, create_dir_all, read_to_string},
     io::Error as IoError,
     net::SocketAddr,
     path::{Path, PathBuf},
@@ -34,7 +34,8 @@ struct QueueItem {
     id: String,
     title: String,
     singer: String,
-    timestamp: i64,
+    filepath: String,
+    timestamp: usize,
     status: QueueItemStatus,
 }
 
@@ -48,10 +49,22 @@ enum QueueItemStatus {
 
 #[derive(Serialize, Deserialize, Debug)]
 enum QRequest {
-    Queue { id: String, singer: String },
-    DeQueue { id: String },
-    QueuePosition { id: String, position: usize },
-    FileProcessingResponse { id: String, status: QueueItemStatus },
+    Queue {
+        id: String,
+        singer: String,
+    },
+    DeQueue {
+        id: String,
+    },
+    QueuePosition {
+        id: String,
+        position: usize,
+    },
+    FileProcessingResponse {
+        id: String,
+        status: QueueItemStatus,
+        filepath: String,
+    },
 
     Error,
 }
@@ -59,6 +72,12 @@ enum QRequest {
 #[derive(Serialize, Deserialize, Debug)]
 enum FileProcessingRequest {
     Queue { id: String },
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct YoutubeDlJSON {
+    _filename: String,
+    duration: usize,
 }
 
 #[tokio::main]
@@ -206,6 +225,7 @@ async fn q_loop(
                     singer: singer,
                     status: QueueItemStatus::Downloading,
                     timestamp: 0,
+                    filepath: "".to_owned(),
                     title: "".to_owned(),
                 });
             }
@@ -229,15 +249,20 @@ async fn q_loop(
                     None => {}
                 };
             }
-            QRequest::FileProcessingResponse { id, status } => {
+            QRequest::FileProcessingResponse {
+                id,
+                status,
+                filepath,
+            } => {
                 info!(
-                    "q_loop FileProcessingResponse id:{} status:{:#?}",
-                    id, status
+                    "q_loop FileProcessingResponse id:{}, status:{:#?}, filepath:{:#?}",
+                    id, status, filepath
                 );
                 match queue.iter().position(|q| q.id == id) {
                     Some(idx) => match queue.get_mut(idx) {
                         Some(queue_item) => {
                             queue_item.status = status;
+                            queue_item.filepath = filepath;
                         }
                         None => {}
                     },
@@ -277,7 +302,7 @@ async fn file_processing(
                     "file_processing library_path -o flag: {:?}",
                     format!("{}/%(id)s.%(ext)s", library_path)
                 );
-                let status: QueueItemStatus = match Command::new("youtube-dl")
+                let response: QRequest = match Command::new("youtube-dl")
                     .arg(&id)
                     .arg("--restrict-filenames")
                     .arg("--write-info-json") // --print-json
@@ -287,35 +312,54 @@ async fn file_processing(
                     .output()
                 {
                     Ok(output) => {
-                        info!("youtube-dl output: {:#?}", output);
+                        info!("file_processing youtube-dl output: {:#?}", output);
 
                         match output.status.code() {
                             Some(code) => {
                                 info!("youtube-dl Exited with status code: {}", code);
                                 if code == 0 {
-                                    QueueItemStatus::Ready
+                                    let filepath = format!("{}/{}.info.json", library_path, id);
+                                    info!("file_processing reading info json file: {}", filepath);
+                                    let contents = read_to_string(filepath)
+                                        .expect("TEST PANIC! ...something went wrong reading info.json file!");
+
+                                    let parsed: YoutubeDlJSON = serde_json::from_str(&contents)
+                                        .expect("test panic! can't parse to JSON");
+
+                                    QRequest::FileProcessingResponse {
+                                        id: id,
+                                        status: QueueItemStatus::Ready,
+                                        filepath: parsed._filename,
+                                    }
                                 } else {
-                                    QueueItemStatus::Error
+                                    QRequest::FileProcessingResponse {
+                                        id: id,
+                                        status: QueueItemStatus::Error,
+                                        filepath: "".to_owned(),
+                                    }
                                 }
                             }
                             None => {
                                 println!("youtube-dl Process terminated by signal");
-                                QueueItemStatus::Error
+                                QRequest::FileProcessingResponse {
+                                    id: id,
+                                    status: QueueItemStatus::Error,
+                                    filepath: "".to_owned(),
+                                }
                             }
                         }
                     }
                     Err(e) => {
                         error!("youtube-dl error: {:#?}", e);
-                        QueueItemStatus::Error
+                        QRequest::FileProcessingResponse {
+                            id: id,
+                            status: QueueItemStatus::Error,
+                            filepath: "".to_owned(),
+                        }
                     }
                 };
 
-                q_sender
-                    .unbounded_send(QRequest::FileProcessingResponse {
-                        id: id,
-                        status: status,
-                    })
-                    .unwrap();
+                q_sender.unbounded_send(response).unwrap();
             }
         }
     }
@@ -331,6 +375,27 @@ mod tests {
     use std::time::Duration;
     use tungstenite::{connect, Message};
     use url::Url;
+
+    #[test]
+    fn test_parae_youtubedl_json() {
+        let contents = read_to_string("./examples/5--RnSogips.info.json".to_owned())
+            .expect("TEST PANIC! ...something went wrong reading ./examples/5--RnSogips.info.json");
+
+        let parsed: YoutubeDlJSON =
+            serde_json::from_str(&contents).expect("test panic! can't parse to JSON");
+
+        let expected: YoutubeDlJSON = YoutubeDlJSON {
+            _filename: "/Users/edwardsharp/src/github/youoke/server/library/5--RnSogips.mp4"
+                .to_owned(),
+            duration: 352,
+        };
+        println!("parsed: {:#?}", parsed);
+
+        assert_eq!(
+            serde_json::json!(expected),
+            serde_json::to_value(&expected).unwrap()
+        );
+    }
 
     #[test]
     fn test_local() {
@@ -371,6 +436,7 @@ mod tests {
             id: "xxx666".to_owned(),
             title: "".to_owned(),
             singer: "frankie frankie".to_owned(),
+            filepath: "".to_owned(),
             timestamp: 0,
             status: QueueItemStatus::Downloading,
         };

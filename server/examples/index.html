@@ -9,9 +9,9 @@
 			var socket = new WebSocket("ws://localhost:9001");
 			socket.onmessage = function (event) {
 				var received = document.getElementById("received");
-				var br = document.createElement("BR");
+				var hr = document.createElement("HR");
 				var text = document.createTextNode(event.data);
-				received.appendChild(br);
+				received.appendChild(hr);
 				received.appendChild(text);
 			};
 
