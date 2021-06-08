@@ -24,7 +24,7 @@ use serde_json;
 type Tx = UnboundedSender<Message>;
 type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
 type Queue = Vec<QueueItem>;
-type BrokerResult<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
+type GenericResult<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct QueueResponse {
@@ -37,7 +37,7 @@ struct QueueItem {
     title: String,
     singer: String,
     filepath: String,
-    timestamp: usize,
+    duration: usize,
     status: QueueItemStatus,
 }
 
@@ -66,8 +66,15 @@ enum QRequest {
         id: String,
         status: QueueItemStatus,
         filepath: String,
+        title: String,
+        duration: usize,
     },
-
+    GetQueue {
+        addr: Option<SocketAddr>,
+    },
+    PlayerPlay,
+    PlayerPause,
+    PlayerSkip,
     Error,
 }
 
@@ -80,6 +87,7 @@ enum FileProcessingRequest {
 struct YoutubeDlJSON {
     _filename: String,
     duration: usize,
+    title: String,
 }
 
 #[tokio::main]
@@ -109,11 +117,6 @@ async fn main() -> Result<(), IoError> {
         .into_string()
         .unwrap();
 
-    info!(
-        "file_processing library_path -o flag: {:?}",
-        format!("{}/%(id)s.%(ext)s", library_path)
-    );
-
     let addr = match env::var_os("WS_ADDRESS") {
         Some(val) => val.into_string().unwrap(),
         None => "127.0.0.1:9001".to_string(),
@@ -125,14 +128,16 @@ async fn main() -> Result<(), IoError> {
     let listener = try_socket.expect("onoz! failed to bind to address and port!");
     println!("youoke ws server is listening on: {}", addr);
 
+    // message bus for handling queue mutation and broadcasting
     let (q_sender, q_receiver) = unbounded();
+    // message bus for handling file processing, doesn't broadcast but will send messages to the queue bus
     let (f_sender, f_receiver) = unbounded();
-    tokio::task::spawn(q_loop(q_receiver, peer_map.clone(), queue, f_sender));
-    tokio::task::spawn(file_processing(library_path, f_receiver, q_sender.clone()));
+    tokio::task::spawn(queue_handler(q_receiver, peer_map.clone(), queue, f_sender));
+    tokio::task::spawn(file_handler(library_path, f_receiver, q_sender.clone()));
 
     // spawn the handling of each connection in a separate task.
     while let Ok((stream, addr)) = listener.accept().await {
-        tokio::spawn(handle_connection(
+        tokio::spawn(connection_handler(
             peer_map.clone(),
             stream,
             addr,
@@ -143,7 +148,7 @@ async fn main() -> Result<(), IoError> {
     Ok(())
 }
 
-async fn handle_connection(
+async fn connection_handler(
     peer_map: PeerMap,
     raw_stream: TcpStream,
     addr: SocketAddr,
@@ -155,9 +160,10 @@ async fn handle_connection(
         .expect("error during the websocket handshake occurred");
     info!("WebSocket connection established: {}", addr);
     let (tx, rx) = unbounded();
-    // TODO: maybe move this into the q_loop and send queue?
-    tx.unbounded_send(Message::Text("ZOMG WELCOME!".to_owned()))
-        .unwrap();
+    // send the queue first thing:
+    q_sender
+        .unbounded_send(QRequest::GetQueue { addr: Some(addr) })
+        .unwrap_or_default();
     // insert the write (tx) part of this peer to the peer map
     peer_map.lock().unwrap().insert(addr, tx);
     let (outgoing, incoming) = ws_stream.split();
@@ -170,6 +176,7 @@ async fn handle_connection(
         let request: QRequest =
             serde_json::from_str(msg.to_text().unwrap()).unwrap_or(QRequest::Error);
 
+        info!("oheyyyy! so the request {:?}", &request);
         match request {
             QRequest::Error => {
                 error!("zomg unknown cmd!!");
@@ -179,18 +186,24 @@ async fn handle_connection(
                     Some(peer) => {
                         info!("zomg found peer with addr: {:#?}", addr);
                         peer.unbounded_send(Message::Text("unknown command".to_owned()))
-                            .unwrap();
+                            .unwrap_or_default();
                     }
                     _ => {}
                 }
             }
-            _ => match q_sender.unbounded_send(request) {
-                Err(e) => error!(
-                    "handle_connection q_sender.unbounded_send caught error: {:#?}",
-                    e
-                ),
-                _ => {}
-            },
+            QRequest::PlayerPause | QRequest::PlayerPlay | QRequest::PlayerSkip => {
+                // broadcast the queue msg to everyone (but maybe only the player truely needz this?)
+                let peers = peer_map.lock().unwrap();
+                let broadcast_recipients = peers.iter().map(|(_, ws_sink)| ws_sink);
+                for recp in broadcast_recipients {
+                    let msg = serde_json::to_value(&request).unwrap().to_string();
+                    recp.unbounded_send(Message::Text(msg)).unwrap_or_default();
+                }
+                q_sender.unbounded_send(request).unwrap_or_default();
+            }
+            _ => {
+                q_sender.unbounded_send(request).unwrap_or_default();
+            }
         };
 
         future::ok(())
@@ -202,107 +215,144 @@ async fn handle_connection(
     peer_map.lock().unwrap().remove(&addr);
 }
 
-async fn q_loop(
+async fn queue_handler(
     mut events: UnboundedReceiver<QRequest>,
     peer_map: PeerMap,
     mut queue: Vec<QueueItem>,
     f_sender: UnboundedSender<FileProcessingRequest>,
-) -> BrokerResult<()> {
+) -> GenericResult<()> {
     while let Some(request) = events.next().await {
-        info!("q_loop has request: {:#?}", request);
-        match request {
-            QRequest::Error => break, // note: stop here if Error
+        info!("queue_handler has request: {:#?}", request);
+        let mut to_addr: Option<SocketAddr> = None;
+        let needs_q: bool = match request {
+            QRequest::Error | QRequest::PlayerPause | QRequest::PlayerPlay => false, // note: stop here if any of these (no queue response needed)
+            QRequest::PlayerSkip => {
+                if queue.len() > 0 {
+                    queue.remove(0);
+                }
+                true
+            }
             QRequest::Queue { id, singer } => {
                 info!(
-                    "q_loop request to Queue (will sleep 5s) id:{} singer:{}",
-                    id, singer
+                    "queue_handler request to Queue id:{} singer:{}",
+                    &id, singer
                 );
 
-                f_sender
-                    .unbounded_send(FileProcessingRequest::Queue { id: id.clone() })
-                    .unwrap();
-
-                queue.push(QueueItem {
-                    id: id,
-                    singer: singer,
-                    status: QueueItemStatus::Downloading,
-                    timestamp: 0,
-                    filepath: "".to_owned(),
-                    title: "".to_owned(),
-                });
+                // take care to not add duplicates to the queue
+                match queue.iter().position(|i| i.id == id) {
+                    Some(_) => info!(
+                        "queue_handler not gonna push to queue, id:{:?} already in queue!",
+                        &id
+                    ),
+                    None => {
+                        queue.push(QueueItem {
+                            id: id.clone(),
+                            singer: singer,
+                            status: QueueItemStatus::Downloading,
+                            duration: 0,
+                            filepath: "".to_owned(),
+                            title: "".to_owned(),
+                        });
+                        f_sender
+                            .unbounded_send(FileProcessingRequest::Queue { id: id.clone() })
+                            .unwrap_or_default();
+                    }
+                }
+                true
             }
             QRequest::DeQueue { id } => {
-                info!("q_loop DeQueue id:{}", id);
+                info!("queue_handler DeQueue id:{}", id);
                 queue.retain(|q| q.id != id);
+                true
             }
             QRequest::QueuePosition { id, position } => {
-                info!("q_loop QueuePosition id:{} position:{}", id, position);
+                info!(
+                    "queue_handler QueuePosition id:{} position:{}",
+                    id, position
+                );
                 match queue.iter().position(|q| q.id == id) {
                     Some(idx) => {
-                        match queue.get(idx) {
-                            Some(queue_item) => {
-                                queue.insert(position, queue_item.clone());
-                                // #TODO: ugh, this is not working, is not removed :/
-                                queue.remove(idx);
-                            }
-                            None => {}
-                        }
+                        let item = queue.remove(idx);
+                        queue.insert(position, item);
                     }
                     None => {}
                 };
+                true
             }
             QRequest::FileProcessingResponse {
                 id,
                 status,
                 filepath,
+                title,
+                duration,
             } => {
                 info!(
-                    "q_loop FileProcessingResponse id:{}, status:{:#?}, filepath:{:#?}",
-                    id, status, filepath
+                    "queue_handler FileProcessingResponse id:{}, status:{:#?}, filepath:{:#?}, title:{:#?}, duration:{:#?}",
+                    id, status, filepath, title, duration
                 );
                 match queue.iter().position(|q| q.id == id) {
                     Some(idx) => match queue.get_mut(idx) {
                         Some(queue_item) => {
                             queue_item.status = status;
                             queue_item.filepath = filepath;
+                            queue_item.title = title;
+                            queue_item.duration = duration;
                         }
                         None => {}
                     },
                     None => {}
                 };
+                true
+            }
+            QRequest::GetQueue { addr } => {
+                to_addr = addr;
+                true
             }
         };
-
-        let msg = serde_json::to_value(QueueResponse {
-            queue: queue.clone(),
-        })
-        .unwrap()
-        .to_string();
-
-        info!("q_loop msg: {:#?}", msg);
-
-        let peers = peer_map.lock().unwrap();
-        // broadcast the queue msg to everyone
-        let broadcast_recipients = peers.iter().map(|(_, ws_sink)| ws_sink);
-        for recp in broadcast_recipients {
-            recp.unbounded_send(Message::Text(msg.clone())).unwrap();
+        if needs_q {
+            let msg = serde_json::to_value(QueueResponse {
+                queue: queue.clone(),
+            })
+            .unwrap()
+            .to_string();
+            info!("queue_handler msg: {:#?}", msg);
+            let peers = peer_map.lock().unwrap();
+            match to_addr {
+                Some(addr) => match peers.get(&addr) {
+                    Some(peer) => {
+                        peer.unbounded_send(Message::Text(msg.clone()))
+                            .unwrap_or_default();
+                    }
+                    _ => {}
+                },
+                None => {
+                    // broadcast the queue msg to everyone
+                    let broadcast_recipients = peers.iter().map(|(_, ws_sink)| ws_sink);
+                    for recp in broadcast_recipients {
+                        recp.unbounded_send(Message::Text(msg.clone()))
+                            .unwrap_or_default();
+                    }
+                }
+            }
         }
     }
     Ok(())
 }
 
-async fn file_processing(
+async fn file_handler(
     library_path: String,
     mut events: UnboundedReceiver<FileProcessingRequest>,
     q_sender: UnboundedSender<QRequest>,
-) -> BrokerResult<()> {
+) -> GenericResult<()> {
     while let Some(event) = events.next().await {
         match event {
             FileProcessingRequest::Queue { id } => {
-                info!("file_processing FileProcessingRequest::Queue id: {:#?}", id);
-
+                // #TODO: this should first check if the file is on disk?
+                // the youtube-dl process blockz any more of these file_handler messages
+                // so maybe this could first check if on disk, if not then send a msg
+                // to do, like, FileProcessingRequest::Download
                 info!(
-                    "file_processing FileProcessingRequest::Queue gonna youtube-dl id: {:#?}",
+                    "file_handler FileProcessingRequest::Queue gonna youtube-dl id: {:#?}",
                     id
                 );
                 let response: QRequest = match Command::new("youtube-dl")
@@ -315,7 +365,7 @@ async fn file_processing(
                     .output()
                 {
                     Ok(output) => {
-                        info!("file_processing youtube-dl output: {:#?}", output);
+                        info!("file_handler youtube-dl output: {:#?}", output);
 
                         match output.status.code() {
                             Some(code) => {
@@ -323,17 +373,14 @@ async fn file_processing(
                                 if code == 0 {
                                     let info_filepath =
                                         format!("{}/{}.info.json", library_path, id);
-                                    info!(
-                                        "file_processing reading info json file: {}",
-                                        info_filepath
-                                    );
+                                    info!("file_handler reading info json file: {}", info_filepath);
                                     let contents = read_to_string(info_filepath)
                                         .expect("TEST PANIC! ...something went wrong reading info.json file!");
 
                                     let parsed: YoutubeDlJSON = serde_json::from_str(&contents)
                                         .expect("test panic! can't parse to JSON");
                                     let mut filepath = parsed._filename;
-                                    // #TODO: validate filename is really a path
+                                    // validate filename is really a path & file on disk
                                     if !Path::new(&filepath).is_file() {
                                         info!("ugh ref file not on filesystem gonna try to find {}/{}*[!json]", &library_path, &id);
                                         // let glob_path = ;
@@ -342,10 +389,7 @@ async fn file_processing(
                                                 .unwrap()
                                         {
                                             if let Ok(path) = entry {
-                                                println!(
-                                                    "ZOMG FOUND new file: {:?}",
-                                                    path.display()
-                                                );
+                                                // zomg, found it!
                                                 filepath = path.as_path().display().to_string();
                                             }
                                         }
@@ -355,36 +399,26 @@ async fn file_processing(
                                         id: id,
                                         status: QueueItemStatus::Ready,
                                         filepath: filepath,
+                                        title: parsed.title,
+                                        duration: parsed.duration,
                                     }
                                 } else {
-                                    QRequest::FileProcessingResponse {
-                                        id: id,
-                                        status: QueueItemStatus::Error,
-                                        filepath: "".to_owned(),
-                                    }
+                                    // will remove this from the queue since it doesn't seem valid
+                                    QRequest::DeQueue { id }
                                 }
                             }
                             None => {
-                                println!("youtube-dl Process terminated by signal");
-                                QRequest::FileProcessingResponse {
-                                    id: id,
-                                    status: QueueItemStatus::Error,
-                                    filepath: "".to_owned(),
-                                }
+                                warn!("youtube-dl Process terminated by signal");
+                                QRequest::DeQueue { id }
                             }
                         }
                     }
                     Err(e) => {
-                        error!("youtube-dl error: {:#?}", e);
-                        QRequest::FileProcessingResponse {
-                            id: id,
-                            status: QueueItemStatus::Error,
-                            filepath: "".to_owned(),
-                        }
+                        warn!("youtube-dl error: {:#?}", e);
+                        QRequest::DeQueue { id }
                     }
                 };
-
-                q_sender.unbounded_send(response).unwrap();
+                q_sender.unbounded_send(response).unwrap_or_default();
             }
         }
     }
@@ -413,6 +447,7 @@ mod tests {
             _filename: "/Users/edwardsharp/src/github/youoke/server/library/5--RnSogips.mp4"
                 .to_owned(),
             duration: 352,
+            title: "Korn   Faget".to_owned(),
         };
         println!("parsed: {:#?}", parsed);
 
@@ -438,19 +473,23 @@ mod tests {
         let (mut socket2, _) = connect(Url::parse("ws://127.0.0.1:9001").unwrap())
             .expect("test can't connect to socket!");
 
-        // welcome message:
+        let queue = vec![];
+        let empty_q = serde_json::to_value(QueueResponse { queue })
+            .unwrap()
+            .to_string();
+
         let msg = socket
             .read_message()
             .expect("test panic! reading socket message");
-        assert_eq!(msg, Message::Text("ZOMG WELCOME!".into()));
+        assert_eq!(msg, Message::Text(empty_q.clone()));
 
         let msg = socket2
             .read_message()
             .expect("test panic! reading socket message");
-        assert_eq!(msg, Message::Text("ZOMG WELCOME!".into()));
+        assert_eq!(msg, Message::Text(empty_q));
 
         socket
-            .write_message(Message::Text("Hello WebSocket".into()))
+            .write_message(Message::Text("this is an invalid message".into()))
             .unwrap();
         let msg = socket
             .read_message()
@@ -462,7 +501,7 @@ mod tests {
             title: "".to_owned(),
             singer: "frankie frankie".to_owned(),
             filepath: "".to_owned(),
-            timestamp: 0,
+            duration: 0,
             status: QueueItemStatus::Downloading,
         };
         let queue = vec![q_item];
@@ -479,7 +518,7 @@ mod tests {
         //     singer: "frankie frankie".to_owned(),
         // };
 
-        let q_response: QueueResponse = QueueResponse { queue: queue };
+        let q_response: QueueResponse = QueueResponse { queue };
 
         socket
             .write_message(Message::Text(queue_req.to_owned()))

@@ -1,42 +1,74 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>WebSocket Test</title>
-	</head>
-	<body>
-		<script>
-			var socket = new WebSocket("ws://localhost:9001");
-			socket.onmessage = function (event) {
-				var received = document.getElementById("received");
-				var hr = document.createElement("HR");
-				var text = document.createTextNode(event.data);
-				received.appendChild(hr);
-				received.appendChild(text);
-			};
+    <head>
+        <meta charset="utf-8" />
+        <title>WebSocket Test</title>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            #received {
+                height: calc(100vh - 55px);
+                overflow: scroll;
+                margin: 0;
+            }
+            #received > pre {
+                margin: 1em;
+            }
+            form {
+                position: absolute;
+                bottom: 0;
+                background: white;
+                padding: 1em;
+            }
+            #message {
+                width: 80vw;
+            }
+        </style>
+    </head>
+    <body>
+        <script>
+            var socket = new WebSocket('ws://localhost:9001')
+            socket.onmessage = function (event) {
+                var received = document.getElementById('received')
+                var hr = document.createElement('HR')
+                var text = document.createElement('pre')
+                var data_text = event.data
+                try {
+                    data_text = JSON.stringify(JSON.parse(event.data), undefined, 2)
+                } catch (e) {
+                    // shrug
+                }
+                text.appendChild(document.createTextNode(data_text))
+                received.appendChild(hr)
+                received.appendChild(text)
+                document.getElementById('received').scrollTop =
+                    document.getElementById('received').scrollHeight
+            }
 
-			socket.onerror = function(event) {
-				console.warn('zomg socket.onerror:',event)
-			}
-			socket.onclose = function(event) {
-				console.log('zomg socket.onclose:',event)
-			}
-			socket.onopen = function(event) {
-				console.log('zomg socket.onopen:',event)
-			}
-			
-			function send(element) {
-				var input = document.getElementById(element);
-				socket.send(input.value);
-				input.value = "";
-			}
-		</script>
-			<p id="received">
-				<strong>Received Messages:</strong>
-			</p>
-			<form onsubmit="send('message'); return false">
-				<input type="text" id="message">
-				<input type="submit" value="Send">
-			</form>
-	</body>
+            socket.onerror = function (event) {
+                console.warn('zomg socket.onerror:', event)
+            }
+            socket.onclose = function (event) {
+                console.log('zomg socket.onclose:', event)
+            }
+            socket.onopen = function (event) {
+                console.log('zomg socket.onopen:', event)
+            }
+
+            function send(element) {
+                var input = document.getElementById(element)
+                socket.send(input.value)
+                input.value = ''
+            }
+        </script>
+        <div id="received">
+            <strong>Received Messages:</strong>
+        </div>
+        <form onsubmit="send('message'); return false">
+            <input type="text" id="message" placeholder="message" />
+            <input type="submit" value="Send" />
+        </form>
+    </body>
 </html>
