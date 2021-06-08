@@ -181,7 +181,7 @@ async fn connection_handler(
         info!("oheyyyy! so the request {:?}", &request);
         match request {
             Request::Error => {
-                error!("zomg unknown cmd!!");
+                warn!("zomg unknown cmd!!");
                 let peers = peer_map.lock().unwrap();
                 // broadcast the error back to sender.
                 match peers.get(&addr) {
@@ -389,7 +389,6 @@ async fn file_handler(
                                     // validate filename is really a path & file on disk
                                     if !Path::new(&filepath).is_file() {
                                         info!("ugh ref file not on filesystem gonna try to find {}/{}*[!json]", &library_path, &id);
-                                        // let glob_path = ;
                                         for entry in
                                             glob(&format!("{}/{}*[!json]", &library_path, &id))
                                                 .unwrap()
