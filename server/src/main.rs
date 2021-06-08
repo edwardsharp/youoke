@@ -51,7 +51,7 @@ enum QueueItemStatus {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-enum QRequest {
+enum Request {
     Queue {
         id: String,
         singer: String,
@@ -154,7 +154,7 @@ async fn connection_handler(
     peer_map: PeerMap,
     raw_stream: TcpStream,
     addr: SocketAddr,
-    q_sender: UnboundedSender<QRequest>,
+    q_sender: UnboundedSender<Request>,
 ) {
     info!("incoming TCP connection from: {}", addr);
     let ws_stream = accept_async(raw_stream)
@@ -164,7 +164,7 @@ async fn connection_handler(
     let (tx, rx) = unbounded();
     // send the queue first thing:
     q_sender
-        .unbounded_send(QRequest::GetQueue { addr: Some(addr) })
+        .unbounded_send(Request::GetQueue { addr: Some(addr) })
         .unwrap_or_default();
     // insert the write (tx) part of this peer to the peer map
     peer_map.lock().unwrap().insert(addr, tx);
@@ -175,12 +175,12 @@ async fn connection_handler(
             addr,
             msg.to_text().unwrap()
         );
-        let request: QRequest =
-            serde_json::from_str(msg.to_text().unwrap()).unwrap_or(QRequest::Error);
+        let request: Request =
+            serde_json::from_str(msg.to_text().unwrap()).unwrap_or(Request::Error);
 
         info!("oheyyyy! so the request {:?}", &request);
         match request {
-            QRequest::Error => {
+            Request::Error => {
                 error!("zomg unknown cmd!!");
                 let peers = peer_map.lock().unwrap();
                 // broadcast the error back to sender.
@@ -193,7 +193,7 @@ async fn connection_handler(
                     _ => {}
                 }
             }
-            QRequest::PlayerPause | QRequest::PlayerPlay | QRequest::PlayerSkip => {
+            Request::PlayerPause | Request::PlayerPlay | Request::PlayerSkip => {
                 // broadcast the queue msg to everyone (but maybe only the player truely needz this?)
                 let peers = peer_map.lock().unwrap();
                 let broadcast_recipients = peers.iter().map(|(_, ws_sink)| ws_sink);
@@ -218,7 +218,7 @@ async fn connection_handler(
 }
 
 async fn queue_handler(
-    mut events: UnboundedReceiver<QRequest>,
+    mut events: UnboundedReceiver<Request>,
     peer_map: PeerMap,
     mut queue: Vec<QueueItem>,
     f_sender: UnboundedSender<FileProcessingRequest>,
@@ -227,14 +227,14 @@ async fn queue_handler(
         info!("queue_handler has request: {:#?}", request);
         let mut to_addr: Option<SocketAddr> = None;
         let needs_q: bool = match request {
-            QRequest::Error | QRequest::PlayerPause | QRequest::PlayerPlay => false, // note: stop here if any of these (no queue response needed)
-            QRequest::PlayerSkip => {
+            Request::Error | Request::PlayerPause | Request::PlayerPlay => false, // note: stop here if any of these (no queue response needed)
+            Request::PlayerSkip => {
                 if queue.len() > 0 {
                     queue.remove(0);
                 }
                 true
             }
-            QRequest::Queue { id, singer } => {
+            Request::Queue { id, singer } => {
                 info!(
                     "queue_handler request to Queue id:{} singer:{}",
                     &id, singer
@@ -262,12 +262,12 @@ async fn queue_handler(
                 }
                 true
             }
-            QRequest::DeQueue { id } => {
+            Request::DeQueue { id } => {
                 info!("queue_handler DeQueue id:{}", id);
                 queue.retain(|q| q.id != id);
                 true
             }
-            QRequest::QueuePosition { id, position } => {
+            Request::QueuePosition { id, position } => {
                 info!(
                     "queue_handler QueuePosition id:{} position:{}",
                     id, position
@@ -281,7 +281,7 @@ async fn queue_handler(
                 };
                 true
             }
-            QRequest::FileProcessingResponse {
+            Request::FileProcessingResponse {
                 id,
                 status,
                 filepath,
@@ -306,7 +306,7 @@ async fn queue_handler(
                 };
                 true
             }
-            QRequest::GetQueue { addr } => {
+            Request::GetQueue { addr } => {
                 to_addr = addr;
                 true
             }
@@ -344,7 +344,7 @@ async fn queue_handler(
 async fn file_handler(
     library_path: String,
     mut events: UnboundedReceiver<FileProcessingRequest>,
-    q_sender: UnboundedSender<QRequest>,
+    q_sender: UnboundedSender<Request>,
 ) -> GenericResult<()> {
     while let Some(event) = events.next().await {
         match event {
@@ -357,7 +357,7 @@ async fn file_handler(
                     "file_handler FileProcessingRequest::Queue gonna youtube-dl id: {:#?}",
                     id
                 );
-                let response: QRequest = match Command::new("youtube-dl")
+                let response: Request = match Command::new("youtube-dl")
                     .arg(&id)
                     .arg("--restrict-filenames")
                     .arg("--write-info-json") // --print-json
@@ -397,7 +397,7 @@ async fn file_handler(
                                         }
                                     }
 
-                                    QRequest::FileProcessingResponse {
+                                    Request::FileProcessingResponse {
                                         id: id,
                                         status: QueueItemStatus::Ready,
                                         filepath: filepath,
@@ -406,18 +406,18 @@ async fn file_handler(
                                     }
                                 } else {
                                     // will remove this from the queue since it doesn't seem valid
-                                    QRequest::DeQueue { id }
+                                    Request::DeQueue { id }
                                 }
                             }
                             None => {
                                 warn!("youtube-dl Process terminated by signal");
-                                QRequest::DeQueue { id }
+                                Request::DeQueue { id }
                             }
                         }
                     }
                     Err(e) => {
                         warn!("youtube-dl error: {:#?}", e);
-                        QRequest::DeQueue { id }
+                        Request::DeQueue { id }
                     }
                 };
                 q_sender.unbounded_send(response).unwrap_or_default();
@@ -514,11 +514,6 @@ mod tests {
                 "singer":"frankie frankie"
             }
         }"#;
-
-        // let request: Request = Request::Queue {
-        //     id: "xxx666".to_owned(),
-        //     singer: "frankie frankie".to_owned(),
-        // };
 
         let q_response: QueueResponse = QueueResponse { queue };
 
