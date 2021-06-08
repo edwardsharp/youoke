@@ -194,13 +194,15 @@ async fn connection_handler(
                 }
             }
             Request::PlayerPause | Request::PlayerPlay | Request::PlayerSkip => {
-                // broadcast the queue msg to everyone (but maybe only the player truely needz this?)
+                // broadcast the player msg to everyone (but maybe only the player truely needz this?)
                 let peers = peer_map.lock().unwrap();
                 let broadcast_recipients = peers.iter().map(|(_, ws_sink)| ws_sink);
                 for recp in broadcast_recipients {
                     let msg = serde_json::to_value(&request).unwrap().to_string();
                     recp.unbounded_send(Message::Text(msg)).unwrap_or_default();
                 }
+                // #TODO: actually prolly don't need to send this request to q_sender
+                // could yank additional logic inside queue_handler...
                 q_sender.unbounded_send(request).unwrap_or_default();
             }
             _ => {
@@ -226,6 +228,8 @@ async fn queue_handler(
     while let Some(request) = events.next().await {
         info!("queue_handler has request: {:#?}", request);
         let mut to_addr: Option<SocketAddr> = None;
+        // #TODO: if this never gets Request::Error | Request::PlayerPause | Request::PlayerPlay then
+        // wouldn't have to handle this needs_q logic...
         let needs_q: bool = match request {
             Request::Error | Request::PlayerPause | Request::PlayerPlay => false, // note: stop here if any of these (no queue response needed)
             Request::PlayerSkip => {
