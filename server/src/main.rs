@@ -384,7 +384,7 @@ async fn file_handler(
                                         .expect("TEST PANIC! ...something went wrong reading info.json file!");
 
                                     let parsed: YoutubeDlJSON = serde_json::from_str(&contents)
-                                        .expect("test panic! can't parse to JSON");
+                                        .expect("file_handler panic! can't parse to JSON");
                                     let mut filepath = parsed._filename;
                                     // validate filename is really a path & file on disk
                                     if !Path::new(&filepath).is_file() {
