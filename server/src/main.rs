@@ -15,6 +15,7 @@ use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 
 use tokio::net::{TcpListener, TcpStream};
+use tokio_tungstenite::accept_async;
 use tungstenite::protocol::Message;
 
 use log::*;
@@ -133,6 +134,7 @@ async fn main() -> Result<(), IoError> {
     // message bus for handling file processing, doesn't broadcast but will send messages to the queue bus
     let (f_sender, f_receiver) = unbounded();
     tokio::task::spawn(queue_handler(q_receiver, peer_map.clone(), queue, f_sender));
+    // hmm, should the file_handler be spawn_blocking since it blockz??
     tokio::task::spawn(file_handler(library_path, f_receiver, q_sender.clone()));
 
     // spawn the handling of each connection in a separate task.
@@ -155,7 +157,7 @@ async fn connection_handler(
     q_sender: UnboundedSender<QRequest>,
 ) {
     info!("incoming TCP connection from: {}", addr);
-    let ws_stream = tokio_tungstenite::accept_async(raw_stream)
+    let ws_stream = accept_async(raw_stream)
         .await
         .expect("error during the websocket handshake occurred");
     info!("WebSocket connection established: {}", addr);
