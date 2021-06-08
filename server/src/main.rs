@@ -162,12 +162,12 @@ async fn connection_handler(
         .expect("error during the websocket handshake occurred");
     info!("WebSocket connection established: {}", addr);
     let (tx, rx) = unbounded();
+    // insert the write (tx) part of this peer to the peer map
+    peer_map.lock().unwrap().insert(addr, tx);
     // send the queue first thing:
     q_sender
         .unbounded_send(Request::GetQueue { addr: Some(addr) })
         .unwrap_or_default();
-    // insert the write (tx) part of this peer to the peer map
-    peer_map.lock().unwrap().insert(addr, tx);
     let (outgoing, incoming) = ws_stream.split();
     let broadcast_incoming = incoming.try_for_each(|msg| {
         info!(
