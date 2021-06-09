@@ -59,19 +59,19 @@ enum Request {
     DeQueue {
         id: String,
     },
-    QueuePosition {
+    QueueSetPosition {
         id: String,
         position: usize,
     },
-    FileProcessingResponse {
+    GetQueue {
+        addr: Option<SocketAddr>,
+    },
+    LibraryResponse {
         id: String,
         status: QueueItemStatus,
         filepath: String,
         title: String,
         duration: usize,
-    },
-    GetQueue {
-        addr: Option<SocketAddr>,
     },
     PlayerPlay,
     PlayerPause,
@@ -80,7 +80,12 @@ enum Request {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-enum FileProcessingRequest {
+enum LibraryRequest {
+    Queue { id: String },
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+enum DownloadRequest {
     Queue { id: String },
 }
 
@@ -131,11 +136,28 @@ async fn main() -> Result<(), IoError> {
 
     // message bus for handling queue mutation and broadcasting
     let (q_sender, q_receiver) = unbounded();
-    // message bus for handling file processing, doesn't broadcast but will send messages to the queue bus
+    // message bus for handling file processing, doesn't broadcast but will send messages to the queue or download bus
     let (f_sender, f_receiver) = unbounded();
-    tokio::task::spawn(queue_handler(q_receiver, peer_map.clone(), queue, f_sender));
-    // hmm, should the file_handler be spawn_blocking since it blockz??
-    tokio::task::spawn(file_handler(library_path, f_receiver, q_sender.clone()));
+    // message bus for handling file downloading, doesn't broadcast but will send messages to the queue bus
+    let (d_sender, d_receiver) = unbounded();
+    tokio::task::spawn(queue_handler(
+        q_receiver,
+        peer_map.clone(),
+        queue,
+        f_sender.clone(),
+    ));
+    tokio::task::spawn(file_handler(
+        library_path.clone(),
+        f_receiver,
+        q_sender.clone(),
+        d_sender.clone(),
+    ));
+    // hmm, should the download_handler be spawn_blocking since it blockz??
+    tokio::task::spawn(download_handler(
+        library_path.clone(),
+        d_receiver,
+        q_sender.clone(),
+    ));
 
     // spawn the handling of each connection in a separate task.
     while let Ok((stream, addr)) = listener.accept().await {
@@ -223,7 +245,7 @@ async fn queue_handler(
     mut events: UnboundedReceiver<Request>,
     peer_map: PeerMap,
     mut queue: Vec<QueueItem>,
-    f_sender: UnboundedSender<FileProcessingRequest>,
+    f_sender: UnboundedSender<LibraryRequest>,
 ) -> GenericResult<()> {
     while let Some(request) = events.next().await {
         info!("queue_handler has request: {:#?}", request);
@@ -259,8 +281,9 @@ async fn queue_handler(
                             filepath: "".to_owned(),
                             title: "".to_owned(),
                         });
+
                         f_sender
-                            .unbounded_send(FileProcessingRequest::Queue { id: id.clone() })
+                            .unbounded_send(LibraryRequest::Queue { id: id.clone() })
                             .unwrap_or_default();
                     }
                 }
@@ -271,9 +294,9 @@ async fn queue_handler(
                 queue.retain(|q| q.id != id);
                 true
             }
-            Request::QueuePosition { id, position } => {
+            Request::QueueSetPosition { id, position } => {
                 info!(
-                    "queue_handler QueuePosition id:{} position:{}",
+                    "queue_handler QueueSetPosition id:{} position:{}",
                     id, position
                 );
                 match queue.iter().position(|q| q.id == id) {
@@ -285,7 +308,7 @@ async fn queue_handler(
                 };
                 true
             }
-            Request::FileProcessingResponse {
+            Request::LibraryResponse {
                 id,
                 status,
                 filepath,
@@ -293,7 +316,7 @@ async fn queue_handler(
                 duration,
             } => {
                 info!(
-                    "queue_handler FileProcessingResponse id:{}, status:{:#?}, filepath:{:#?}, title:{:#?}, duration:{:#?}",
+                    "queue_handler LibraryResponse id:{}, status:{:#?}, filepath:{:#?}, title:{:#?}, duration:{:#?}",
                     id, status, filepath, title, duration
                 );
                 match queue.iter().position(|q| q.id == id) {
@@ -347,18 +370,94 @@ async fn queue_handler(
 
 async fn file_handler(
     library_path: String,
-    mut events: UnboundedReceiver<FileProcessingRequest>,
+    mut events: UnboundedReceiver<LibraryRequest>,
+    q_sender: UnboundedSender<Request>,
+    d_sender: UnboundedSender<DownloadRequest>,
+) -> GenericResult<()> {
+    while let Some(event) = events.next().await {
+        match event {
+            LibraryRequest::Queue { id } => {
+                info!(
+                    "file_handler LibraryRequest::Queue gonna look for file with id: {:#?}",
+                    &id
+                );
+                let info_filepath = format!("{}/{}.info.json", library_path, &id);
+                info!(
+                    "file_handler looking for info json file named: {}",
+                    info_filepath
+                );
+                let needs_to_download: bool = match read_to_string(info_filepath) {
+                    Ok(contents) => {
+                        match serde_json::from_str::<YoutubeDlJSON>(&contents) {
+                            Ok(parsed) => {
+                                let mut filepath = parsed._filename;
+                                // validate filename is really a path & file on disk
+                                if !Path::new(&filepath).is_file() {
+                                    info!("ugh ref file not on filesystem gonna try to find {}/{}*[!json]", &library_path, &id);
+                                    for entry in
+                                        glob(&format!("{}/{}*[!json]", &library_path, &id)).unwrap()
+                                    {
+                                        if let Ok(path) = entry {
+                                            // zomg, found it!
+                                            filepath = path.as_path().display().to_string();
+                                        }
+                                    }
+
+                                    if Path::new(&filepath).is_file() {
+                                        // okay! got it, finally:
+                                        q_sender
+                                            .unbounded_send(Request::LibraryResponse {
+                                                id: id.clone(),
+                                                status: QueueItemStatus::Ready,
+                                                filepath: filepath,
+                                                title: parsed.title,
+                                                duration: parsed.duration,
+                                            })
+                                            .unwrap_or_default();
+                                        false
+                                    } else {
+                                        true
+                                    }
+                                } else {
+                                    q_sender
+                                        .unbounded_send(Request::LibraryResponse {
+                                            id: id.clone(),
+                                            status: QueueItemStatus::Ready,
+                                            filepath: filepath,
+                                            title: parsed.title,
+                                            duration: parsed.duration,
+                                        })
+                                        .unwrap_or_default();
+                                    false
+                                }
+                            }
+                            Err(_) => true,
+                        }
+                    }
+                    Err(_) => true,
+                };
+
+                if needs_to_download {
+                    d_sender
+                        .unbounded_send(DownloadRequest::Queue { id: id })
+                        .unwrap_or_default();
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+async fn download_handler(
+    library_path: String,
+    mut events: UnboundedReceiver<DownloadRequest>,
     q_sender: UnboundedSender<Request>,
 ) -> GenericResult<()> {
     while let Some(event) = events.next().await {
         match event {
-            FileProcessingRequest::Queue { id } => {
-                // #TODO: this should first check if the file is on disk?
-                // the youtube-dl process blockz any more of these file_handler messages
-                // so maybe this could first check if on disk, if not then send a msg
-                // to do, like, FileProcessingRequest::Download
+            DownloadRequest::Queue { id } => {
                 info!(
-                    "file_handler FileProcessingRequest::Queue gonna youtube-dl id: {:#?}",
+                    "download_handler DownloadRequest::Queue gonna youtube-dl id: {:#?}",
                     id
                 );
                 let response: Request = match Command::new("youtube-dl")
@@ -371,7 +470,7 @@ async fn file_handler(
                     .output()
                 {
                     Ok(output) => {
-                        info!("file_handler youtube-dl output: {:#?}", output);
+                        info!("download_handler youtube-dl output: {:#?}", output);
 
                         match output.status.code() {
                             Some(code) => {
@@ -379,12 +478,15 @@ async fn file_handler(
                                 if code == 0 {
                                     let info_filepath =
                                         format!("{}/{}.info.json", library_path, id);
-                                    info!("file_handler reading info json file: {}", info_filepath);
+                                    info!(
+                                        "download_handler reading info json file: {}",
+                                        info_filepath
+                                    );
                                     let contents = read_to_string(info_filepath)
                                         .expect("TEST PANIC! ...something went wrong reading info.json file!");
 
                                     let parsed: YoutubeDlJSON = serde_json::from_str(&contents)
-                                        .expect("file_handler panic! can't parse to JSON");
+                                        .expect("download_handler panic! can't parse to JSON");
                                     let mut filepath = parsed._filename;
                                     // validate filename is really a path & file on disk
                                     if !Path::new(&filepath).is_file() {
@@ -400,7 +502,7 @@ async fn file_handler(
                                         }
                                     }
 
-                                    Request::FileProcessingResponse {
+                                    Request::LibraryResponse {
                                         id: id,
                                         status: QueueItemStatus::Ready,
                                         filepath: filepath,
