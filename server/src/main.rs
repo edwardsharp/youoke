@@ -393,7 +393,7 @@ async fn file_handler(
                                 let mut filepath = parsed._filename;
                                 // validate filename is really a path & file on disk
                                 if !Path::new(&filepath).is_file() {
-                                    info!("ugh ref file not on filesystem gonna try to find {}/{}*[!json]", &library_path, &id);
+                                    info!("file_handler: file not on filesystem gonna try to find {}/{}*[!json]", &library_path, &id);
                                     for entry in
                                         glob(&format!("{}/{}*[!json]", &library_path, &id)).unwrap()
                                     {
@@ -438,6 +438,10 @@ async fn file_handler(
                 };
 
                 if needs_to_download {
+                    info!(
+                        "file_handler unable to located  {:?} on filesystem, gonna try to download.",
+                        &id
+                    );
                     d_sender
                         .unbounded_send(DownloadRequest::Queue { id: id })
                         .unwrap_or_default();
@@ -461,12 +465,13 @@ async fn download_handler(
                     id
                 );
                 let response: Request = match Command::new("youtube-dl")
-                    .arg(&id)
                     .arg("--restrict-filenames")
                     .arg("--write-info-json") // --print-json
                     .arg("--quiet")
                     .arg("-o")
                     .arg(format!("{}/%(id)s.%(ext)s", library_path))
+                    .arg("--")
+                    .arg(&id) // note: this handles video IDz that start with a dash (-)
                     .output()
                 {
                     Ok(output) => {
@@ -482,8 +487,10 @@ async fn download_handler(
                                         "download_handler reading info json file: {}",
                                         info_filepath
                                     );
-                                    let contents = read_to_string(info_filepath)
-                                        .expect("TEST PANIC! ...something went wrong reading info.json file!");
+                                    // #TODO handle erros, here. cuz might not be a valid file (like)
+                                    let contents = read_to_string(info_filepath).expect(
+                                        "PANIC! ...something went wrong reading info.json file!",
+                                    );
 
                                     let parsed: YoutubeDlJSON = serde_json::from_str(&contents)
                                         .expect("download_handler panic! can't parse to JSON");
