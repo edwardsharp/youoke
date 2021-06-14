@@ -49,9 +49,29 @@ input {
 }
 
 .list-btn:hover,
-.list-btn:focus {
+.list-btn:focus,
+.list-btn-1char:hover,
+.list-btn-1char:focus {
     color: blue;
     background-color: white;
+    cursor: pointer;
+}
+
+.list-btn-1char {
+    padding: 0 15px;
+    color: white;
+    background-color: blue;
+}
+
+.invert-list-btn {
+    padding: 0 15px;
+    color: blue;
+    background-color: white;
+}
+.invert-list-btn:hover,
+.invert-list-btn:focus {
+    color: white;
+    background-color: blue;
     cursor: pointer;
 }
 

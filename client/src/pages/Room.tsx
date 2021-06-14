@@ -18,10 +18,20 @@ export interface QueueRequest {
         singer: string
     }
 }
-
+export interface QueueSetPosition {
+    QueueSetPosition: { id: string; position: number }
+}
+export interface DeQueue {
+    DeQueue: { id: string }
+}
 export type PlayerRequest = 'PlayerPause' | 'PlayerPlay'
 export type LibraryRequest = 'GetLibrary'
-type Request = QueueRequest | PlayerRequest | LibraryRequest
+type Request =
+    | QueueRequest
+    | QueueSetPosition
+    | DeQueue
+    | PlayerRequest
+    | LibraryRequest
 
 interface QueueItem {
     duration: number
@@ -81,6 +91,8 @@ export default function Room(props: RoomProps) {
     const [showSearchResults, setShowSearchResults] = useState(false)
     const [searchResults, setSearchResults] = useState<LibraryItem[]>([])
     const [library, setLibrary] = useState<LibraryItem[]>(() => DEFAULT_LIBRARY)
+    const [showIdInput, setShowIdInput] = useState(false)
+    const [showSearchInput, setShowSeachInout] = useState(false)
 
     function handleWsMessage(message: WebSocketEventMap['message']) {
         try {
@@ -115,6 +127,24 @@ export default function Room(props: RoomProps) {
             },
         })
     }
+
+    function deQ(id: string) {
+        sendWsMessage({
+            DeQueue: {
+                id,
+            },
+        })
+    }
+
+    function qPosition(id: string, position: number) {
+        sendWsMessage({
+            QueueSetPosition: {
+                id,
+                position,
+            },
+        })
+    }
+
     useEffect(() => {
         ws.current = new WebSocket(`ws://${room.href}`)
         ws.current.onopen = () => {
@@ -148,74 +178,108 @@ export default function Room(props: RoomProps) {
                 <div className="list">
                     <h2>- - - MENU - - -</h2>
                     <ol>
-                        <li tabIndex={0} className="list-no-pad">
-                            <input
-                                type="text"
-                                placeholder="queue song ID"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        q(qSongId)
-                                        setQSongId('')
-                                    }
-                                }}
-                                value={qSongId}
-                                onChange={(e) => setQSongId(e.target.value)}
-                            />
-                        </li>
-                        <li tabIndex={0} className="list-no-pad">
-                            <div className="sticky search-q">
-                                <input
-                                    className={
-                                        showSearchResults
-                                            ? 'search-q-input'
-                                            : ''
-                                    }
-                                    type="text"
-                                    placeholder="search"
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            const fResults = library.filter(
-                                                (item) =>
-                                                    item.title
-                                                        .toLowerCase()
-                                                        .includes(
-                                                            searchQ.toLowerCase()
-                                                        )
-                                            )
-                                            console.log('fResults', fResults)
-                                            setSearchResults(fResults)
-                                            setShowSearchResults(true)
-                                            document
-                                                .getElementById(
-                                                    'search-q-header'
-                                                )
-                                                ?.scrollIntoView()
+                        <li tabIndex={0} className="list-no-pad list-btn">
+                            {showIdInput ? (
+                                <div className="flex">
+                                    <input
+                                        type="text"
+                                        placeholder="queue song ID"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                q(qSongId)
+                                                setQSongId('')
+                                            }
+                                        }}
+                                        value={qSongId}
+                                        onChange={(e) =>
+                                            setQSongId(e.target.value)
                                         }
-                                    }}
-                                    onFocus={() => setShowSearchResults(true)}
-                                    value={searchQ}
-                                    onChange={(e) => setSearchQ(e.target.value)}
-                                />
-                                {showSearchResults && (
+                                    />
                                     <div
-                                        className="list-btn"
-                                        onClick={() =>
-                                            setShowSearchResults(false)
-                                        }
+                                        className="invert-list-btn"
+                                        onClick={() => setShowIdInput(false)}
                                     >
                                         {' '}
                                         x{' '}
                                     </div>
+                                </div>
+                            ) : (
+                                <div onClick={() => setShowIdInput(true)}>
+                                    queue song ID
+                                </div>
+                            )}
+                        </li>
+                        <li tabIndex={0} className="list-no-pad">
+                            <div className="sticky">
+                                {showSearchInput ? (
+                                    <div className="search-q">
+                                        <input
+                                            className={
+                                                showSearchResults
+                                                    ? 'search-q-input'
+                                                    : ''
+                                            }
+                                            type="text"
+                                            placeholder="search"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    const fResults = library.filter(
+                                                        (item) =>
+                                                            item.title
+                                                                .toLowerCase()
+                                                                .includes(
+                                                                    searchQ.toLowerCase()
+                                                                )
+                                                    )
+                                                    console.log(
+                                                        'fResults',
+                                                        fResults
+                                                    )
+                                                    setSearchResults(fResults)
+                                                    setShowSearchResults(true)
+                                                    document
+                                                        .getElementById(
+                                                            'search-results-container'
+                                                        )
+                                                        ?.scrollIntoView()
+                                                }
+                                            }}
+                                            onFocus={() =>
+                                                setShowSearchResults(true)
+                                            }
+                                            value={searchQ}
+                                            onChange={(e) =>
+                                                setSearchQ(e.target.value)
+                                            }
+                                        />
+                                        {showSearchResults && (
+                                            <div
+                                                className="invert-list-btn"
+                                                onClick={() => {
+                                                    setShowSearchResults(false)
+                                                    setShowSeachInout(false)
+                                                }}
+                                            >
+                                                {' '}
+                                                x{' '}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div
+                                        className="list-btn"
+                                        onClick={() => setShowSeachInout(true)}
+                                    >
+                                        {' '}
+                                        search/browse{' '}
+                                    </div>
                                 )}
                             </div>
                             {showSearchResults && (
-                                <div className="search-results-container">
+                                <div id="search-results-container">
                                     {searchResults.length ? (
                                         <>
-                                            <h3
-                                                id="search-q-header"
-                                                className="center"
-                                            >
+                                            <h3 className="center">
                                                 - - -{' '}
                                                 {searchQ ? 'results' : 'browse'}{' '}
                                                 - - -
@@ -231,7 +295,9 @@ export default function Room(props: RoomProps) {
                                                     </li>
                                                 ))}
                                             </ol>
-                                            <h3 className="center">- - - - - - - - - -</h3>
+                                            <h3 className="center">
+                                                - - - - - - - - - -
+                                            </h3>
                                         </>
                                     ) : (
                                         'no search results'
@@ -296,10 +362,49 @@ export default function Room(props: RoomProps) {
                             <h2>- - - QUEUE - - -</h2>
                             {queue.length === 0 && 'queue is empty...'}
                             <ol>
-                                {queue.map((q) => (
+                                {queue.map((q, idx) => (
                                     <li key={q.id} tabIndex={0}>
-                                        <div className="q-singer">
-                                            {q.singer}
+                                        <div className="q-singer flex">
+                                            <div className="flex-grow">{q.singer}</div>
+
+                                            {idx > 1 && (
+                                                <div
+                                                    className="list-btn-1char"
+                                                    onClick={() =>
+                                                        qPosition(q.id, idx - 1)
+                                                    }
+                                                    title="move one UP in queue"
+                                                >
+                                                    {' '}
+                                                    &uarr;{' '}
+                                                </div>
+                                            )}
+
+                                            {idx !== 0 &&
+                                                idx + 1 < queue.length && (
+                                                    <div
+                                                        className="list-btn-1char"
+                                                        onClick={() =>
+                                                            qPosition(
+                                                                q.id,
+                                                                idx + 1
+                                                            )
+                                                        }
+                                                        title="move one DOWN in queue"
+                                                    >
+                                                        {' '}
+                                                        &darr;
+                                                    </div>
+                                                )}
+
+                                            <div
+                                                className="list-btn-1char"
+                                                onClick={() => deQ(q.id)}
+                                                title="REMOVE from queue"
+                                            >
+                                                {' '}
+                                                x{' '}
+                                            </div>
                                         </div>
                                         <div>
                                             {q.status === 'Downloading'

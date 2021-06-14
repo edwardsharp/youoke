@@ -15,8 +15,12 @@ input {
     border-bottom: 5px solid white;
 }
 
-.search-q {
+.search-q,
+.flex {
     display: flex;
+}
+.flex-grow {
+    flex-grow: 1;
 }
 .search-q .list-btn {
     width: 30px;
