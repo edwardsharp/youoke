@@ -76,6 +76,7 @@ enum Request {
     PlayerPlay,
     PlayerPause,
     PlayerSkip,
+    GetLibrary,
     Error,
 }
 
@@ -94,6 +95,18 @@ struct YoutubeDlJSON {
     _filename: String,
     duration: usize,
     title: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct LibraryItem {
+    title: String,
+    duration: usize,
+    id: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct GetLibraryResponse {
+    library: Vec<LibraryItem>,
 }
 
 #[tokio::main]
@@ -166,6 +179,7 @@ async fn main() -> Result<(), IoError> {
             stream,
             addr,
             q_sender.clone(),
+            library_path.clone(),
         ));
     }
 
@@ -177,6 +191,7 @@ async fn connection_handler(
     raw_stream: TcpStream,
     addr: SocketAddr,
     q_sender: UnboundedSender<Request>,
+    library_path: String,
 ) {
     info!("incoming TCP connection from: {}", addr);
     let ws_stream = accept_async(raw_stream)
@@ -208,7 +223,10 @@ async fn connection_handler(
                 // broadcast the error back to sender.
                 match peers.get(&addr) {
                     Some(peer) => {
-                        info!("zomg found peer with addr: {:#?}", addr);
+                        info!(
+                            "zomg found peer with addr (will send 'unknown command'): {:#?}",
+                            addr
+                        );
                         peer.unbounded_send(Message::Text("unknown command".to_owned()))
                             .unwrap_or_default();
                     }
@@ -226,6 +244,36 @@ async fn connection_handler(
                 // #TODO: actually prolly don't need to send this request to q_sender
                 // could yank additional logic inside queue_handler...
                 q_sender.unbounded_send(request).unwrap_or_default();
+            }
+            Request::GetLibrary => {
+                info!("zomg GetLibrary!");
+                let mut library: Vec<LibraryItem> = vec![];
+                for entry in glob(&format!("{}/*.json", &library_path)).unwrap() {
+                    if let Ok(path) = entry {
+                        // zomg, found it!
+                        // path.as_path().display().to_string();
+                        info!("zomg gonna reqd path: {:?}", path);
+                        let contents = read_to_string(path)
+                            .expect("PANIC! something went wrong reading json file");
+                        let parsed: LibraryItem = serde_json::from_str(&contents)
+                            .expect("download_handler panic! can't parse to JSON");
+                        library.push(parsed);
+                        // println!("With text:\n{}", contents);
+                    }
+                }
+
+                let peers = peer_map.lock().unwrap();
+                // broadcast the error back to sender.
+
+                let msg = serde_json::to_value(GetLibraryResponse { library })
+                    .unwrap()
+                    .to_string();
+                match peers.get(&addr) {
+                    Some(peer) => {
+                        peer.unbounded_send(Message::Text(msg)).unwrap_or_default();
+                    }
+                    _ => {}
+                }
             }
             _ => {
                 q_sender.unbounded_send(request).unwrap_or_default();
@@ -253,7 +301,9 @@ async fn queue_handler(
         // #TODO: if this never gets Request::Error | Request::PlayerPause | Request::PlayerPlay then
         // wouldn't have to handle this needs_q logic...
         let needs_q: bool = match request {
-            Request::Error | Request::PlayerPause | Request::PlayerPlay => false, // note: stop here if any of these (no queue response needed)
+            Request::Error | Request::PlayerPause | Request::PlayerPlay | Request::GetLibrary => {
+                false
+            } // note: stop here if any of these (no queue response needed)
             Request::PlayerSkip => {
                 if queue.len() > 0 {
                     queue.remove(0);
