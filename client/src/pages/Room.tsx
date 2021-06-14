@@ -214,7 +214,7 @@ export default function Room(props: RoomProps) {
                                         <>
                                             <h3
                                                 id="search-q-header"
-                                                className="list-btn center"
+                                                className="center"
                                             >
                                                 - - -{' '}
                                                 {searchQ ? 'results' : 'browse'}{' '}
@@ -231,7 +231,7 @@ export default function Room(props: RoomProps) {
                                                     </li>
                                                 ))}
                                             </ol>
-                                            <h3>- - - - - - - - - -</h3>
+                                            <h3 className="center">- - - - - - - - - -</h3>
                                         </>
                                     ) : (
                                         'no search results'
