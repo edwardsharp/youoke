@@ -44,10 +44,6 @@ input {
     padding-left: 10px;
 }
 
-.list-no-pad {
-    padding-left: 0px !important;
-}
-
 .list-btn:hover,
 .list-btn:focus,
 .list-btn-1char:hover,

@@ -178,7 +178,7 @@ export default function Room(props: RoomProps) {
                 <div className="list">
                     <h2>- - - MENU - - -</h2>
                     <ol>
-                        <li tabIndex={0} className="list-no-pad list-btn">
+                        <li tabIndex={0}>
                             {showIdInput ? (
                                 <div className="flex">
                                     <input
@@ -204,12 +204,15 @@ export default function Room(props: RoomProps) {
                                     </div>
                                 </div>
                             ) : (
-                                <div onClick={() => setShowIdInput(true)}>
+                                <div
+                                    className="list-btn"
+                                    onClick={() => setShowIdInput(true)}
+                                >
                                     queue song ID
                                 </div>
                             )}
                         </li>
-                        <li tabIndex={0} className="list-no-pad">
+                        <li tabIndex={0}>
                             <div className="sticky">
                                 {showSearchInput ? (
                                     <div className="search-q">
@@ -307,7 +310,6 @@ export default function Room(props: RoomProps) {
                         </li>
 
                         <li
-                            className="list-btn"
                             tabIndex={0}
                             onClick={() => setEditSinger(true)}
                         >
@@ -331,29 +333,26 @@ export default function Room(props: RoomProps) {
                                     onChange={(e) => setSinger(e.target.value)}
                                 />
                             ) : (
-                                <>singer: {singer}</>
+                                <div className="list-btn">singer: {singer}</div>
                             )}
                         </li>
                         <li
-                            className="list-btn"
                             tabIndex={0}
                             onClick={() => sendWsMessage('PlayerPause')}
                         >
-                            pause
+                            <div className="list-btn">pause</div>
                         </li>
                         <li
-                            className="list-btn"
                             tabIndex={0}
                             onClick={() => sendWsMessage('PlayerPlay')}
                         >
-                            play
+                            <div className="list-btn">play</div>
                         </li>
                         <li
-                            className="list-btn"
                             tabIndex={0}
                             onClick={() => setRoom(undefined)}
                         >
-                            exit
+                            <div className="list-btn">exit</div>
                         </li>
                     </ol>
 
@@ -365,7 +364,9 @@ export default function Room(props: RoomProps) {
                                 {queue.map((q, idx) => (
                                     <li key={q.id} tabIndex={0}>
                                         <div className="q-singer flex">
-                                            <div className="flex-grow">{q.singer}</div>
+                                            <div className="flex-grow">
+                                                {q.singer}
+                                            </div>
 
                                             {idx > 1 && (
                                                 <div
