@@ -1,0 +1,11 @@
+.youoke {
+    font-size: 12em;
+    text-decoration: underline;
+    /* text-shadow: 2px 2px 15px #fff, 0px 0px 10px #fff; */
+}
+
+@media (max-width: 500px) {
+    .youoke {
+        font-size: 3em;
+    }
+}

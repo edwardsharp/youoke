@@ -1,0 +1,30 @@
+.room-heading {
+    text-decoration: underline;
+}
+input {
+    background-color: white;
+    color: blue;
+    border: none;
+    height: 60px;
+    width: calc(100% - 20px);
+    padding: 0 10px;
+    margin: 0;
+}
+
+.q-singer {
+    border-bottom: 5px solid white;
+}
+
+.search-q {
+    display: flex;
+}
+.search-q .list-btn {
+    width: 30px;
+}
+.search-q-input {
+    width: calc(100% - 60px);
+}
+
+.search-results li {
+    word-break: break-word;
+}
