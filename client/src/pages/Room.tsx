@@ -48,34 +48,6 @@ interface LibraryItem {
     duration: number
 }
 
-const DEFAULT_LIBRARY: LibraryItem[] = [
-    {
-        duration: 287,
-        id: 'wym88qdSuYM',
-        title: 'Front 242 – Headhunter (karaoke)',
-    },
-    {
-        duration: 386,
-        id: 'SmDlLPwT5AI',
-        title: 'Ministry  - Everyday Is Halloween (karaoke)',
-    },
-    {
-        duration: 343,
-        id: '1TIeDbnzp9M',
-        title: 'George Michael - Careless Whisper (Karaoke Version)',
-    },
-    {
-        duration: 267,
-        id: 'XCkiLSReVoA',
-        title: 'The Wild Boys - Duran Duran | Karaoke Version | KaraFun',
-    },
-    {
-        duration: 245,
-        id: '43Zws6N_xbI',
-        title: 'Rihanna  Stay Karaoke',
-    },
-]
-
 export default function Room(props: RoomProps) {
     const { room, setRoom } = props
 
@@ -90,7 +62,7 @@ export default function Room(props: RoomProps) {
     const [searchQ, setSearchQ] = useState('')
     const [showSearchResults, setShowSearchResults] = useState(false)
     const [searchResults, setSearchResults] = useState<LibraryItem[]>([])
-    const [library, setLibrary] = useState<LibraryItem[]>(() => DEFAULT_LIBRARY)
+    const [library, setLibrary] = useState<LibraryItem[]>(() => [])
     const [showIdInput, setShowIdInput] = useState(false)
     const [showSearchInput, setShowSeachInout] = useState(false)
 
