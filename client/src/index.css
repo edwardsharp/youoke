@@ -29,7 +29,7 @@ input {
 }
 
 .list {
-    width: 320px;
+    width: 90%;
     margin: 0 auto;
     line-height: 50px;
 }
@@ -78,9 +78,6 @@ input {
 }
 
 @media (max-width: 500px) {
-    .box {
-        padding: 0;
-    }
     .list {
         border-width: 1em;
     }

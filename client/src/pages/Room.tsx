@@ -101,7 +101,6 @@ export default function Room(props: RoomProps) {
             if (data.queue) {
                 setQueue(data.queue)
             } else if (data.library) {
-                console.log('zomg gonna setLibrary!!')
                 setLibrary(data.library)
                 setSearchResults(data.library)
             }
@@ -159,6 +158,14 @@ export default function Room(props: RoomProps) {
         }
     }, [room.href])
 
+    useEffect(() => {
+        const fResults = library.filter((item) =>
+            item.title.toLowerCase().includes(searchQ.toLowerCase())
+        )
+        setSearchResults(fResults)
+        document.getElementById('search-results-container')?.scrollIntoView()
+    }, [library, searchQ])
+
     return (
         <div className="box">
             <h1 className="room-heading">{room.name}</h1>
@@ -188,12 +195,16 @@ export default function Room(props: RoomProps) {
                                             if (e.key === 'Enter') {
                                                 q(qSongId)
                                                 setQSongId('')
+                                            } else if (e.key === 'Escape') {
+                                                setQSongId('')
+                                                setShowIdInput(false)
                                             }
                                         }}
                                         value={qSongId}
                                         onChange={(e) =>
                                             setQSongId(e.target.value)
                                         }
+                                        autoFocus
                                     />
                                     <div
                                         className="invert-list-btn"
@@ -225,26 +236,9 @@ export default function Room(props: RoomProps) {
                                             type="text"
                                             placeholder="search"
                                             onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    const fResults = library.filter(
-                                                        (item) =>
-                                                            item.title
-                                                                .toLowerCase()
-                                                                .includes(
-                                                                    searchQ.toLowerCase()
-                                                                )
-                                                    )
-                                                    console.log(
-                                                        'fResults',
-                                                        fResults
-                                                    )
-                                                    setSearchResults(fResults)
-                                                    setShowSearchResults(true)
-                                                    document
-                                                        .getElementById(
-                                                            'search-results-container'
-                                                        )
-                                                        ?.scrollIntoView()
+                                                if (e.key === 'Escape') {
+                                                    setShowSearchResults(false)
+                                                    setShowSeachInout(false)
                                                 }
                                             }}
                                             onFocus={() =>
@@ -254,11 +248,13 @@ export default function Room(props: RoomProps) {
                                             onChange={(e) =>
                                                 setSearchQ(e.target.value)
                                             }
+                                            autoFocus
                                         />
                                         {showSearchResults && (
                                             <div
                                                 className="invert-list-btn"
                                                 onClick={() => {
+                                                    setSearchQ('')
                                                     setShowSearchResults(false)
                                                     setShowSeachInout(false)
                                                 }}
@@ -309,29 +305,39 @@ export default function Room(props: RoomProps) {
                             )}
                         </li>
 
-                        <li
-                            tabIndex={0}
-                            onClick={() => setEditSinger(true)}
-                        >
+                        <li tabIndex={0} onClick={() => setEditSinger(true)}>
                             {editSinger ? (
-                                <input
-                                    type="text"
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            localStorage.setItem(
-                                                'singer',
-                                                singer
-                                            )
-                                            setEditSinger(false)
-                                        } else if (e.key === 'Escape') {
-                                            setEditSinger(false)
+                                <div className="flex">
+                                    <input
+                                        type="text"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                localStorage.setItem(
+                                                    'singer',
+                                                    singer
+                                                )
+                                                setEditSinger(false)
+                                            } else if (e.key === 'Escape') {
+                                                setEditSinger(false)
+                                            }
+                                        }}
+                                        autoFocus
+                                        onBlur={() => setEditSinger(false)}
+                                        value={singer}
+                                        onChange={(e) =>
+                                            setSinger(e.target.value)
                                         }
-                                    }}
-                                    autoFocus
-                                    onBlur={() => setEditSinger(false)}
-                                    value={singer}
-                                    onChange={(e) => setSinger(e.target.value)}
-                                />
+                                    />
+                                    <div
+                                        className="invert-list-btn"
+                                        onClick={() => {
+                                            setEditSinger(false)
+                                        }}
+                                    >
+                                        {' '}
+                                        x{' '}
+                                    </div>
+                                </div>
                             ) : (
                                 <div className="list-btn">singer: {singer}</div>
                             )}
@@ -348,10 +354,7 @@ export default function Room(props: RoomProps) {
                         >
                             <div className="list-btn">play</div>
                         </li>
-                        <li
-                            tabIndex={0}
-                            onClick={() => setRoom(undefined)}
-                        >
+                        <li tabIndex={0} onClick={() => setRoom(undefined)}>
                             <div className="list-btn">exit</div>
                         </li>
                     </ol>
