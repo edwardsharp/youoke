@@ -2,9 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>WebSocket Player Test</title>
+    <title>youoke.party player</title>
+    <link rel="stylesheet" href="fonts/fonts.css" />
     <style>
       body {
+        font-family: 'VCR OSD Mono';
         display: flex;
         margin: 0;
         padding: 0;
@@ -22,18 +24,19 @@
       }
       #queue {
         overflow-wrap: break-word;
+        padding-right: 1em;
       }
     </style>
   </head>
   <body>
     <video id="videoEl" poster="youoke.png"></video>
     <div id="q">
-      <form onsubmit="send('message'); return false">
+      <!-- <form onsubmit="send('message'); return false">
         <input type="text" id="message" />
         <input type="submit" value="Send" />
         <input type="button" value="goto end" onclick="gotoEnd()" />
-      </form>
-      <p id="queue"></p>
+      </form> -->
+      <ol id="queue"></ol>
     </div>
 
     <script>
@@ -96,11 +99,13 @@
             return
           }
           queue = data.queue
-          //first clear everything
-          queueEl.innerHTML = ''
+
           if (queue) {
+            //first clear everything
+            queueEl.innerHTML = ''
+
             queue.forEach(function (qItem) {
-              var item = document.createElement('div')
+              var item = document.createElement('li')
               var title = document.createElement('h3')
               title.appendChild(document.createTextNode(qItem.singer))
               item.appendChild(title)
