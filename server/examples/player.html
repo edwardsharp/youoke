@@ -125,15 +125,16 @@
                         })
                     }
 
-                    if (isPlaying) {
-                        console.log('isPlaying! gonna return early...')
-                        return
-                    }
-
                     var firstReadyQueueItem = queue.find(function (i) {
                         return i.status === 'Ready' && i.filepath
                     })
                     console.log('firstReadyQueueItem:', firstReadyQueueItem)
+
+                    if (isPlaying && currentQueueItem.id === firstReadyQueueItem.id ) {
+                        console.log('isPlaying and currently playing queue item has not changed... gonna return early...')
+                        return
+                    }
+                    
 
                     if (firstReadyQueueItem) {
                         currentQueueItem = firstReadyQueueItem
