@@ -171,6 +171,29 @@ export default function Room(props: RoomProps) {
                     placeholder="queue song ID"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
+                        if (/http/.test(qSongId)) {
+                            console.log('oh, i guess is URL>>', qSongId)
+                          try{
+                            const url = new URL(qSongId)
+                            const v = url.searchParams.get('v')
+                            if (v) {
+                              q(v)
+                              setQSongId('')
+                              return
+                            }
+                            if (/youtu\.be/.test(qSongId)) {
+                              const path = url.pathname.replace('/', '')
+                              if (path) {
+                                q(path)
+                                setQSongId('')
+                                return
+                              }
+                            }
+                          }catch(e){
+                              // :shrug:
+                          }
+                        }
+
                         q(qSongId)
                         setQSongId('')
                       } else if (e.key === 'Escape') {
