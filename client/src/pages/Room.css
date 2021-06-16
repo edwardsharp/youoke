@@ -16,7 +16,8 @@ input {
 }
 
 .search-q,
-.flex {
+.flex,
+.flex-responsive {
   display: flex;
 }
 .flex-grow {
@@ -31,6 +32,7 @@ input {
 
 .search-results li {
   word-break: break-word;
+  margin-bottom: 0.5em;
 }
 
 .search-results .img-container {
@@ -40,4 +42,31 @@ input {
 
 #search-results-container {
   padding-top: 50px;
+}
+
+@media (max-width: 500px) {
+  #search-results-container {
+    margin-left: -50px;
+  }
+
+  #search-results-container h3 {
+    font-size: 0.75em;
+  }
+  .q-item-title {
+    margin-left: -50px;
+    line-height: 1.5em;
+    text-align: center;
+  }
+  .search-results {
+    line-height: 1.5em;
+  }
+  .search-results .img-container {
+    margin-right: 0;
+  }
+  .yt-results li {
+    margin-bottom: 1.5em;
+  }
+  .flex-responsive {
+    flex-direction: column;
+  }
 }

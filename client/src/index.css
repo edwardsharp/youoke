@@ -1,102 +1,115 @@
 body {
-    margin: 0;
-    padding: 0;
-    background: black;
-    color: white;
+  margin: 0;
+  padding: 0;
+  background: black;
+  color: white;
 }
 
 body,
 input {
-    font-family: 'VCR OSD Mono';
-    font-weight: normal;
-    font-style: normal;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  font-family: 'VCR OSD Mono';
+  font-weight: normal;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .center {
-    text-align: center;
+  text-align: center;
 }
 
 .box {
-    text-align: center;
-    background-color: blue;
-    padding: 25px;
-    border: 25px solid #ff11ff;
-    box-sizing: border-box;
-    height: 100%;
-    overflow-y: scroll;
+  text-align: center;
+  background-color: blue;
+  padding: 25px;
+  border: 25px solid #ff11ff;
+  box-sizing: border-box;
+  height: 100%;
+  overflow-y: scroll;
 }
 
 .list {
-    width: 90%;
-    margin: 0 auto;
-    line-height: 50px;
+  width: 90%;
+  margin: 0 auto;
+  line-height: 50px;
 }
 
 .list ol {
-    font-size: 1.25em;
-    text-align: left;
+  font-size: 1.25em;
+  text-align: left;
 }
 
 .list ol li,
 .list-btn {
-    padding-left: 10px;
+  padding-left: 10px;
 }
 
 .list-btn:hover,
 .list-btn:focus,
 .list-btn-1char:hover,
 .list-btn-1char:focus {
-    color: blue;
-    background-color: white;
-    cursor: pointer;
+  color: blue;
+  background-color: white;
+  cursor: pointer;
 }
 
 .list-btn-1char {
-    padding: 0 15px;
-    color: white;
-    background-color: blue;
+  padding: 0 15px;
+  color: white;
+  background-color: blue;
 }
 
 .invert-list-btn {
-    padding: 0 15px;
-    color: blue;
-    background-color: white;
+  padding: 0 15px;
+  color: blue;
+  background-color: white;
 }
 .invert-list-btn:hover,
 .invert-list-btn:focus {
-    color: white;
-    background-color: blue;
-    cursor: pointer;
+  color: white;
+  background-color: blue;
+  cursor: pointer;
 }
 
 .sticky {
-    position: sticky;
-    top: -25px;
-    background: blue;
+  position: sticky;
+  top: -25px;
+  background: blue;
 }
 
 @media (max-width: 500px) {
-    .list {
-        border-width: 1em;
-    }
+  .box {
+    padding: 0px;
+  }
+  .list {
+    border-width: 1em;
+  }
+  .list h2 {
+    font-size: 1em;
+  }
+  .list ol {
+    font-size: 1em;
+  }
+  .sticky {
+    top: 0px;
+  }
 }
 
 @media (min-width: 700px) {
-    .list {
-        width: 640px;
-    }
+  .list {
+    width: 640px;
+  }
 }
 
 @media (min-width: 800px) {
-    .list {
-        width: 720px;
-    }
+  .list {
+    width: 720px;
+    font-size: 2em;
+  }
 }
 
 @media (min-width: 1024px) {
-    .list {
-        width: 1000px;
-    }
+  .list {
+    width: 1000px;
+  }
 }

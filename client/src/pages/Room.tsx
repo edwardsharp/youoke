@@ -286,14 +286,14 @@ export default function Room(props: RoomProps) {
                           <h3 className="center">
                             - - - youtube results - - -
                           </h3>
-                          <ol className="search-results">
+                          <ol className="search-results yt-results">
                             {ytSearchResulta.map((item) => (
                               <li
                                 className="list-btn"
                                 onClick={() => q(item.id.videoId)}
                                 key={`ytresult${item.id.videoId}`}
                               >
-                                <div className="flex">
+                                <div className="flex-responsive">
                                   <div className="img-container">
                                     <img
                                       src={item.snippet.thumbnails.default.url}
@@ -401,7 +401,7 @@ export default function Room(props: RoomProps) {
                         x{' '}
                       </div>
                     </div>
-                    <div>
+                    <div className="q-item-title">
                       {q.status === 'Downloading' ? 'downloading...' : q.title}
                     </div>
                   </li>
