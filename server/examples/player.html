@@ -26,6 +26,16 @@
         overflow-wrap: break-word;
         padding-right: 1em;
       }
+      #disconnected {
+        position: absolute;
+        bottom: 25px;
+        font-size: 2em;
+        line-height: 1.25em;
+        z-index: 5;
+      }
+      .hidden {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -37,6 +47,9 @@
         <input type="button" value="goto end" onclick="gotoEnd()" />
       </form> -->
       <ol id="queue"></ol>
+      <div id="disconnected" class="hidden">
+        ************ disconnected ************
+      </div>
     </div>
 
     <script>
@@ -46,6 +59,14 @@
       var isPlaying = false
       var isPaused = false
       var socket = new WebSocket('ws://localhost:9001')
+
+      function reconnect() {
+        window.setTimeout(function () {
+          console.log('gonna reload...')
+          window.location = window.location
+        }, 5000)
+      }
+
       var videoEl = document.getElementById('videoEl')
       var setPlaying = function () {
         isPlaying = true
@@ -157,9 +178,12 @@
       }
       socket.onclose = function (event) {
         console.log('zomg socket.onclose:', event)
+        document.getElementById('disconnected').classList.remove('hidden')
+        reconnect()
       }
       socket.onopen = function (event) {
         console.log('zomg socket.onopen:', event)
+        document.getElementById('disconnected').classList.add('hidden')
       }
 
       function send(element) {
