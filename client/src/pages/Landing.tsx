@@ -10,10 +10,7 @@ export interface LandingProps {
 
 type RoomList = IRoom[]
 
-const KNOWN_ROOMS: RoomList = [
-  { name: 'LOCALHOST', href: 'localhost:9001' },
-  { name: 'RESPECTFULLY', href: '10.0.1.42:9001' },
-]
+const KNOWN_ROOMS: RoomList = [{ name: 'LOCALHOST', href: 'localhost:9001' }]
 
 function testWS(href: string): Promise<boolean> {
   const ws = new WebSocket(`ws://${href}`)
@@ -30,6 +27,8 @@ function testWS(href: string): Promise<boolean> {
 export default function Landing(props: LandingProps) {
   const { setRoom } = props
 
+  const [addNewRoom, setAddNewRoom] = useState(false)
+  const [newRoom, setNewRoom] = useState<IRoom>(KNOWN_ROOMS[0])
   const [roomsToFind, setRoomsToFind] = useState(KNOWN_ROOMS)
   const [roomList, setRoomList] = useState<RoomList>()
   const [delay, setDelay] = useState<number | null>(1000)
@@ -70,6 +69,75 @@ export default function Landing(props: LandingProps) {
       <div className="list">
         <h2>- - - JOIN ROOM - - -</h2>
         <ol>
+          <li
+            className={addNewRoom ? undefined : 'list-btn'}
+            tabIndex={0}
+            onClick={(e) => !addNewRoom && setAddNewRoom(true)}
+          >
+            {addNewRoom ? (
+              <>
+                <label>
+                  name
+                  <input
+                    type="text"
+                    onChange={(e) =>
+                      setNewRoom((prev) => ({ ...prev, name: e.target.value }))
+                    }
+                    value={newRoom.name}
+                    placeholder="name"
+                  />
+                </label>
+                <label>
+                  href
+                  <input
+                    type="text"
+                    onChange={(e) =>
+                      setNewRoom((prev) => ({ ...prev, href: e.target.value }))
+                    }
+                    value={newRoom.href}
+                    placeholder="href"
+                  />
+                </label>
+
+                <div className="btn-row">
+                  <div
+                    className="btn"
+                    onClick={(e) => {
+                      setRoomsToFind((prev) => {
+                        if (
+                          prev.find(
+                            (r) =>
+                              r.name === newRoom.name && r.href === newRoom.href
+                          )
+                        ) {
+                          return prev
+                        }
+
+                        return [...prev, newRoom]
+                      })
+                      // reset inputz?
+                      // setNewRoom(KNOWN_ROOMS[0])
+                      setAddNewRoom(false)
+                    }}
+                  >
+                    add new room
+                  </div>
+
+                  <div
+                    className="btn"
+                    onClick={(e) => {
+                      setAddNewRoom(false)
+                    }}
+                  >
+                    x
+                  </div>
+                </div>
+              </>
+            ) : (
+              'find room...'
+            )}
+          </li>
+
           {!roomList
             ? 'looking for rooms...'
             : roomList.map((room, idx) => (
@@ -77,7 +145,10 @@ export default function Landing(props: LandingProps) {
                   className="list-btn"
                   key={`${room}${idx}`}
                   tabIndex={idx}
-                  onClick={(_) => setRoom(room)}
+                  onClick={(_) => {
+                    setRoom(room)
+                    setDelay(null)
+                  }}
                 >
                   {room.name}
                 </li>

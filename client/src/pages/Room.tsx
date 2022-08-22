@@ -26,11 +26,15 @@ export interface QueueSetPosition {
 export interface DeQueue {
   DeQueue: { id: string }
 }
-export type PlayerRequest = 'PlayerPause' | 'PlayerPlay'
+export interface QueueSetSinger {
+  QueueSetSinger: { id: string; singer: string }
+}
+export type PlayerRequest = 'PlayerPause' | 'PlayerPlay' | 'PlayerSkip'
 export type LibraryRequest = 'GetLibrary'
 type Request =
   | QueueRequest
   | QueueSetPosition
+  | QueueSetSinger
   | DeQueue
   | PlayerRequest
   | LibraryRequest
@@ -48,6 +52,44 @@ interface LibraryItem {
   id: string
   title: string
   duration: number
+}
+
+function QSinger(props: {
+  qid: string
+  singer: string
+  qSinger: (id: string, singer: string) => void
+}) {
+  const { qid, singer, qSinger } = props
+
+  const [renameSinger, setRenameSinger] = useState(false)
+  const [newSinger, setNewSinger] = useState(singer)
+
+  return (
+    <div
+      className="flex-grow"
+      onClick={(e) => !renameSinger && setRenameSinger(true)}
+    >
+      {renameSinger ? (
+        <>
+          <input
+            type="text"
+            value={newSinger}
+            onChange={(e) => setNewSinger(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                qSinger(qid, newSinger)
+                setRenameSinger(false)
+              } else if (e.key === 'Escape') {
+                setRenameSinger(false)
+              }
+            }}
+          />
+        </>
+      ) : (
+        singer
+      )}
+    </div>
+  )
 }
 
 export default function Room(props: RoomProps) {
@@ -119,6 +161,15 @@ export default function Room(props: RoomProps) {
     })
   }
 
+  function qSinger(id: string, singer: string) {
+    sendWsMessage({
+      QueueSetSinger: {
+        id,
+        singer,
+      },
+    })
+  }
+
   useEffect(() => {
     ws.current = new WebSocket(`ws://${room.href}`)
     ws.current.onopen = () => {
@@ -172,8 +223,8 @@ export default function Room(props: RoomProps) {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         if (/http/.test(qSongId)) {
-                            console.log('oh, i guess is URL>>', qSongId)
-                          try{
+                          console.log('oh, i guess is URL>>', qSongId)
+                          try {
                             const url = new URL(qSongId)
                             const v = url.searchParams.get('v')
                             if (v) {
@@ -189,8 +240,8 @@ export default function Room(props: RoomProps) {
                                 return
                               }
                             }
-                          }catch(e){
-                              // :shrug:
+                          } catch (e) {
+                            // :shrug:
                           }
                         }
 
@@ -355,6 +406,9 @@ export default function Room(props: RoomProps) {
             <li tabIndex={0} onClick={() => sendWsMessage('PlayerPlay')}>
               <div className="list-btn">play</div>
             </li>
+            <li tabIndex={0} onClick={() => sendWsMessage('PlayerSkip')}>
+              <div className="list-btn">skip</div>
+            </li>
             <li tabIndex={0} onClick={() => setRoom(undefined)}>
               <div className="list-btn">exit</div>
             </li>
@@ -368,7 +422,7 @@ export default function Room(props: RoomProps) {
                 {queue.map((q, idx) => (
                   <li key={q.id} tabIndex={0}>
                     <div className="q-singer flex">
-                      <div className="flex-grow">{q.singer}</div>
+                      <QSinger qid={q.id} singer={q.singer} qSinger={qSinger} />
 
                       {idx > 1 && (
                         <div
@@ -392,14 +446,18 @@ export default function Room(props: RoomProps) {
                         </div>
                       )}
 
-                      <div
-                        className="list-btn-1char"
-                        onClick={() => deQ(q.id)}
-                        title="REMOVE from queue"
-                      >
-                        {' '}
-                        x{' '}
-                      </div>
+                      {idx == 0 ? (
+                        <div title="CURRENTLY PLAYING">🎤</div>
+                      ) : (
+                        <div
+                          className="list-btn-1char"
+                          onClick={() => deQ(q.id)}
+                          title="REMOVE from queue"
+                        >
+                          {' '}
+                          x{' '}
+                        </div>
+                      )}
                     </div>
                     <div className="q-item-title">
                       {q.status === 'Downloading' ? 'downloading...' : q.title}
