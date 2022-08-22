@@ -63,6 +63,10 @@ enum Request {
         id: String,
         position: usize,
     },
+    QueueSetSinger {
+        id: String,
+        singer: String,
+    },
     GetQueue {
         addr: Option<SocketAddr>,
     },
@@ -354,6 +358,14 @@ async fn queue_handler(
                         let item = queue.remove(idx);
                         queue.insert(position, item);
                     }
+                    None => {}
+                };
+                true
+            }
+            Request::QueueSetSinger { id, singer } => {
+                info!("queue_handler QueueSetSinger id:{} singer:{}", id, singer);
+                match queue.iter().position(|q| q.id == id) {
+                    Some(idx) => queue[idx].singer = singer,
                     None => {}
                 };
                 true
