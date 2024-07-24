@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
-import { IRoom } from './Room'
 import useInterval from '../hooks'
 import './Landing.css'
+import { IRoom } from './Room'
 
 export interface LandingProps {
   setRoom: (room: IRoom) => void
@@ -16,8 +16,8 @@ function testWS(href: string): Promise<boolean> {
   const ws = new WebSocket(`ws://${href}`)
 
   return new Promise((resolve, reject) => {
-    ws.onerror = (error) => reject(false)
-    ws.onopen = (success) => {
+    ws.onerror = () => reject(false)
+    ws.onopen = () => {
       ws.close()
       resolve(true)
     }
@@ -72,7 +72,7 @@ export default function Landing(props: LandingProps) {
           <li
             className={addNewRoom ? undefined : 'list-btn'}
             tabIndex={0}
-            onClick={(e) => !addNewRoom && setAddNewRoom(true)}
+            onClick={() => !addNewRoom && setAddNewRoom(true)}
           >
             {addNewRoom ? (
               <>
@@ -81,7 +81,10 @@ export default function Landing(props: LandingProps) {
                   <input
                     type="text"
                     onChange={(e) =>
-                      setNewRoom((prev) => ({ ...prev, name: e.target.value }))
+                      setNewRoom((prev: IRoom) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
                     }
                     value={newRoom.name}
                     placeholder="name"
@@ -92,7 +95,10 @@ export default function Landing(props: LandingProps) {
                   <input
                     type="text"
                     onChange={(e) =>
-                      setNewRoom((prev) => ({ ...prev, href: e.target.value }))
+                      setNewRoom((prev: IRoom) => ({
+                        ...prev,
+                        href: e.target.value,
+                      }))
                     }
                     value={newRoom.href}
                     placeholder="href"
@@ -102,7 +108,7 @@ export default function Landing(props: LandingProps) {
                 <div className="btn-row">
                   <div
                     className="btn"
-                    onClick={(e) => {
+                    onClick={() => {
                       setRoomsToFind((prev) => {
                         if (
                           prev.find(
@@ -125,7 +131,7 @@ export default function Landing(props: LandingProps) {
 
                   <div
                     className="btn"
-                    onClick={(e) => {
+                    onClick={() => {
                       setAddNewRoom(false)
                     }}
                   >
@@ -145,7 +151,7 @@ export default function Landing(props: LandingProps) {
                   className="list-btn"
                   key={`${room}${idx}`}
                   tabIndex={idx}
-                  onClick={(_) => {
+                  onClick={() => {
                     setRoom(room)
                     setDelay(null)
                   }}

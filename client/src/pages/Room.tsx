@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import debounce from 'lodash.debounce'
 
 import './Room.css'
@@ -67,7 +67,7 @@ function QSinger(props: {
   return (
     <div
       className="flex-grow"
-      onClick={(e) => !renameSinger && setRenameSinger(true)}
+      onClick={() => !renameSinger && setRenameSinger(true)}
     >
       {renameSinger ? (
         <>

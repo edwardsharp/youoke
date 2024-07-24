@@ -8,6 +8,4 @@ note: currently this app is configured to look for websocket servers on localhos
 
 localhost dev: `npm start`
 
-storybook: `npm run storybook`
-
 prod build: `npm run build`
