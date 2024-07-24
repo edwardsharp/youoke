@@ -96,7 +96,8 @@ enum DownloadRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 struct YoutubeDlJSON {
-    _filename: String,
+    id: String,
+    ext: String,
     duration: usize,
     title: String,
 }
@@ -117,11 +118,11 @@ struct GetLibraryResponse {
 async fn main() -> Result<(), IoError> {
     env_logger::init();
 
-    Command::new("youtube-dl")
+    Command::new("yt-dlp")
     .arg("--version")
     .stdout(Stdio::null())
     .spawn()
-    .expect("PANIC! cannot find youtube-dl program, please make sure it is installed and on your $PATH.");
+    .expect("PANIC! cannot find yt-dlp program, please make sure it is installed and on your $PATH.");
 
     let lib_dir = match env::var_os("LIB_DIR") {
         Some(val) => val.into_string().unwrap(),
@@ -452,7 +453,8 @@ async fn file_handler(
                     Ok(contents) => {
                         match serde_json::from_str::<YoutubeDlJSON>(&contents) {
                             Ok(parsed) => {
-                                let mut filepath = parsed._filename;
+                                let mut filepath = format!("{}.{}", parsed.id, parsed.ext);
+                                //format!("{parsed.id}{parsed.ext}");
                                 // validate filename is really a path & file on disk
                                 if !Path::new(&filepath).is_file() {
                                     info!("file_handler: file not on filesystem gonna try to find {}/{}*[!json]", &library_path, &id);
@@ -523,25 +525,32 @@ async fn download_handler(
         match event {
             DownloadRequest::Queue { id } => {
                 info!(
-                    "download_handler DownloadRequest::Queue gonna youtube-dl id: {:#?}",
+                    "download_handler DownloadRequest::Queue gonna yt-dlp id: {:#?}",
                     id
                 );
-                let response: Request = match Command::new("youtube-dl")
+                info!("o flag: {:#?}", format!("{}/%(id)s.%(ext)s", library_path));
+                // #TODO: use
+                let response: Request = match Command::new("yt-dlp")
+                    .arg("--no-warnings")
                     .arg("--restrict-filenames")
                     .arg("--write-info-json") // --print-json
                     .arg("--quiet")
                     .arg("-o")
                     .arg(format!("{}/%(id)s.%(ext)s", library_path))
+                    .arg("-S")
+                    .arg("+size,+br")
                     .arg("--")
                     .arg(&id) // note: this handles video IDz that start with a dash (-)
                     .output()
+                // note: sleep for debuggin.
+                // let response: Request = match Command::new("sleep").arg("1").output() 
                 {
                     Ok(output) => {
-                        info!("download_handler youtube-dl output: {:#?}", output);
+                        info!("download_handler yt-dlp output: {:#?}", output);
 
                         match output.status.code() {
                             Some(code) => {
-                                info!("youtube-dl Exited with status code: {}", code);
+                                info!("yt-dlp Exited with status code: {}", code);
                                 if code == 0 {
                                     let info_filepath =
                                         format!("{}/{}.info.json", library_path, id);
@@ -556,7 +565,8 @@ async fn download_handler(
 
                                     let parsed: YoutubeDlJSON = serde_json::from_str(&contents)
                                         .expect("download_handler panic! can't parse to JSON");
-                                    let mut filepath = parsed._filename;
+                                    // let mut filepath = parsed._filename;
+                                    let mut filepath = format!("{}.{}", parsed.id, parsed.ext);
                                     // validate filename is really a path & file on disk
                                     if !Path::new(&filepath).is_file() {
                                         info!("ugh ref file not on filesystem gonna try to find {}/{}*[!json]", &library_path, &id);
@@ -584,13 +594,13 @@ async fn download_handler(
                                 }
                             }
                             None => {
-                                warn!("youtube-dl Process terminated by signal");
+                                warn!("yt-dlp Process terminated by signal");
                                 Request::DeQueue { id }
                             }
                         }
                     }
                     Err(e) => {
-                        warn!("youtube-dl error: {:#?}", e);
+                        warn!("yt-dlp error: {:#?}", e);
                         Request::DeQueue { id }
                     }
                 };
@@ -620,8 +630,8 @@ mod tests {
             serde_json::from_str(&contents).expect("test panic! can't parse to JSON");
 
         let expected: YoutubeDlJSON = YoutubeDlJSON {
-            _filename: "/Users/edwardsharp/src/github/youoke/server/library/5--RnSogips.mp4"
-                .to_owned(),
+            id: "5--RnSogips".to_owned(),
+            ext: "mp4".to_owned(),
             duration: 352,
             title: "Korn   Faget".to_owned(),
         };
