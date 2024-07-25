@@ -10,7 +10,7 @@ a websocket server for handling a queue of requests, calling yt-dlp cli command,
 cargo install
 cargo test
 RUST_LOG=info cargo run
-cargo build
+cargo build --release
 ```
 
 ### docker
