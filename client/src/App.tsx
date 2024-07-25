@@ -6,6 +6,17 @@ import Room, { IRoom } from './pages/Room'
 
 function App() {
   const [room, setAppRoom] = useState<IRoom | undefined>(() => {
+    // first, try to get a room from the url query params:
+    const search = window.location.search
+    const params = new URLSearchParams(search)
+    const name = params.get('name')
+    const href = params.get('href')
+    if (name && href) {
+      console.log('zomg have room from query params!', { name, href })
+      return { name, href }
+    }
+
+    // otherwise fallback to localstorage
     const lRoom = localStorage.getItem('room')
     console.log('lRoom:', lRoom)
     try {
