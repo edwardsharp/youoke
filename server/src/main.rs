@@ -528,8 +528,7 @@ async fn download_handler(
                     "download_handler DownloadRequest::Queue gonna yt-dlp id: {:#?}",
                     id
                 );
-                info!("o flag: {:#?}", format!("{}/%(id)s.%(ext)s", library_path));
-                // #TODO: use
+                // info!("o flag: {:#?}", format!("{}/%(id)s.%(ext)s", library_path));
                 let response: Request = match Command::new("yt-dlp")
                     .arg("--no-warnings")
                     .arg("--restrict-filenames")
@@ -538,7 +537,7 @@ async fn download_handler(
                     .arg("-o")
                     .arg(format!("{}/%(id)s.%(ext)s", library_path))
                     .arg("-S")
-                    .arg("+size,+br")
+                    .arg("+res:720")
                     .arg("--")
                     .arg(&id) // note: this handles video IDz that start with a dash (-)
                     .output()
