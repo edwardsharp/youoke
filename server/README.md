@@ -1,8 +1,8 @@
 # youoke server
 
-a websocket server for handling a queue of requests, managing youtube-dl, and handling a screen playing video files
+a websocket server for handling a queue of requests, calling yt-dlp cli command, and an example video player
 
-...written in Rust!
+...written in Rust! 🤘
 
 ### devel
 
@@ -12,3 +12,9 @@ cargo test
 RUST_LOG=info cargo run
 cargo build
 ```
+
+### docker
+
+go at yr own risk; used this for building arm binary to run on raspberry pi (`--target=armv7-unknown-linux-gnueabihf`)
+
+mileage may vary `:/`

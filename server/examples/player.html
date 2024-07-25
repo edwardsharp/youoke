@@ -160,15 +160,19 @@
           }
 
           if (firstReadyQueueItem) {
+            // okay! set global currentQueueItem and try to start playing it...
+            // #TODO: add a lil' animation here with singer name???!!!
             currentQueueItem = firstReadyQueueItem
             var filepath = currentQueueItem.filepath
             console.log('gonna try to play video!!!', filepath)
             videoEl.setAttribute('src', 'file://' + filepath)
             videoEl.load()
             videoEl.play()
-          } else {
-            destroyPlayer()
+            return
           }
+
+          // otherwise nothing to do? stop the show i guess
+          destroyPlayer()
         } catch (e) {
           console.warn('onoz! caught error parsing JSON e:', e)
         }

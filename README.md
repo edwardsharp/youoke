@@ -10,4 +10,14 @@ Interested in contributing to YOUOKE? Have a look at the [Contributing Guideline
 
 see either the `/server` or `/client`
 
-note: this is mostly a fun&funny work in progress. hopefully more work will get done, soon.
+note: this is mostly a fun&funny work in progress. don't come at me bruh; lolol.
+
+### see also:
+
+[./client/README.md](./client/README.md)
+
+[./server/README.md](./server/README.md)
+
+---
+
+made with 🖤 in NYC
