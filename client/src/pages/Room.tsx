@@ -191,7 +191,7 @@ export default function Room(props: RoomProps) {
     setSearchResults(fResults)
     document.getElementById('search-results-container')?.scrollIntoView()
     debounceYtSearch(searchQ)
-  }, [library, searchQ])
+  }, [library, searchQ, queue])
 
   function ytSearch(q: string) {
     youtubeSearch(q).then((results) => setYtSearchResults(results))
@@ -219,7 +219,7 @@ export default function Room(props: RoomProps) {
                 <div className="flex">
                   <input
                     type="text"
-                    placeholder="queue song ID"
+                    placeholder="youtube video ID or URL"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         if (/http/.test(qSongId)) {
@@ -321,15 +321,19 @@ export default function Room(props: RoomProps) {
                         - - - {searchQ ? 'local results' : 'browse'} - - -
                       </h3>
                       <ol className="search-results">
-                        {searchResults.map((r) => (
-                          <li
-                            className="list-btn"
-                            onClick={() => q(r.id)}
-                            key={`result${r.id}`}
-                          >
-                            {r.title}
-                          </li>
-                        ))}
+                        {searchResults.map((r) => {
+                          const isQueued = queue?.some((l) => l.id == r.id)
+                          return (
+                            <li
+                              className={isQueued ? '' : 'list-btn'}
+                              onClick={() => !isQueued && q(r.id)}
+                              key={`result${r.id}`}
+                            >
+                              {isQueued && <span title="IT'S Q'D!">🎤</span>}{' '}
+                              {r.title}
+                            </li>
+                          )
+                        })}
                       </ol>
 
                       {ytSearchResulta.length > 0 && (
@@ -338,23 +342,34 @@ export default function Room(props: RoomProps) {
                             - - - youtube results - - -
                           </h3>
                           <ol className="search-results yt-results">
-                            {ytSearchResulta.map((item) => (
-                              <li
-                                className="list-btn"
-                                onClick={() => q(item.id.videoId)}
-                                key={`ytresult${item.id.videoId}`}
-                              >
-                                <div className="flex-responsive">
-                                  <div className="img-container">
-                                    <img
-                                      src={item.snippet.thumbnails.default.url}
-                                    />
+                            {ytSearchResulta.map((item) => {
+                              const isQueued = queue?.some(
+                                (l) => l.id == item.id.videoId
+                              )
+                              return (
+                                <li
+                                  className={isQueued ? '' : 'list-btn'}
+                                  onClick={() =>
+                                    !isQueued && q(item.id.videoId)
+                                  }
+                                  key={`ytresult${item.id.videoId}`}
+                                >
+                                  <div className="flex-responsive">
+                                    <div className="img-container">
+                                      <img
+                                        src={
+                                          item.snippet.thumbnails.default.url
+                                        }
+                                      />
+                                    </div>
+                                    {isQueued && (
+                                      <span title="IT'S Q'D!">🎤</span>
+                                    )}{' '}
+                                    {item.snippet.title}
                                   </div>
-
-                                  {item.snippet.title}
-                                </div>
-                              </li>
-                            ))}
+                                </li>
+                              )
+                            })}
                           </ol>
                         </>
                       )}
