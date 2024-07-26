@@ -1,5 +1,6 @@
 .room-heading {
   text-decoration: underline;
+  text-decoration-thickness: 0.25em;
 }
 input {
   background-color: white;
