@@ -82,7 +82,7 @@ pub async fn start_proxy_server(
     let key = load_private_key(key_path)?;
 
     // use tokio_rustls::rustls::server::AllowAnyAuthenticatedClient;
-    let mut config = ServerConfig::new(rustls::server::NoClientAuth::new());
+    let mut config = ServerConfig::new(tokio_rustls::rustls::NoClientAuth::new());
     config
         .set_single_cert(certs, key)
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;

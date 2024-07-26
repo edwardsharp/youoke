@@ -11,12 +11,12 @@ export interface LandingProps {
 type RoomList = IRoom[]
 
 const KNOWN_ROOMS: RoomList = [
-  { name: 'LOCALHOST', href: 'localhost:9001' },
-  { name: 'FOLK', href: '10.246.17.194:9001' },
+  { name: 'LOCALHOST', href: 'ws://localhost:9001' },
+  { name: 'FOLK', href: 'wss://folk.youoke.party' },
 ]
 
 function testWS(href: string): Promise<boolean> {
-  const ws = new WebSocket(`ws://${href}`)
+  const ws = new WebSocket(href)
 
   return new Promise((resolve, reject) => {
     ws.onerror = () => reject(false)

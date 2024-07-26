@@ -149,24 +149,26 @@ async fn main() -> Result<(), IoError> {
     };
 
     // websocket ssl proxy stuff
-    let cert_path: String = match env::var_os("CERT") {
-        Some(val) => val.into_string().unwrap(),
-        None => "certs/config/live/folk.youoke.party/fullchain.pem".to_string(),
-    };
-    let key_path = match env::var_os("KEY") {
-        Some(val) => val.into_string().unwrap(),
-        None => "certs/config/live/folk.youoke.party/privkey.pem".to_string(),
-    };
-    let listen_addr = "0.0.0.0:443";
-    // let target_addr = "ws://127.0.0.1:8080"; // Replace with your target WebSocket server address
+    // let cert_path: String = match env::var_os("CERT") {
+    //     Some(val) => val.into_string().unwrap(),
+    //     None => "certs/config/live/folk.youoke.party/fullchain.pem".to_string(),
+    // };
+    // let key_path = match env::var_os("KEY") {
+    //     Some(val) => val.into_string().unwrap(),
+    //     None => "certs/config/live/folk.youoke.party/privkey.pem".to_string(),
+    // };
 
-    websocket_proxy::start_proxy_server(
-        &cert_path,
-        &key_path,
+    let cert_path = "certs/config/live/folk.youoke.party/fullchain.pem";
+    let key_path = "certs/config/live/folk.youoke.party/privkey.pem";
+    let listen_addr = "0.0.0.0:443"; // note: should use 0.0.0.0
+    let target_addr = "ws://127.0.0.1:9001"; // Replace with your target WebSocket server address
+
+    tokio::task::spawn(websocket_proxy::start_proxy_server(
+        cert_path,
+        key_path,
         listen_addr,
-        &format!("ws://{}", addr),
-    )
-    .await;
+        target_addr, // &format!("ws://{}", addr),
+    ));
 
     let peer_map = PeerMap::new(Mutex::new(HashMap::new()));
     let queue: Vec<QueueItem> = vec![];
