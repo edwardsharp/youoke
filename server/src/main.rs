@@ -1,3 +1,5 @@
+mod websocket_proxy;
+
 use std::{
     collections::HashMap,
     env,
@@ -145,6 +147,27 @@ async fn main() -> Result<(), IoError> {
         Some(val) => val.into_string().unwrap(),
         None => "127.0.0.1:9001".to_string(),
     };
+
+    // websocket ssl proxy stuff
+    let cert_path: String = match env::var_os("CERT") {
+        Some(val) => val.into_string().unwrap(),
+        None => "certs/config/live/folk.youoke.party/fullchain.pem".to_string(),
+    };
+    let key_path = match env::var_os("KEY") {
+        Some(val) => val.into_string().unwrap(),
+        None => "certs/config/live/folk.youoke.party/privkey.pem".to_string(),
+    };
+    let listen_addr = "0.0.0.0:443";
+    // let target_addr = "ws://127.0.0.1:8080"; // Replace with your target WebSocket server address
+
+    websocket_proxy::start_proxy_server(
+        &cert_path,
+        &key_path,
+        listen_addr,
+        &format!("ws://{}", addr),
+    )
+    .await;
+
     let peer_map = PeerMap::new(Mutex::new(HashMap::new()));
     let queue: Vec<QueueItem> = vec![];
 
