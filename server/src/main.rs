@@ -1,3 +1,5 @@
+mod websocket_proxy;
+
 use std::{
     collections::HashMap,
     env,
@@ -145,6 +147,25 @@ async fn main() -> Result<(), IoError> {
         Some(val) => val.into_string().unwrap(),
         None => "127.0.0.1:9001".to_string(),
     };
+
+    // -start- websocket ssl proxy stuff
+    if env::var_os("USE_WSS_PROXY").is_some() {
+        println!("gonna start wss proxy!");
+        // #TODO: make ssl proxy stuff --flag(s) for cert pathz & addrz?
+        let cert_path = "certs/config/live/folk.youoke.party/fullchain.pem";
+        let key_path = "certs/config/live/folk.youoke.party/privkey.pem";
+        let listen_addr = "0.0.0.0:443"; // note: should use 0.0.0.0
+        let target_addr = "ws://127.0.0.1:9001"; // Replace with your target WebSocket server address
+
+        tokio::task::spawn(websocket_proxy::start_proxy_server(
+            cert_path,
+            key_path,
+            listen_addr,
+            target_addr, // &format!("ws://{}", addr),
+        ));
+    }
+    // -end- wss proxy stuff.
+
     let peer_map = PeerMap::new(Mutex::new(HashMap::new()));
     let queue: Vec<QueueItem> = vec![];
 
@@ -542,7 +563,7 @@ async fn download_handler(
                     .arg(&id) // note: this handles video IDz that start with a dash (-)
                     .output()
                 // note: sleep for debuggin.
-                // let response: Request = match Command::new("sleep").arg("1").output() 
+                // let response: Request = match Command::new("sleep").arg("1").output()
                 {
                     Ok(output) => {
                         info!("download_handler yt-dlp output: {:#?}", output);
@@ -557,7 +578,7 @@ async fn download_handler(
                                         "download_handler reading info json file: {}",
                                         info_filepath
                                     );
-                                    // #TODO handle erros, here. cuz might not be a valid file (like)
+                                    // #TODO handle errors, here. cuz might not be a valid json file ;(
                                     let contents = read_to_string(info_filepath).expect(
                                         "PANIC! ...something went wrong reading info.json file!",
                                     );

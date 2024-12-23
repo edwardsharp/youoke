@@ -1,6 +1,7 @@
 .youoke {
   font-size: 12em;
   text-decoration: underline;
+  text-decoration-thickness: 0.25em;
   /* text-shadow: 2px 2px 15px #fff, 0px 0px 10px #fff; */
 }
 

@@ -171,7 +171,7 @@ export default function Room(props: RoomProps) {
   }
 
   useEffect(() => {
-    ws.current = new WebSocket(`ws://${room.href}`)
+    ws.current = new WebSocket(room.href)
     ws.current.onopen = () => {
       setWsStatus('open')
       sendWsMessage('GetLibrary')
