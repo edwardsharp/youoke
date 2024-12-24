@@ -1,3 +1,4 @@
+server/certs/
 client-iced/
 .env
 node_modules
