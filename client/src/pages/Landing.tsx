@@ -13,6 +13,7 @@ type RoomList = IRoom[]
 const KNOWN_ROOMS: RoomList = [
   { name: 'LOCALHOST', href: 'localhost:9001' },
   { name: 'FOLK', href: '10.246.17.194:9001' },
+  { name: 'PARTYLINE', href: 'https://f8da-68-161-154-113.ngrok-free.app' },
 ]
 
 function testWS(href: string): Promise<boolean> {
