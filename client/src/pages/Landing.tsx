@@ -11,13 +11,13 @@ export interface LandingProps {
 type RoomList = IRoom[]
 
 const KNOWN_ROOMS: RoomList = [
-  { name: 'LOCALHOST', href: 'localhost:9001' },
-  { name: 'FOLK', href: '10.246.17.194:9001' },
-  { name: 'PARTYLINE', href: 'https://f8da-68-161-154-113.ngrok-free.app' },
+  { name: 'LOCALHOST', href: 'ws://localhost:9001' },
+  // { name: 'FOLK', href: 'ws://10.246.17.194:9001' },
+  { name: 'PARTYLINE', href: 'wss://f8da-68-161-154-113.ngrok-free.app' },
 ]
 
 function testWS(href: string): Promise<boolean> {
-  const ws = new WebSocket(`ws://${href}`)
+  const ws = new WebSocket(href)
 
   return new Promise((resolve, reject) => {
     ws.onerror = () => reject(false)
@@ -114,12 +114,7 @@ export default function Landing(props: LandingProps) {
                     className="btn"
                     onClick={() => {
                       setRoomsToFind((prev) => {
-                        if (
-                          prev.find(
-                            (r) =>
-                              r.name === newRoom.name && r.href === newRoom.href
-                          )
-                        ) {
+                        if (prev.find((r) => r.name === newRoom.name && r.href === newRoom.href)) {
                           return prev
                         }
 
