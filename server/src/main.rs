@@ -24,6 +24,8 @@ use tokio_tungstenite::tungstenite::handshake::server::{
 };
 use tungstenite::protocol::Message;
 
+use warp::cors;
+use warp::http::StatusCode;
 use warp::Filter;
 
 use log::*;
@@ -153,6 +155,13 @@ async fn main() -> Result<(), IoError> {
         Some(val) => val.into_string().unwrap(),
         None => "127.0.0.1:9001".to_string(),
     };
+
+    let http_address = match env::var_os("HTTP_ADDRESS") {
+        Some(val) => val.into_string().unwrap(),
+        None => "127.0.0.1:9002".to_string(),
+    };
+    let http_addr: SocketAddr = http_address.parse().expect("Invalid HTTP_ADDRESS");
+
     let peer_map = PeerMap::new(Mutex::new(HashMap::new()));
     let queue: Vec<QueueItem> = vec![];
 
@@ -186,23 +195,48 @@ async fn main() -> Result<(), IoError> {
     ));
 
     println!(
-        "serving /hello and library({}) at http://localhost:9002",
-        &library_path
+        "serving /hello and library({}) at http://{}",
+        &library_path, &http_addr
     );
-    let hello_route = warp::path("hello")
-        .and(warp::get())
-        .map(|| warp::reply::with_status("hello!", warp::http::StatusCode::OK));
-    let static_files = warp::fs::dir("./library");
 
-    let routes = hello_route.or(static_files);
-    tokio::task::spawn(warp::serve(routes).run(([127, 0, 0, 1], 9002)));
+    // warp server setup stuff
+    let cors = cors()
+        .allow_any_origin()
+        .allow_methods(vec!["GET", "POST", "OPTIONS"]) // Add methods you need
+        .allow_headers(vec!["Content-Type"]); // Optional: allow custom headers
 
     // #todo: use  match env::var_os("HANDSHAKE_CODE") or something
-    let handshake_code = generate_code();
+    let handshake_code = Arc::new(generate_code());
+
+    let code_filter = warp::any().map({
+        let secret_code = handshake_code.clone(); // Clone into filter
+        move || secret_code.clone()
+    });
+
+    let hello_route = warp::path("hello")
+        .and(warp::get())
+        .and(warp::query::<HashMap<String, String>>())
+        .and(code_filter)
+        .map(
+            |query: HashMap<String, String>, secret_code: Arc<String>| match query.get("code") {
+                Some(code) if code == secret_code.as_str() => {
+                    warp::reply::with_status("hello!", StatusCode::OK)
+                }
+                _ => warp::reply::with_status("unauthorized", StatusCode::UNAUTHORIZED),
+            },
+        )
+        .with(&cors);
+
+    let static_files = warp::fs::dir("./library").with(&cors);
+
+    let routes = hello_route.or(static_files);
+
+    tokio::task::spawn(warp::serve(routes).run(http_addr));
+
     println!("");
     println!("- - - - - - - - - -");
     println!("-> HANDSHAKE CODE");
-    println!("-> {}", &handshake_code);
+    println!("-> {}", handshake_code.as_str());
     println!(
         "-> http://localhost:3000?href={}&name={}&code={}",
         "localhost%3A9001", "localdev", &handshake_code
@@ -230,7 +264,7 @@ async fn connection_handler(
     addr: SocketAddr,
     q_sender: UnboundedSender<Request>,
     library_path: String,
-    handshake_code: String,
+    handshake_code: Arc<String>,
 ) {
     info!("incoming TCP connection from: {}", addr);
 

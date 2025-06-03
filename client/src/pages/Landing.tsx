@@ -16,11 +16,22 @@ const KNOWN_ROOMS: RoomList = [
   // { name: 'PIZZAPARTY', href: 'wss://youoke.ngrok.pizza' },
 ]
 
-function testWS(href: string): Promise<boolean> {
+function testRoom(href: string): Promise<boolean> {
   // simple ping to see if server is alive
   return fetch(
     `${href.replace('ws://', 'http://').replace('wss://', 'https://')}/hello`
   )
+    .then((response) => response.status === 200)
+    .catch(() => false)
+}
+
+function testCode(href: string, code: string): Promise<boolean> {
+  // simple ping to see if server is alive
+  const fixed_href = href
+    .replace('ws://', 'http://')
+    .replace('wss://', 'https://')
+    .replace('9001', '9002')
+  return fetch(`${fixed_href}/hello?code=${code}`)
     .then((response) => response.status === 200)
     .catch(() => false)
 }
@@ -43,7 +54,7 @@ export default function Landing(props: LandingProps) {
         return
       }
       roomsToFind.forEach((room) => {
-        testWS(room.href)
+        testRoom(room.href)
           .then(() => {
             console.log('zomg FOUND room!', room)
             setRoomList((prev) => [...(prev ? prev : []), room])
@@ -169,8 +180,13 @@ export default function Landing(props: LandingProps) {
                           const c = e.target.value
                           setCode(c)
                           if (c.length > 5) {
-                            setRoom({ ...room, code: c })
-                            setDelay(null)
+                            testCode(room.href, c)
+                              .then((success) => {
+                                if (!success) return
+                                setRoom({ ...room, code: c })
+                                setDelay(null)
+                              })
+                              .catch(() => {})
                           }
                         }}
                         value={code}
