@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
     <title>youoke.party player</title>
-    <link rel="stylesheet" href="fonts/fonts.css" />
+    <link rel="stylesheet" href="player/fonts/fonts.css" />
     <style>
       ::-webkit-scrollbar {
         display: none;
@@ -57,17 +57,24 @@
     </div>
 
     <script>
+      var search = window.location.search
+      var params = new URLSearchParams(search)
+      var href = params.get('href') || 'ws://localhost:9001'
+      var code = params.get('code')
+
+      var USE_FILE_URLS = !!params.get('use_file_urls')
+
       var queue = []
       var currentQueueItem
       var duration = 0
       var isPlaying = false
       var isPaused = false
-      var socket = new WebSocket('ws://localhost:9001')
+      var socket = new WebSocket(`${href}?code=${code}`)
 
       function reconnect() {
         window.setTimeout(function () {
           console.log('gonna reload...')
-          window.location = window.location
+          window.location.reload()
         }, 5000)
       }
 
@@ -140,8 +147,8 @@
                   qItem.status === 'Downloading'
                     ? 'Downloading'
                     : qItem.title
-                    ? qItem.title
-                    : qItem.id
+                      ? qItem.title
+                      : qItem.id
                 )
               )
               item.appendChild(singer)
@@ -151,7 +158,7 @@
           }
 
           var firstReadyQueueItem = queue.find(function (i) {
-            return i.status === 'Ready' && i.filepath
+            return i.status === 'Ready' && i.filename
           })
           console.log('firstReadyQueueItem:', firstReadyQueueItem)
 
@@ -166,9 +173,19 @@
             // okay! set global currentQueueItem and try to start playing it...
             // #TODO: add a lil' animation here with singer name???!!!
             currentQueueItem = firstReadyQueueItem
-            var filepath = currentQueueItem.filepath
-            console.log('gonna try to play video!!!', filepath)
-            videoEl.setAttribute('src', 'file://' + filepath)
+            if (USE_FILE_URLS) {
+              var filepath = currentQueueItem.filepath
+              console.log('gonna try to play video!!! file://', filepath)
+              videoEl.setAttribute('src', 'file://' + filepath)
+            } else {
+              var filename = currentQueueItem.filename
+              console.log(
+                'gonna try to play video!!! http://localhost:9002/',
+                filename
+              )
+              videoEl.setAttribute('src', 'http://localhost:9002/' + filename)
+            }
+
             videoEl.load()
             videoEl.play()
             return

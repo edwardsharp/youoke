@@ -48,6 +48,7 @@ struct QueueItem {
     title: String,
     singer: String,
     filepath: String,
+    filename: String,
     duration: usize,
     status: QueueItemStatus,
 }
@@ -84,6 +85,7 @@ enum Request {
         id: String,
         status: QueueItemStatus,
         filepath: String,
+        filename: String,
         title: String,
         duration: usize,
     },
@@ -151,6 +153,21 @@ async fn main() -> Result<(), IoError> {
         .into_string()
         .unwrap();
 
+    let player_dir = match env::var_os("PLAYER_DIR") {
+        Some(val) => val.into_string().unwrap(),
+        None => "../player/public".to_string(),
+    };
+
+    if !Path::new(&player_dir).is_dir() {
+        panic!("player dir does not exist!")
+    }
+    let player_path = PathBuf::from(&player_dir);
+    let player_path = canonicalize(&player_path)
+        .unwrap()
+        .into_os_string()
+        .into_string()
+        .unwrap();
+
     let addr = match env::var_os("WS_ADDRESS") {
         Some(val) => val.into_string().unwrap(),
         None => "127.0.0.1:9001".to_string(),
@@ -195,18 +212,20 @@ async fn main() -> Result<(), IoError> {
     ));
 
     println!(
-        "serving /hello and library({}) at http://{}",
-        &library_path, &http_addr
+        "serving /hello and library({}) and player({}) at http://{}",
+        &library_path, &player_path, &http_addr,
     );
 
-    // warp server setup stuff
+    // warp server setup stuff for /hello code-check and static file hosting
     let cors = cors()
         .allow_any_origin()
         .allow_methods(vec!["GET", "POST", "OPTIONS"]) // Add methods you need
         .allow_headers(vec!["Content-Type"]); // Optional: allow custom headers
 
-    // #todo: use  match env::var_os("HANDSHAKE_CODE") or something
-    let handshake_code = Arc::new(generate_code());
+    let handshake_code = match env::var_os("HANDSHAKE_CODE") {
+        Some(val) => Arc::new(val.into_string().unwrap()),
+        None => Arc::new(generate_code()),
+    };
 
     let code_filter = warp::any().map({
         let secret_code = handshake_code.clone(); // Clone into filter
@@ -227,9 +246,13 @@ async fn main() -> Result<(), IoError> {
         )
         .with(&cors);
 
+    let player_route = warp::path("player")
+        .and(warp::fs::dir(player_path))
+        .with(&cors);
+
     let static_files = warp::fs::dir("./library").with(&cors);
 
-    let routes = hello_route.or(static_files);
+    let routes = hello_route.or(static_files).or(player_route);
 
     tokio::task::spawn(warp::serve(routes).run(http_addr));
 
@@ -430,6 +453,7 @@ async fn queue_handler(
                             status: QueueItemStatus::Downloading,
                             duration: 0,
                             filepath: "".to_owned(),
+                            filename: "".to_owned(),
                             title: "".to_owned(),
                         });
 
@@ -471,6 +495,7 @@ async fn queue_handler(
                 id,
                 status,
                 filepath,
+                filename,
                 title,
                 duration,
             } => {
@@ -485,6 +510,7 @@ async fn queue_handler(
                             queue_item.filepath = filepath;
                             queue_item.title = title;
                             queue_item.duration = duration;
+                            queue_item.filename = filename;
                         }
                         None => {}
                     },
@@ -549,7 +575,8 @@ async fn file_handler(
                     Ok(contents) => {
                         match serde_json::from_str::<YoutubeDlJSON>(&contents) {
                             Ok(parsed) => {
-                                let mut filepath = format!("{}.{}", parsed.id, parsed.ext);
+                                let filename = format!("{}.{}", parsed.id, parsed.ext);
+                                let mut filepath = filename.clone();
                                 //format!("{parsed.id}{parsed.ext}");
                                 // validate filename is really a path & file on disk
                                 if !Path::new(&filepath).is_file() {
@@ -570,6 +597,7 @@ async fn file_handler(
                                                 id: id.clone(),
                                                 status: QueueItemStatus::Ready,
                                                 filepath: filepath,
+                                                filename: filename,
                                                 title: parsed.title,
                                                 duration: parsed.duration,
                                             })
@@ -584,6 +612,7 @@ async fn file_handler(
                                             id: id.clone(),
                                             status: QueueItemStatus::Ready,
                                             filepath: filepath,
+                                            filename: filename,
                                             title: parsed.title,
                                             duration: parsed.duration,
                                         })
@@ -661,7 +690,8 @@ async fn download_handler(
                                     let parsed: YoutubeDlJSON = serde_json::from_str(&contents)
                                         .expect("download_handler panic! can't parse to JSON");
                                     // let mut filepath = parsed._filename;
-                                    let mut filepath = format!("{}.{}", parsed.id, parsed.ext);
+                                    let filename = format!("{}.{}", parsed.id, parsed.ext);
+                                    let mut filepath = filename.clone();
                                     // validate filename is really a path & file on disk
                                     if !Path::new(&filepath).is_file() {
                                         info!("ugh ref file not on filesystem gonna try to find {}/{}*[!json]", &library_path, &id);
@@ -680,6 +710,7 @@ async fn download_handler(
                                         id: id,
                                         status: QueueItemStatus::Ready,
                                         filepath: filepath,
+                                        filename: filename,
                                         title: parsed.title,
                                         duration: parsed.duration,
                                     }
@@ -707,6 +738,7 @@ async fn download_handler(
 }
 
 fn generate_code() -> String {
+    // #todo: use rand crate
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -792,6 +824,7 @@ mod tests {
             title: "".to_owned(),
             singer: "frankie frankie".to_owned(),
             filepath: "".to_owned(),
+            filename: "".to_owned(),
             duration: 0,
             status: QueueItemStatus::Downloading,
         };
