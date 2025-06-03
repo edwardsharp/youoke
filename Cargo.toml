@@ -1,4 +1,4 @@
 [workspace]
 
 # note: this is here at the top-level to appease vscode convention.
-members = ["server", "player", "worker", "shared"]
+members = ["server", "player", "worker", "shared", "cli"]
