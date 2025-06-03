@@ -19,9 +19,9 @@ const KNOWN_ROOMS: RoomList = [
 function testRoom(href: string): Promise<boolean> {
   // simple ping to see if server is alive
   return fetch(
-    `${href.replace('ws://', 'http://').replace('wss://', 'https://')}/hello`
+    `${href.replace('ws://', 'http://').replace('wss://', 'https://').replace('9001', '9002')}/hello`
   )
-    .then((response) => response.status === 200)
+    .then((response) => response.status === 200 || response.status === 401)
     .catch(() => false)
 }
 
@@ -55,7 +55,8 @@ export default function Landing(props: LandingProps) {
       }
       roomsToFind.forEach((room) => {
         testRoom(room.href)
-          .then(() => {
+          .then((success) => {
+            if (!success) return
             console.log('zomg FOUND room!', room)
             setRoomList((prev) => [...(prev ? prev : []), room])
             const roomsToFindClone = [...roomsToFind]
@@ -175,6 +176,7 @@ export default function Landing(props: LandingProps) {
                     <label className="code">
                       code
                       <input
+                        autoFocus
                         type="text"
                         onChange={(e) => {
                           const c = e.target.value

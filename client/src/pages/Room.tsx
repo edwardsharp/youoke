@@ -71,7 +71,7 @@ function QSinger(props: {
       onClick={() => !renameSinger && setRenameSinger(true)}
     >
       {renameSinger ? (
-        <>
+        <div className="flex">
           <input
             type="text"
             value={newSinger}
@@ -85,9 +85,17 @@ function QSinger(props: {
               }
             }}
           />
-        </>
+
+          <div
+            className="invert-list-btn"
+            onClick={() => setRenameSinger(false)}
+          >
+            {' '}
+            x{' '}
+          </div>
+        </div>
       ) : (
-        singer
+        <div className="list-btn">{singer}</div>
       )}
     </div>
   )
@@ -209,6 +217,9 @@ export default function Room(props: RoomProps) {
         <div className="list">
           * * * disconnected * * *
           <ol>
+            <li className="list-btn" onClick={() => location.reload()}>
+              reload
+            </li>
             <li className="list-btn" onClick={() => setRoom(undefined)}>
               exit room
             </li>
@@ -296,7 +307,7 @@ export default function Room(props: RoomProps) {
                       />
                       {!searchQ.match('karaoke') && (
                         <div
-                          className="search-q-input-tip"
+                          className="list-btn-1char search-q-input-tip"
                           onClick={() =>
                             setSearchQ((prev) => `${prev} karaoke`)
                           }
@@ -431,17 +442,37 @@ export default function Room(props: RoomProps) {
                 <div className="list-btn">singer: {singer}</div>
               )}
             </li>
-            <li tabIndex={0} onClick={() => sendWsMessage('PlayerPause')}>
-              <div className="list-btn">pause</div>
-            </li>
-            <li tabIndex={0} onClick={() => sendWsMessage('PlayerPlay')}>
-              <div className="list-btn">play</div>
-            </li>
-            <li tabIndex={0} onClick={() => sendWsMessage('PlayerSkip')}>
-              <div className="list-btn">skip</div>
-            </li>
-            <li tabIndex={0} onClick={() => setRoom(undefined)}>
-              <div className="list-btn">exit</div>
+            <li>
+              <div className="controls">
+                <div
+                  tabIndex={0}
+                  className="list-btn"
+                  onClick={() => sendWsMessage('PlayerPause')}
+                >
+                  pause
+                </div>
+                <div
+                  tabIndex={0}
+                  className="list-btn"
+                  onClick={() => sendWsMessage('PlayerPlay')}
+                >
+                  play
+                </div>
+                <div
+                  tabIndex={0}
+                  className="list-btn"
+                  onClick={() => sendWsMessage('PlayerSkip')}
+                >
+                  skip
+                </div>
+                <div
+                  tabIndex={0}
+                  className="list-btn"
+                  onClick={() => setRoom(undefined)}
+                >
+                  exit
+                </div>
+              </div>
             </li>
           </ol>
 

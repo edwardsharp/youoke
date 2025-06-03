@@ -57,6 +57,17 @@ input {
   padding-top: 50px;
 }
 
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.controls div {
+  margin: 0;
+  /* padding: 0; */
+  padding: 0 1em;
+  text-decoration: underline;
+}
 @media (max-width: 500px) {
   .search-q-input-tip {
     font-size: xx-small;
