@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import useInterval from '../hooks'
 import './Landing.css'
@@ -16,45 +16,37 @@ const KNOWN_ROOMS: RoomList = [
   // { name: 'PIZZAPARTY', href: 'wss://youoke.ngrok.pizza' },
 ]
 
-function testWS(href: string, code: string): Promise<boolean> {
-  const ws = new WebSocket(`${href}?code=${code}`)
-
-  return new Promise((resolve, reject) => {
-    ws.onerror = (e) => reject(e)
-    ws.onopen = () => {
-      ws.close()
-      resolve(true)
-    }
-  })
+function testWS(href: string): Promise<boolean> {
+  // simple ping to see if server is alive
+  return fetch(
+    `${href.replace('ws://', 'http://').replace('wss://', 'https://')}/hello`
+  )
+    .then((response) => response.status === 200)
+    .catch(() => false)
 }
 
 export default function Landing(props: LandingProps) {
   const { setRoom } = props
 
   const [code, setCode] = useState('')
+  const [needsCode, setNeedsCode] = useState(false)
   const [addNewRoom, setAddNewRoom] = useState(false)
   const [newRoom, setNewRoom] = useState<IRoom>(KNOWN_ROOMS[0])
   const [roomsToFind, setRoomsToFind] = useState(KNOWN_ROOMS)
   const [roomList, setRoomList] = useState<RoomList>()
-  const [delay, setDelay] = useState<number | null>(null)
-
-  useEffect(() => {
-    if (code && delay === null) {
-      setDelay(1000)
-    }
-  }, [code, delay])
+  const [delay, setDelay] = useState<number | null>(1000)
 
   useInterval(
     () => {
-      if (roomsToFind.length === 0 || !code) {
+      if (roomsToFind.length === 0) {
         setDelay(null)
         return
       }
       roomsToFind.forEach((room) => {
-        testWS(room.href, code)
+        testWS(room.href)
           .then(() => {
             console.log('zomg FOUND room!', room)
-            setRoomList((prev) => [...(prev ? prev : []), { ...room, code }])
+            setRoomList((prev) => [...(prev ? prev : []), room])
             const roomsToFindClone = [...roomsToFind]
             const idx = roomsToFindClone.indexOf(room)
             if (idx > -1) {
@@ -62,8 +54,9 @@ export default function Landing(props: LandingProps) {
               setRoomsToFind(roomsToFindClone)
             }
           })
-          .catch((e) => {
-            console.warn('onoz, bad room!', room, ' error:', e)
+          .catch(() => {
+            // console.warn('onoz, bad room!', room, ' error:', e)
+            // 🤷‍♀️
           })
       })
 
@@ -79,110 +72,119 @@ export default function Landing(props: LandingProps) {
       <h1 className="youoke">YOUOKE</h1>
       <div className="list">
         <h2>- - - JOIN ROOM - - -</h2>
-        <label>
-          code
-          <input
-            type="text"
-            onChange={(e) => setCode(e.target.value)}
-            value={code}
-            placeholder="code"
-          />
-        </label>
-        {code && (
-          <ol>
-            <li
-              className={addNewRoom ? undefined : 'list-btn'}
-              tabIndex={0}
-              onClick={() => !addNewRoom && setAddNewRoom(true)}
-            >
-              {addNewRoom ? (
-                <>
-                  <label>
-                    name
-                    <input
-                      type="text"
-                      onChange={(e) =>
-                        setNewRoom((prev: IRoom) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                      value={newRoom.name}
-                      placeholder="name"
-                    />
-                  </label>
-                  <label>
-                    href
-                    <input
-                      type="text"
-                      onChange={(e) =>
-                        setNewRoom((prev: IRoom) => ({
-                          ...prev,
-                          href: e.target.value,
-                        }))
-                      }
-                      value={newRoom.href}
-                      placeholder="href"
-                    />
-                  </label>
 
-                  <div className="btn-row">
-                    <div
-                      className="btn"
-                      onClick={() => {
-                        setRoomsToFind((prev) => {
-                          if (
-                            prev.find(
-                              (r) =>
-                                r.name === newRoom.name &&
-                                r.href === newRoom.href
-                            )
-                          ) {
-                            return prev
-                          }
+        <ol>
+          <li
+            className={addNewRoom ? undefined : 'list-btn'}
+            tabIndex={0}
+            onClick={() => !addNewRoom && setAddNewRoom(true)}
+          >
+            {addNewRoom ? (
+              <>
+                <label>
+                  name
+                  <input
+                    type="text"
+                    onChange={(e) =>
+                      setNewRoom((prev: IRoom) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    value={newRoom.name}
+                    placeholder="name"
+                  />
+                </label>
+                <label>
+                  href
+                  <input
+                    type="text"
+                    onChange={(e) =>
+                      setNewRoom((prev: IRoom) => ({
+                        ...prev,
+                        href: e.target.value,
+                      }))
+                    }
+                    value={newRoom.href}
+                    placeholder="href"
+                  />
+                </label>
 
-                          return [...prev, newRoom]
-                        })
-                        // reset inputz?
-                        // setNewRoom(KNOWN_ROOMS[0])
-                        setAddNewRoom(false)
-                      }}
-                    >
-                      add new room
-                    </div>
-
-                    <div
-                      className="btn"
-                      onClick={() => {
-                        setAddNewRoom(false)
-                      }}
-                    >
-                      x
-                    </div>
-                  </div>
-                </>
-              ) : (
-                'find room...'
-              )}
-            </li>
-
-            {!roomList
-              ? 'looking for rooms...'
-              : roomList.map((room, idx) => (
-                  <li
-                    className="list-btn"
-                    key={`${room}${idx}`}
-                    tabIndex={idx}
+                <div className="btn-row">
+                  <div
+                    className="btn"
                     onClick={() => {
-                      setRoom(room)
-                      setDelay(null)
+                      setRoomsToFind((prev) => {
+                        if (
+                          prev.find(
+                            (r) =>
+                              r.name === newRoom.name && r.href === newRoom.href
+                          )
+                        ) {
+                          return prev
+                        }
+
+                        return [...prev, newRoom]
+                      })
+                      // reset inputz?
+                      // setNewRoom(KNOWN_ROOMS[0])
+                      setAddNewRoom(false)
                     }}
                   >
-                    {room.name}
-                  </li>
-                ))}
-          </ol>
-        )}
+                    add new room
+                  </div>
+
+                  <div
+                    className="btn"
+                    onClick={() => {
+                      setAddNewRoom(false)
+                    }}
+                  >
+                    x
+                  </div>
+                </div>
+              </>
+            ) : (
+              'find room...'
+            )}
+          </li>
+
+          {!roomList
+            ? 'looking for rooms...'
+            : roomList.map((room, idx) => (
+                <li
+                  className="list-btn"
+                  key={`${room}${idx}`}
+                  tabIndex={idx}
+                  onClick={() => {
+                    setNeedsCode(true)
+                  }}
+                >
+                  {needsCode ? (
+                    <label className="code">
+                      code
+                      <input
+                        type="text"
+                        onChange={(e) => {
+                          const c = e.target.value
+                          setCode(c)
+                          if (c.length > 5) {
+                            setRoom({ ...room, code: c })
+                            setDelay(null)
+                          }
+                        }}
+                        value={code}
+                        placeholder="6 digit number"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                      />
+                    </label>
+                  ) : (
+                    room.name
+                  )}
+                </li>
+              ))}
+        </ol>
       </div>
     </div>
   )

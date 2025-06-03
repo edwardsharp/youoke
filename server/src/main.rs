@@ -23,7 +23,8 @@ use tokio_tungstenite::tungstenite::handshake::server::{
     Response as HandshakeResponse,
 };
 use tungstenite::protocol::Message;
-// use url::Url;
+
+use warp::Filter;
 
 use log::*;
 use serde::{Deserialize, Serialize};
@@ -184,14 +185,30 @@ async fn main() -> Result<(), IoError> {
         q_sender.clone(),
     ));
 
-    println!("serving {} at http://localhost:9002/", &library_path);
-    tokio::task::spawn(
-        warp::serve(warp::fs::dir(library_path.clone())).run(([127, 0, 0, 1], 9002)),
+    println!(
+        "serving /hello and library({}) at http://localhost:9002",
+        &library_path
     );
+    let hello_route = warp::path("hello")
+        .and(warp::get())
+        .map(|| warp::reply::with_status("hello!", warp::http::StatusCode::OK));
+    let static_files = warp::fs::dir("./library");
 
+    let routes = hello_route.or(static_files);
+    tokio::task::spawn(warp::serve(routes).run(([127, 0, 0, 1], 9002)));
+
+    // #todo: use  match env::var_os("HANDSHAKE_CODE") or something
     let handshake_code = generate_code();
-    println!("THE HANDSHAKE CODE IS: {}", &handshake_code);
-
+    println!("");
+    println!("- - - - - - - - - -");
+    println!("-> HANDSHAKE CODE");
+    println!("-> {}", &handshake_code);
+    println!(
+        "-> http://localhost:3000?href={}&name={}&code={}",
+        "localhost%3A9001", "localdev", &handshake_code
+    );
+    println!("- - - - - - - - - -");
+    println!("");
     // spawn the handling of each connection in a separate task.
     while let Ok((stream, addr)) = listener.accept().await {
         tokio::spawn(connection_handler(

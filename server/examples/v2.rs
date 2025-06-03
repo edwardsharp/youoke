@@ -63,9 +63,12 @@ async fn main() {
     //     ws.on_upgrade(move |socket| handle_connection(socket, state))
     // });
 
+    let hello_route = warp::path("hello")
+        .and(warp::get())
+        .map(|| warp::reply::with_status("hello!", warp::http::StatusCode::OK));
     let static_files = warp::fs::dir("./library");
 
-    let routes = ws_route.or(static_files);
+    let routes = ws_route.or(static_files).or(hello_route);
 
     println!("websocket server running at ws://localhost:3030/ws");
     println!("serving ./library at http://localhost:3030/");

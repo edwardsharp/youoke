@@ -172,6 +172,7 @@ export default function Room(props: RoomProps) {
   }
 
   useEffect(() => {
+    // console.log('zomg using ws url:', `${room.href}?code=${room.code}`)
     ws.current = new WebSocket(`${room.href}?code=${room.code}`)
     ws.current.onopen = () => {
       setWsStatus('open')
@@ -183,7 +184,7 @@ export default function Room(props: RoomProps) {
     return () => {
       ws.current && ws.current.close()
     }
-  }, [room.href])
+  }, [room.href, room.code])
 
   useEffect(() => {
     const fResults = library.filter((item) =>

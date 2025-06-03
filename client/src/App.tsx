@@ -10,10 +10,14 @@ function App() {
     const search = window.location.search
     const params = new URLSearchParams(search)
     const name = params.get('name')
-    const href = params.get('href')
-    if (name && href) {
+    let href = params.get('href')
+    const code = params.get('code')
+    if (name && href && code) {
       console.log('zomg have room from query params!', { name, href })
-      return { name, href }
+      if (!href.startsWith('ws://') || !href.startsWith('wss://')) {
+        href = `ws://${href}`
+      }
+      return { name, href, code }
     }
 
     // otherwise fallback to localstorage
