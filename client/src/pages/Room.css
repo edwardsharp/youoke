@@ -20,14 +20,27 @@ input {
 .flex-responsive {
   display: flex;
 }
+.search-q {
+  width: 100%;
+}
 .flex-grow {
   flex-grow: 1;
 }
 .search-q .list-btn {
   width: 30px;
 }
-.search-q-input {
-  width: calc(100% - 60px);
+.search-q .invert-list-btn {
+  height: 60px;
+  margin-top: 7px;
+}
+.search-q .flex-grow {
+  flex-grow: 1;
+}
+
+.search-q-input-tip {
+  font-size: large;
+  line-height: 1em;
+  text-decoration: underline;
 }
 
 .search-results li {
@@ -45,6 +58,14 @@ input {
 }
 
 @media (max-width: 500px) {
+  .search-q-input-tip {
+    font-size: xx-small;
+    line-height: 1em;
+  }
+
+  .search-q .invert-list-btn {
+    margin-top: 0;
+  }
   #search-results-container {
     margin-left: -50px;
   }

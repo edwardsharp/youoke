@@ -188,7 +188,9 @@ export default function Room(props: RoomProps) {
 
   useEffect(() => {
     const fResults = library.filter((item) =>
-      item.title.toLowerCase().includes(searchQ.toLowerCase())
+      item.title
+        .toLowerCase()
+        .includes(searchQ.toLowerCase().replace('karaoke', ''))
     )
     setSearchResults(fResults)
     document.getElementById('search-results-container')?.scrollIntoView()
@@ -276,21 +278,33 @@ export default function Room(props: RoomProps) {
               <div className="sticky">
                 {showSearchInput ? (
                   <div className="search-q">
-                    <input
-                      className={showSearchResults ? 'search-q-input' : ''}
-                      type="text"
-                      placeholder="search"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                          setShowSearchResults(false)
-                          setShowSeachInout(false)
-                        }
-                      }}
-                      onFocus={() => setShowSearchResults(true)}
-                      value={searchQ}
-                      onChange={(e) => setSearchQ(e.target.value)}
-                      autoFocus
-                    />
+                    <div className="flex-grow">
+                      <input
+                        className={showSearchResults ? 'search-q-input' : ''}
+                        type="text"
+                        placeholder="search"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            setShowSearchResults(false)
+                            setShowSeachInout(false)
+                          }
+                        }}
+                        onFocus={() => setShowSearchResults(true)}
+                        value={searchQ}
+                        onChange={(e) => setSearchQ(e.target.value)}
+                        autoFocus
+                      />
+                      {!searchQ.match('karaoke') && (
+                        <div
+                          className="search-q-input-tip"
+                          onClick={() =>
+                            setSearchQ((prev) => `${prev} karaoke`)
+                          }
+                        >
+                          tip: add "karaoke" to the search query!
+                        </div>
+                      )}
+                    </div>
                     {showSearchResults && (
                       <div
                         className="invert-list-btn"
