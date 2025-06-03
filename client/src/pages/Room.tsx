@@ -7,6 +7,7 @@ import youtubeSearch, { YTSearchItem } from '../youtube'
 export interface IRoom {
   name: string
   href: string
+  code: string
 }
 
 export interface RoomProps {
@@ -171,7 +172,7 @@ export default function Room(props: RoomProps) {
   }
 
   useEffect(() => {
-    ws.current = new WebSocket(room.href)
+    ws.current = new WebSocket(`${room.href}?code=${room.code}`)
     ws.current.onopen = () => {
       setWsStatus('open')
       sendWsMessage('GetLibrary')

@@ -2,11 +2,12 @@ use std::{
     collections::HashMap,
     env,
     fs::{canonicalize, create_dir_all, read_to_string},
-    io::Error as IoError,
+    io::{self, Error as IoError},
     net::SocketAddr,
     path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::{Arc, Mutex},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use glob::glob;
@@ -15,8 +16,14 @@ use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 
 use tokio::net::{TcpListener, TcpStream};
-use tokio_tungstenite::accept_async;
+use tokio_tungstenite::accept_hdr_async;
+
+use tokio_tungstenite::tungstenite::handshake::server::{
+    ErrorResponse as HandshakeErrorResponse, Request as HandshakeRequest,
+    Response as HandshakeResponse,
+};
 use tungstenite::protocol::Message;
+// use url::Url;
 
 use log::*;
 use serde::{Deserialize, Serialize};
@@ -177,6 +184,14 @@ async fn main() -> Result<(), IoError> {
         q_sender.clone(),
     ));
 
+    println!("serving {} at http://localhost:9002/", &library_path);
+    tokio::task::spawn(
+        warp::serve(warp::fs::dir(library_path.clone())).run(([127, 0, 0, 1], 9002)),
+    );
+
+    let handshake_code = generate_code();
+    println!("THE HANDSHAKE CODE IS: {}", &handshake_code);
+
     // spawn the handling of each connection in a separate task.
     while let Ok((stream, addr)) = listener.accept().await {
         tokio::spawn(connection_handler(
@@ -185,6 +200,7 @@ async fn main() -> Result<(), IoError> {
             addr,
             q_sender.clone(),
             library_path.clone(),
+            handshake_code.clone(),
         ));
     }
 
@@ -197,11 +213,40 @@ async fn connection_handler(
     addr: SocketAddr,
     q_sender: UnboundedSender<Request>,
     library_path: String,
+    handshake_code: String,
 ) {
     info!("incoming TCP connection from: {}", addr);
-    let ws_stream = accept_async(raw_stream)
-        .await
-        .expect("error during the websocket handshake occurred");
+
+    // let check_handshake_code = |req: &HandshakeRequest, resp: HandshakeResponse| {
+    let check_handshake_code = move |req: &HandshakeRequest,
+                                     resp: HandshakeResponse|
+          -> Result<HandshakeResponse, HandshakeErrorResponse> {
+        info!("zomg gonna check_handshake_code");
+        if let Some(uri) = req.uri().path_and_query() {
+            if let Ok(parsed_url) = url::Url::parse(&format!("http://localhost{}", uri)) {
+                if let Some(code) = parsed_url.query_pairs().find(|(k, _)| k == "code") {
+                    info!("zomg checking code {}", code.1);
+                    if code.1 == *handshake_code {
+                        info!("zomg okay good handshake bro!");
+                        return Ok(resp);
+                    }
+                }
+            }
+        }
+
+        Err(HandshakeErrorResponse::new(Some(
+            "Unauthorized".to_string(),
+        )))
+    };
+
+    // let ws_stream = accept_hdr_async(raw_stream, check_handshake_code).await?;
+    let ws_stream = match accept_hdr_async(raw_stream, check_handshake_code).await {
+        Ok(stream) => stream,
+        Err(err) => {
+            eprintln!("Handshake failed: {}", err);
+            return; // or future::ok(()) if you’re returning a future
+        }
+    };
     info!("WebSocket connection established: {}", addr);
     let (tx, rx) = unbounded();
     // insert the write (tx) part of this peer to the peer map
@@ -542,7 +587,7 @@ async fn download_handler(
                     .arg(&id) // note: this handles video IDz that start with a dash (-)
                     .output()
                 // note: sleep for debuggin.
-                // let response: Request = match Command::new("sleep").arg("1").output() 
+                // let response: Request = match Command::new("sleep").arg("1").output()
                 {
                     Ok(output) => {
                         info!("download_handler yt-dlp output: {:#?}", output);
@@ -608,6 +653,16 @@ async fn download_handler(
         }
     }
     Ok(())
+}
+
+fn generate_code() -> String {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .subsec_nanos();
+
+    let code = (nanos % 1_000_000).to_string();
+    format!("{:0>6}", code) // zero-pad to 6 digits
 }
 
 #[cfg(test)]
