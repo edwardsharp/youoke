@@ -11,18 +11,58 @@ export interface LandingProps {
 
 type RoomList = IRoom[]
 
-const name = window.location.hostname.includes('youoke.party')
-  ? 'LOCALHOST' // all capz, cuz better
-  : window.location.hostname
-const href = `ws://${name.toLowerCase()}:9001`
-
 const search = window.location.search
 const params = new URLSearchParams(search)
 const code = params.get('code') || ''
 
+const tryToTidyNameOrHref = (name?: string | null, href?: string | null) => {
+  if (!name && !href) return
+
+  if (!name && href) {
+    name =
+      href.replace('ws://', '').replace('wss://', '').replace(/:\d+/, '') || ''
+  }
+
+  if (!href && name) href = name
+
+  // still no href?!
+  if (!href || !name) return
+
+  if (!href.startsWith('ws://') || !href.startsWith('wss://')) {
+    href = `ws://${href}`
+  }
+  if (!href.match(/:\d+/)) {
+    href = `${href}:9001`
+  }
+
+  console.log('zomg tryToTidyNameOrHref', { name, href, code })
+
+  return { name, href, code }
+}
+
+const getWindowLocationRoom = () => {
+  const name = window.location.hostname.includes('youoke.party')
+    ? 'LOCALHOST' // all capz, cuz better
+    : window.location.hostname
+  const href = `ws://${name.toLowerCase()}:9001`
+  return { name, href, code }
+}
+
+const getQueryParamsRoom = () =>
+  tryToTidyNameOrHref(params.get('name'), params.get('href'))
+
+const getSpecialRooms = () => {
+  const queryParamsRoom = getQueryParamsRoom()
+  if (!queryParamsRoom) {
+    return [getWindowLocationRoom()]
+  } else {
+    return [getWindowLocationRoom(), queryParamsRoom]
+  }
+}
+
 const KNOWN_ROOMS: RoomList = [
-  { name, href, code: '' },
-  { name: 'PIZZAPARTY', href: 'wss://youoke.ngrok.pizza', code },
+  ...getSpecialRooms(),
+  // { name: 'PIZZAPARTY', href: 'wss://youoke.ngrok.pizza', code },
 ]
 
 function testRoom(href: string): Promise<boolean> {
@@ -50,9 +90,13 @@ export default function Landing(props: LandingProps) {
 
   const [isHttps, setIsHttps] = useState(false)
   const [code, setCode] = useState('')
-  const [needsCode, setNeedsCode] = useState(false)
+  const [needsCode, setNeedsCode] = useState<Record<string, boolean>>({})
   const [addNewRoom, setAddNewRoom] = useState(false)
-  const [newRoom, setNewRoom] = useState<IRoom>(KNOWN_ROOMS[0])
+  const [newRoom, setNewRoom] = useState<IRoom>({
+    name: '',
+    href: '',
+    code: '',
+  })
   const [roomsToFind, setRoomsToFind] = useState(KNOWN_ROOMS)
   const [roomList, setRoomList] = useState<RoomList>()
   const [delay, setDelay] = useState<number | null>(1000)
@@ -144,7 +188,7 @@ export default function Landing(props: LandingProps) {
                     placeholder="name"
                   />
                 </label>
-                <label>
+                {/* <label>
                   href
                   <input
                     type="text"
@@ -157,27 +201,27 @@ export default function Landing(props: LandingProps) {
                     value={newRoom.href}
                     placeholder="href"
                   />
-                </label>
+                </label> */}
 
                 <div className="btn-row">
                   <div
                     className="btn"
                     onClick={() => {
                       setRoomsToFind((prev) => {
-                        if (
-                          prev.find(
-                            (r) =>
-                              r.name === newRoom.name && r.href === newRoom.href
-                          )
-                        ) {
+                        const fixedNewRoom = tryToTidyNameOrHref(
+                          newRoom.name,
+                          newRoom.href
+                        )
+                        if (!fixedNewRoom || !fixedNewRoom.href) return prev
+                        if (prev.find((r) => r.href === fixedNewRoom.href)) {
                           return prev
                         }
-
-                        return [...prev, newRoom]
+                        return [...prev, fixedNewRoom]
                       })
                       // reset inputz?
                       // setNewRoom(KNOWN_ROOMS[0])
                       setAddNewRoom(false)
+                      setDelay(1000)
                     }}
                   >
                     add new room
@@ -206,10 +250,13 @@ export default function Landing(props: LandingProps) {
                   key={`${room}${idx}`}
                   tabIndex={idx}
                   onClick={() => {
-                    setNeedsCode(true)
+                    setNeedsCode((prev) => ({
+                      ...prev,
+                      [`${room}${idx}`]: true,
+                    }))
                   }}
                 >
-                  {needsCode ? (
+                  {needsCode[`${room}${idx}`] ? (
                     <label className="code">
                       code
                       <input
@@ -219,13 +266,25 @@ export default function Landing(props: LandingProps) {
                           const c = e.target.value
                           setCode(c)
                           if (c.length > 5) {
-                            testCode(room.href, c)
-                              .then((success) => {
-                                if (!success) return
-                                setRoom({ ...room, code: c })
-                                setDelay(null)
-                              })
-                              .catch(() => {})
+                            testCode(room.href, c).then((success) => {
+                              if (!success) return
+                              setRoom({ ...room, code: c })
+                              setDelay(null)
+                            })
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            testCode(room.href, code).then((success) => {
+                              if (!success) return
+                              setRoom({ ...room, code })
+                              setDelay(null)
+                            })
+                          } else if (e.key === 'Escape') {
+                            setNeedsCode((prev) => ({
+                              ...prev,
+                              [`${room}${idx}`]: false,
+                            }))
                           }
                         }}
                         value={code}

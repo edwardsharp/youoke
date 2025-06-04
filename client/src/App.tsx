@@ -6,27 +6,6 @@ import Room, { IRoom } from './pages/Room'
 
 function App() {
   const [room, setAppRoom] = useState<IRoom | undefined>(() => {
-    // first, try to get a room from the url query params:
-    const search = window.location.search
-    const params = new URLSearchParams(search)
-    let name = params.get('name')
-    let href = params.get('href')
-    const code = params.get('code')
-    if (href && code) {
-      if (!name)
-        name =
-          href.replace('ws://', '').replace('wss://', '').replace(/:\d+/, '') ||
-          ''
-      console.log('zomg have room from query params!', { name, href })
-      if (!href.startsWith('ws://') || !href.startsWith('wss://')) {
-        href = `ws://${href}`
-      }
-      if (!href.match(/:\d+/)) {
-        href = `${href}:9001`
-      }
-      return { name, href, code }
-    }
-
     // otherwise fallback to localstorage
     const lRoom = localStorage.getItem('room')
     console.log('lRoom:', lRoom)
