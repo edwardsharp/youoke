@@ -3,6 +3,7 @@ import debounce from 'lodash.debounce'
 
 import './Room.css'
 import youtubeSearch, { YTSearchItem } from '../youtube'
+import { HttpsNotice } from './HttpsNotice'
 
 export interface IRoom {
   name: string
@@ -216,6 +217,7 @@ export default function Room(props: RoomProps) {
       {wsStatus === 'closed' ? (
         <div className="list">
           * * * disconnected * * *
+          <HttpsNotice />
           <ol>
             <li className="list-btn" onClick={() => location.reload()}>
               reload

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import useInterval from '../hooks'
 import './Landing.css'
 import { IRoom } from './Room'
+import { HttpsNotice } from './HttpsNotice'
 
 export interface LandingProps {
   room?: IRoom
@@ -88,7 +89,6 @@ function testCode(href: string, code: string): Promise<boolean> {
 export default function Landing(props: LandingProps) {
   const { room, setRoom } = props
 
-  const [isHttps, setIsHttps] = useState(false)
   const [code, setCode] = useState('')
   const [needsCode, setNeedsCode] = useState<Record<string, boolean>>({})
   const [addNewRoom, setAddNewRoom] = useState(false)
@@ -100,10 +100,6 @@ export default function Landing(props: LandingProps) {
   const [roomsToFind, setRoomsToFind] = useState(KNOWN_ROOMS)
   const [roomList, setRoomList] = useState<RoomList>()
   const [delay, setDelay] = useState<number | null>(1000)
-
-  useEffect(() => {
-    setIsHttps(window.location.protocol === 'https:')
-  }, [])
 
   useEffect(() => {
     if (!room) return
@@ -146,23 +142,7 @@ export default function Landing(props: LandingProps) {
   return (
     <div className="box">
       <h1 className="youoke">YOUOKE</h1>
-      {isHttps && (
-        <>
-          <h2>important! you're using "https://"</h2>
-          <p>
-            so you need to manually type the "http://" part of
-            "http://youoke.party"
-          </p>
-          <p>
-            <em>...which is anoying, yeah</em>
-          </p>
-          <p>
-            (i wish there was a better way, but your browser doesn't think i
-            should do that for you, which is, in some ways, understandable, but
-            in other ways, infuriating 🤷)
-          </p>
-        </>
-      )}
+      <HttpsNotice />
       <div className="list">
         <h2>- - - JOIN ROOM - - -</h2>
 
