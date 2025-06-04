@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+import './HttpNotice.css'
+
 export function HttpsNotice() {
   const [isHttps, setIsHttps] = useState(false)
   useEffect(() => {
@@ -8,21 +10,17 @@ export function HttpsNotice() {
 
   return (
     isHttps && (
-      <>
+      <div className="notice">
         <h2>important! you're using "https://"</h2>
-        <p>
-          so you need to manually type the "http://" part of
+        <h3>
+          so you need to manually type the <b>"http://"</b> part of
           "http://youoke.party"
-        </p>
+        </h3>
         <p>
-          <em>...which is anoying, yeah</em>
+          <em>...which is anoying (sorry)</em> if you're using a room with https
+          support, you can ignore this!
         </p>
-        <p>
-          (i wish there was a better way, but your browser doesn't think i
-          should do that for you, which is, in some ways, understandable, but in
-          other ways, infuriating 🤷)
-        </p>
-      </>
+      </div>
     )
   )
 }
