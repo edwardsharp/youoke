@@ -465,14 +465,10 @@ export default function Room(props: RoomProps) {
                 >
                   skip
                 </div>
-                <div
-                  tabIndex={0}
-                  className="list-btn"
-                  onClick={() => setRoom(undefined)}
-                >
-                  exit
-                </div>
               </div>
+            </li>
+            <li className="list-btn" onClick={() => setRoom(undefined)}>
+              exit room
             </li>
           </ol>
 

@@ -64,8 +64,11 @@ input {
 
 .controls div {
   margin: 0;
-  /* padding: 0; */
   padding: 0 1em;
+  flex-grow: 1;
+  text-align: center;
+}
+.controls div:hover {
   text-decoration: underline;
 }
 @media (max-width: 500px) {
@@ -100,5 +103,8 @@ input {
   }
   .flex-responsive {
     flex-direction: column;
+  }
+  .controls div {
+    padding: 0;
   }
 }

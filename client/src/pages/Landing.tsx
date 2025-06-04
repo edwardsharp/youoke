@@ -1,17 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import useInterval from '../hooks'
 import './Landing.css'
 import { IRoom } from './Room'
 
 export interface LandingProps {
+  room?: IRoom
   setRoom: (room: IRoom) => void
 }
 
 type RoomList = IRoom[]
 
+const name =
+  window.location.hostname !== 'localhost'
+    ? window.location.hostname
+    : 'LOCALHOST'
+const href =
+  window.location.hostname !== 'localhost'
+    ? `ws://${window.location.hostname}:9001`
+    : 'ws://localhost:9001'
 const KNOWN_ROOMS: RoomList = [
-  { name: 'LOCALHOST', href: 'ws://localhost:9001', code: '' },
+  { name, href, code: '' },
   // { name: 'FOLK', href: 'ws://10.246.17.194:9001' },
   // { name: 'PIZZAPARTY', href: 'wss://youoke.ngrok.pizza' },
 ]
@@ -37,7 +46,7 @@ function testCode(href: string, code: string): Promise<boolean> {
 }
 
 export default function Landing(props: LandingProps) {
-  const { setRoom } = props
+  const { room, setRoom } = props
 
   const [code, setCode] = useState('')
   const [needsCode, setNeedsCode] = useState(false)
@@ -46,6 +55,12 @@ export default function Landing(props: LandingProps) {
   const [roomsToFind, setRoomsToFind] = useState(KNOWN_ROOMS)
   const [roomList, setRoomList] = useState<RoomList>()
   const [delay, setDelay] = useState<number | null>(1000)
+
+  useEffect(() => {
+    if (!room) return
+    console.log('zomg add props room!', room)
+    setRoomsToFind((prev) => [...prev, room])
+  }, [room])
 
   useInterval(
     () => {

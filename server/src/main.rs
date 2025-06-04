@@ -250,7 +250,7 @@ async fn main() -> Result<(), IoError> {
         .and(warp::fs::dir(player_path))
         .with(&cors);
 
-    let static_files = warp::fs::dir("./library").with(&cors);
+    let static_files = warp::fs::dir(library_path.clone()).with(&cors);
 
     let routes = hello_route.or(static_files).or(player_route);
 

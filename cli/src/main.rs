@@ -63,7 +63,7 @@ __   _____  _   _  ___  _  _______
   \ V / | | | | | | | | | ' /|  _|
   | || |_| | |_| | |_| | . \| |___
   |_| \___/ \___/ \___/|_|\_\_____|
-    "#
+"#
     );
 }
 
@@ -72,6 +72,7 @@ fn default_envs() -> HashMap<String, String> {
     map.insert("WS_ADDRESS".into(), "127.0.0.1:9001".into());
     map.insert("HTTP_ADDRESS".into(), "127.0.0.1:9002".into());
     map.insert("LIB_DIR".into(), "./library".into());
+    map.insert("PLAYER_DIR".into(), "player/public/".into());
     map.insert("HANDSHAKE_CODE".into(), generate_code());
     map
 }

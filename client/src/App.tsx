@@ -9,13 +9,20 @@ function App() {
     // first, try to get a room from the url query params:
     const search = window.location.search
     const params = new URLSearchParams(search)
-    const name = params.get('name')
+    let name = params.get('name')
     let href = params.get('href')
     const code = params.get('code')
-    if (name && href && code) {
+    if (href && code) {
+      if (!name)
+        name =
+          href.replace('ws://', '').replace('wss://', '').replace(/:\d+/, '') ||
+          ''
       console.log('zomg have room from query params!', { name, href })
       if (!href.startsWith('ws://') || !href.startsWith('wss://')) {
         href = `ws://${href}`
+      }
+      if (!href.match(/:\d+/)) {
+        href = `${href}:9001`
       }
       return { name, href, code }
     }
@@ -39,7 +46,7 @@ function App() {
   return (
     <div className="App">
       {!room ? (
-        <Landing setRoom={setRoom} />
+        <Landing room={room} setRoom={setRoom} />
       ) : (
         <Room room={room} setRoom={setRoom} />
       )}

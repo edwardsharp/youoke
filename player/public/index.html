@@ -25,10 +25,25 @@
         height: 100vh;
         overflow-y: scroll;
       }
-      #queue {
+      #queue,
+      #info {
         overflow-wrap: break-word;
         margin: 1em;
         font-size: 1.75em;
+      }
+      #info {
+        position: sticky;
+        bottom: 0;
+        background-color: black;
+        text-align: right;
+        margin: 0 1em 1em 0;
+        padding-bottom: 0.5em;
+      }
+      #info #code {
+        font-size: 2em;
+      }
+      #info #name {
+        font-size: 0.75em;
       }
       #disconnected {
         position: absolute;
@@ -40,27 +55,48 @@
       .hidden {
         display: none;
       }
+      #qr-img {
+        filter: invert(1);
+      }
     </style>
   </head>
   <body>
-    <video id="videoEl" poster="youoke.png"></video>
+    <video id="videoEl" poster="player/youoke.png"></video>
     <div id="q">
-      <!-- <form onsubmit="send('message'); return false">
-        <input type="text" id="message" />
-        <input type="submit" value="Send" />
-        <input type="button" value="goto end" onclick="gotoEnd()" />
-      </form> -->
       <ol id="queue"></ol>
       <div id="disconnected" class="hidden">
         ************ disconnected ************
       </div>
+
+      <div id="info">
+        <img id="qr-img" />
+        <div>youoke.party</div>
+        <div id="code"></div>
+        <div id="name"></div>
+      </div>
     </div>
 
-    <script>
-      var search = window.location.search
-      var params = new URLSearchParams(search)
-      var href = params.get('href') || 'ws://localhost:9001'
-      var code = params.get('code')
+    <script type="module">
+      import qrcode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm'
+
+      const search = window.location.search
+      const params = new URLSearchParams(search)
+      const href = params.get('href') || `ws://${window.location.hostname}:9001`
+      const name = href
+        .replace('ws://', '')
+        .replace('wss://', '')
+        .replace(/:\d+/, '')
+
+      const code = params.get('code')
+
+      const client_url = `http://youoke.party?href=${href}&code=${code}`
+      qrcode.toDataURL(client_url, { width: 256 }, function (err, src) {
+        if (err) return console.error(err)
+        document.getElementById('qr-img').src = src
+      })
+
+      document.getElementById('name').innerText = name
+      document.getElementById('code').innerText = code
 
       var USE_FILE_URLS = !!params.get('use_file_urls')
 
@@ -74,7 +110,8 @@
       function reconnect() {
         window.setTimeout(function () {
           console.log('gonna reload...')
-          window.location.reload()
+          // window.location.reload()
+          socket = new WebSocket(`${href}?code=${code}`)
         }, 5000)
       }
 

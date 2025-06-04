@@ -1928,20 +1928,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
-name = "worker"
-version = "0.1.0"
-dependencies = [
- "futures",
- "futures-util",
- "rusqlite",
- "serde",
- "serde_json",
- "shared",
- "tokio",
- "tokio-tungstenite 0.17.2",
-]
-
-[[package]]
 name = "writeable"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2010,6 +1996,20 @@ dependencies = [
  "tungstenite 0.17.3",
  "url",
  "warp",
+]
+
+[[package]]
+name = "youoke-worker"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "futures-util",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "shared",
+ "tokio",
+ "tokio-tungstenite 0.17.2",
 ]
 
 [[package]]
