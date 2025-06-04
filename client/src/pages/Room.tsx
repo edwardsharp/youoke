@@ -120,6 +120,7 @@ export default function Room(props: RoomProps) {
   const [showIdInput, setShowIdInput] = useState(false)
   const [showSearchInput, setShowSeachInout] = useState(false)
   const [ytSearchResulta, setYtSearchResults] = useState<YTSearchItem[]>([])
+  const [ytNextPageToken, setYtNextPageToken] = useState('')
 
   function handleWsMessage(message: WebSocketEventMap['message']) {
     try {
@@ -207,9 +208,19 @@ export default function Room(props: RoomProps) {
   }, [library, searchQ, queue])
 
   function ytSearch(q: string) {
-    youtubeSearch(q).then((results) => setYtSearchResults(results))
+    youtubeSearch(q).then((results) => {
+      setYtNextPageToken(results?.nextPageToken || '')
+      setYtSearchResults(results?.items || [])
+    })
   }
   const debounceYtSearch = useCallback(debounce(ytSearch, 2500), [])
+
+  function ytSearchNextPage() {
+    youtubeSearch(searchQ, 10, ytNextPageToken).then((results) => {
+      setYtNextPageToken(results?.nextPageToken || '')
+      setYtSearchResults((prev) => [...prev, ...(results?.items || [])])
+    })
+  }
 
   return (
     <div className="box">
@@ -399,6 +410,13 @@ export default function Room(props: RoomProps) {
                                 </li>
                               )
                             })}
+
+                            <li
+                              onClick={() => ytSearchNextPage()}
+                              className="list-btn"
+                            >
+                              load more youtube results
+                            </li>
                           </ol>
                         </>
                       )}

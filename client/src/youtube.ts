@@ -43,17 +43,22 @@ export interface DefaultOrMediumOrHigh {
   height: number
 }
 
-export default function youtubeSearch(q: string): Promise<YTSearchItem[]> {
+export default function youtubeSearch(
+  q: string,
+  maxResults: number = 3,
+  pageToken: string | null = null
+): Promise<SearchResult | null> {
   if (!q || q.length === 0) {
     console.log('no search q, gonna return []')
-    return Promise.resolve([])
+    return Promise.resolve(null)
   }
   const params = new URLSearchParams({
     q,
     part: 'snippet',
-    maxResults: '25',
+    maxResults: maxResults.toString(),
     key: YT_API_KEY,
   })
+  if (pageToken) params.set('pageToken', pageToken)
 
   return fetch(
     `https://www.googleapis.com/youtube/v3/search?${params.toString()}`
@@ -61,10 +66,10 @@ export default function youtubeSearch(q: string): Promise<YTSearchItem[]> {
     .then((response) => response.json())
     .then((result: SearchResult) => {
       console.log('zomg youtube resultz! data:', result)
-      return result.items
+      return result
     })
     .catch((error) => {
       console.warn('onoz! youtube search caught error:', error)
-      return []
+      return null
     })
 }
