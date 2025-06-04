@@ -24,13 +24,14 @@ function wrapText(text, fontSize) {
 }
 
 function render(messages, startIndex, done) {
+  bumper.messages = messages
   console.log('zomg gonna start bumperz! bumper:', bumper)
   bumper.canvas.classList.remove('hidden')
   const messageIndex = Number(startIndex) || 0
   const text = messages[messageIndex]
-  fontSize = 10
+  bumper.fontSize = 10
 
-  // Calculate best font size
+  // calculate biggest font size
   while (true) {
     const testLines = wrapText(text, bumper.fontSize)
     const totalHeight = testLines.length * bumper.fontSize * 1.2
@@ -47,7 +48,7 @@ function render(messages, startIndex, done) {
     bumper.fontSize += 2
   }
 
-  // Clear canvas
+  // clear canvas
   bumper.ctx.fillStyle = '#000000'
   bumper.ctx.fillRect(0, 0, bumper.canvas.width, bumper.canvas.height)
 
@@ -65,9 +66,7 @@ function render(messages, startIndex, done) {
     bumper.ctx.font = `${bumper.fontSize}px 'VCR OSD Mono'`
     bumper.ctx.fillStyle = 'white'
     bumper.ctx.shadowColor = 'magenta'
-    bumper.ctx.shadowBlur = parseInt(
-      Math.random() * 10 > 3 ? Math.random() * 20 : Math.random() * 69
-    )
+    bumper.ctx.shadowBlur = parseInt(Math.random() * 69)
 
     bumper.ctx.beginPath()
     bumper.ctx.rect(0, 0, scanX, scanY)
@@ -91,16 +90,15 @@ function render(messages, startIndex, done) {
     if (scanY <= bumper.canvas.height) {
       setTimeout(scanFrame, delay)
     } else {
-      // Pause before next message
+      // pause before complete (or starting again)
       if (messageIndex + 1 < messages.length) {
         setTimeout(() => bumper.render(messages, messageIndex + 1, done), 1000)
       } else {
-        // All messages done — leave last one on screen (unless done cb)
-        console.log('✨ zee bumperz are done ANDAND done!')
-        done && hideBumper()
-        done && done()
-        // or i guess if nothing else, have a go again
-        !done && setTimeout(() => bumper.render(messages, 0, done), 1000)
+        setTimeout(() => {
+          console.log('zee bumperz are done and done ANDAND !!done:', !!done)
+          done && bumper.hide()
+          done && done()
+        }, 1000)
       }
     }
   }
@@ -129,7 +127,7 @@ function setup() {
 }
 
 const DEMO_MESSAGES = [
-  'DO: SWEET EMOTION IN THE NIGHT; END;',
+  'DO: SWEET EMOTIONZ IN THE NIGHT; END;',
   'DANCING THROUGH DIGITAL STORMZ && LOVE',
   'THE FUTURE IN A VHS DREAM',
 ]

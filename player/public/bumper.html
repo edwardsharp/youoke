@@ -61,9 +61,9 @@
     <canvas id="bumper" width="800" height="300"></canvas>
     <div id="message-wrapper">
       <textarea id="message" class="hidden" name="message" rows="5" cols="33">
-        ['DO: SWEET EMOTION IN THE NIGHT; END;',
-        'DANCING THROUGH DIGITAL STORMZ && LOVE',
-        'THE FUTURE IN A VHS DREAM'];
+        DO: SWEET EMOTION IN THE NIGHT; END;
+        DANCING THROUGH DIGITAL STORMZ && LOVE
+        THE FUTURE IN A VHS DREAM
       </textarea>
       <div id="message-close">&nbsp;</div>
     </div>
@@ -100,7 +100,7 @@
         bumper.canvas.classList.remove('hidden')
         const messageIndex = Number(startIndex) || 0
         const text = messages[messageIndex]
-        fontSize = 10
+        bumper.fontSize = 10
 
         // Calculate best font size
         while (true) {
@@ -137,9 +137,7 @@
           bumper.ctx.font = `${bumper.fontSize}px 'VCR OSD Mono'`
           bumper.ctx.fillStyle = 'white'
           bumper.ctx.shadowColor = 'magenta'
-          bumper.ctx.shadowBlur = parseInt(
-            Math.random() * 10 > 3 ? Math.random() * 20 : Math.random() * 69
-          )
+          bumper.ctx.shadowBlur = parseInt(Math.random() * 69)
 
           bumper.ctx.beginPath()
           bumper.ctx.rect(0, 0, scanX, scanY)
@@ -178,10 +176,10 @@
               done && bumper.hide()
               done && done()
               // or i guess if nothing else, have a go again
-              !done &&
-                setTimeout(() => {
-                  bumper.render(messages, 0, done)
-                }, 1000)
+              // !done &&
+              //   setTimeout(() => {
+              //     bumper.render(messages, 0, done)
+              //   }, 1000)
             }
           }
         }
@@ -227,16 +225,21 @@
       // wait for font to load before starting
       document.fonts.ready.then(() => {
         bumper.setup()
-        bumper.render(DEMO_MESSAGES, 0, () => {
+
+        const done = () => {
           const messageEl = document.getElementById('message')
-          bumper.render(messageEl.value.split('\n'), 0, null)
-        })
+          bumper.render(
+            messageEl.value.split('\n').map((t) => t.trim()),
+            0,
+            done
+          )
+        }
+        bumper.render(DEMO_MESSAGES, 0, done)
 
         document.addEventListener('click', () => {
           const messageEl = document.getElementById('message')
 
           if (messageEl.classList.contains('hidden')) {
-            console.log('body click messageEl:', messageEl)
             messageEl.classList.remove('hidden')
             messageEl.focus()
           }
@@ -254,7 +257,7 @@
           e.preventDefault()
           console.log('message close click!')
           messageEl.classList.add('hidden')
-          bumper.render(messageEl.value.split('\n'), 0, null)
+          // bumper.render(messageEl.value.split('\n'), 0, null)
         })
       })
     </script>
