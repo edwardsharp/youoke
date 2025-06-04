@@ -11,14 +11,18 @@ export interface LandingProps {
 
 type RoomList = IRoom[]
 
-const name =
-  window.location.hostname !== 'localhost'
-    ? window.location.hostname
-    : 'LOCALHOST' // all capz, cuz better
-const href = `ws://${window.location.hostname}:9001`
+const name = window.location.hostname.includes('youoke.party')
+  ? 'LOCALHOST' // all capz, cuz better
+  : window.location.hostname
+const href = `ws://${name.toLowerCase()}:9001`
+
+const search = window.location.search
+const params = new URLSearchParams(search)
+const code = params.get('code') || ''
+
 const KNOWN_ROOMS: RoomList = [
   { name, href, code: '' },
-  { name: 'PIZZAPARTY', href: 'wss://youoke.ngrok.pizza', code: '' },
+  { name: 'PIZZAPARTY', href: 'wss://youoke.ngrok.pizza', code },
 ]
 
 function testRoom(href: string): Promise<boolean> {
@@ -44,6 +48,7 @@ function testCode(href: string, code: string): Promise<boolean> {
 export default function Landing(props: LandingProps) {
   const { room, setRoom } = props
 
+  const [isHttps, setIsHttps] = useState(false)
   const [code, setCode] = useState('')
   const [needsCode, setNeedsCode] = useState(false)
   const [addNewRoom, setAddNewRoom] = useState(false)
@@ -51,6 +56,10 @@ export default function Landing(props: LandingProps) {
   const [roomsToFind, setRoomsToFind] = useState(KNOWN_ROOMS)
   const [roomList, setRoomList] = useState<RoomList>()
   const [delay, setDelay] = useState<number | null>(1000)
+
+  useEffect(() => {
+    setIsHttps(window.location.protocol === 'https:')
+  }, [])
 
   useEffect(() => {
     if (!room) return
@@ -93,6 +102,23 @@ export default function Landing(props: LandingProps) {
   return (
     <div className="box">
       <h1 className="youoke">YOUOKE</h1>
+      {isHttps && (
+        <>
+          <h2>important! you're using "https://"</h2>
+          <p>
+            so you need to manually type the "http://" part of
+            "http://youoke.party"
+          </p>
+          <p>
+            <em>...which is anoying, yeah</em>
+          </p>
+          <p>
+            (i wish there was a better way, but your browser doesn't think i
+            should do that for you, which is, in some ways, understandable, but
+            in other ways, infuriating 🤷)
+          </p>
+        </>
+      )}
       <div className="list">
         <h2>- - - JOIN ROOM - - -</h2>
 

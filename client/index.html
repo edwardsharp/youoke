@@ -22,40 +22,6 @@
     <link rel="manifest" href="/manifest.json" />
 
     <title>YOUOKE</title>
-    <script type="module">
-      // try to avoid https:// so this window can connect to "ws://" urls
-      // and not the otherwise required to use "wss:"
-      const key = 'r'
-      const val = 't'
-      function getFromhttps() {
-        try {
-          return localStorage.getItem(key) === val
-        } catch (e) {
-          console.warn(`⚠️ localStorage access failed: ${e.message}`)
-          // fall back to query params
-          const params = new URLSearchParams(window.location.search)
-          return params.get(key) === val
-        }
-      }
-
-      function setFromhttps() {
-        try {
-          localStorage.setItem(key, val)
-        } catch (e) {
-          console.warn(`⚠️ localStorage access failed: ${e.message}`)
-          // so fall back to query params
-          const u = new URL(window.location.origin)
-          const params = u.searchParams
-          if (!params.has(key)) {
-            params.append(key, val)
-          }
-        }
-      }
-      if (window.location.protocol === 'https:' && !getFromhttps()) {
-        setFromhttps()
-        window.location.protocol = 'http:'
-      }
-    </script>
   </head>
   <body>
     <div id="root"></div>
