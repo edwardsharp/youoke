@@ -32,8 +32,9 @@
         font-size: 1.75em;
       }
       #info {
-        position: sticky;
+        position: absolute;
         bottom: 0;
+        right: 0;
         background-color: black;
         text-align: right;
         margin: 0 1em 1em 0;
@@ -58,9 +59,22 @@
       #qr-img {
         filter: invert(1);
       }
+      #bumper {
+        width: 80vw;
+        height: 100vh;
+        z-index: 10;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      .hidden {
+        display: none;
+      }
     </style>
+    <script src="player/bumper.js" defer></script>
   </head>
   <body>
+    <canvas id="bumper" width="800" height="300" class="hidden"></canvas>
     <video id="videoEl" poster="player/youoke.png"></video>
     <div id="q">
       <ol id="queue"></ol>
@@ -105,6 +119,7 @@
       var duration = 0
       var isPlaying = false
       var isPaused = false
+      var isFirstClick = true
       var socket = new WebSocket(`${href}?code=${code}`)
 
       function reconnect() {
@@ -140,6 +155,15 @@
       })
       videoEl.addEventListener('complete', setNotPlaying)
       videoEl.addEventListener('click', function (e) {
+        if (isFirstClick) {
+          bumper.render(
+            [`UP NEXT: ${currentQueueItem.singer}`, currentQueueItem.title],
+            0,
+            () => videoEl.play()
+          )
+          isFirstClick = false
+          return
+        }
         if (isPlaying && !isPaused) {
           console.log('gonna try to pause')
           videoEl.pause()
@@ -157,9 +181,11 @@
           var data = JSON.parse(event.data)
           if (data === 'PlayerPause') {
             videoEl.pause()
+            bumper.render(['PAUSED'], 0)
             return
           }
           if (data === 'PlayerPlay') {
+            hideBumper()
             videoEl.play()
             return
           }
@@ -224,7 +250,16 @@
             }
 
             videoEl.load()
+
+            if (!isFirstClick) {
+              bumper.render(
+                [`UP NEXT: ${currentQueueItem.singer}`, currentQueueItem.title],
+                0,
+                () => videoEl.play()
+              )
+            }
             videoEl.play()
+
             return
           }
 
