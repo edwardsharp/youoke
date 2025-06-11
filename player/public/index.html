@@ -274,11 +274,12 @@
         .replace(/:\d+/, '')
 
       // const ws_host = `${window.location.proto === 'https' ? 'wss://' : 'ws://'}${name}:9001`
-      const player_host = `http://${host === 'youoke.party' ? host : `${host.replace(/:\d+/, '')}:3000`}`
+      const player_host = `http://${host.endsWith('youoke.party') ? host : `${host.replace(/:\d+/, '')}:3000`}`
 
       const code = params.get('code')
 
       const client_url = `${player_host}?host=${host}&code=${code}`
+      console.log('########### client_url:', client_url)
       qrcode.toDataURL(client_url, { width: 256 }, function (err, src) {
         if (err) return console.error(err)
         document.getElementById('qr-img').src = src
