@@ -31,7 +31,7 @@ input {
 }
 .search-q .invert-list-btn {
   height: 60px;
-  margin-top: 7px;
+  margin-top: 6px;
 }
 .search-q .flex-grow {
   flex-grow: 1;
@@ -71,15 +71,18 @@ input {
 .controls div:hover {
   text-decoration: underline;
 }
+@media (max-width: 799px) {
+  .search-q .invert-list-btn {
+    margin-top: 0px;
+  }
+}
+
 @media (max-width: 500px) {
   .search-q-input-tip {
     font-size: xx-small;
     line-height: 1em;
   }
 
-  .search-q .invert-list-btn {
-    margin-top: 0;
-  }
   #search-results-container {
     margin-left: -50px;
   }

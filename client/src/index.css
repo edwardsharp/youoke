@@ -16,6 +16,7 @@ input {
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 16px;
 }
 
 .center {
@@ -95,7 +96,9 @@ input {
     font-size: 1em;
   }
   .sticky {
-    top: 0px;
+    position: sticky;
+
+    top: 50px;
   }
 }
 
