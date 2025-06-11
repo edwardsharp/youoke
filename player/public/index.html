@@ -154,18 +154,24 @@
         function scanFrame() {
           bumper.ctx.save()
           bumper.ctx.font = `${bumper.fontSize}px 'VCR OSD Mono'`
-          bumper.ctx.fillStyle = 'white'
-          bumper.ctx.shadowColor = 'magenta'
-          bumper.ctx.shadowBlur = parseInt(Math.random() * 69)
 
           bumper.ctx.beginPath()
           bumper.ctx.rect(0, 0, scanX, scanY)
+          bumper.ctx.fillStyle = 'black'
+          bumper.ctx.fillRect(0, 0, scanX, scanY)
           bumper.ctx.clip()
+          bumper.ctx.fillStyle = 'white'
 
           bumper.lines.forEach((line, i) => {
             const lineWidth = bumper.ctx.measureText(line).width
             const x = (bumper.canvas.width - lineWidth) / 2
             const y = baseY + i * bumper.fontSize * 1.2
+
+            // so like stoke outline so thick it turnz more into block 😋
+            bumper.ctx.strokeStyle = 'magenta'
+            bumper.ctx.lineWidth = bumper.fontSize
+            bumper.ctx.strokeText(line, x, y)
+            bumper.ctx.fillStyle = 'white'
             bumper.ctx.fillText(line, x, y)
           })
 
