@@ -502,6 +502,7 @@ export default function Room(props: RoomProps) {
                     value={wallmessage}
                     onChange={(e) => setWallmessage(e.target.value)}
                     placeholder="show a message between songz"
+                    maxLength={75}
                   />
                   <div
                     className="invert-list-btn"
