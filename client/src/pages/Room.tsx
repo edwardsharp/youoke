@@ -381,7 +381,12 @@ export default function Room(props: RoomProps) {
                           return (
                             <li
                               className={isQueued ? '' : 'list-btn'}
-                              onClick={() => !isQueued && q(r.id)}
+                              onClick={() => {
+                                if (isQueued) return
+                                q(r.id)
+                                setShowSearchResults(false)
+                                setShowSeachInout(false)
+                              }}
                               key={`result${r.id}`}
                             >
                               {isQueued && <span title="IT'S Q'D!">🎤</span>}{' '}
@@ -404,9 +409,12 @@ export default function Room(props: RoomProps) {
                               return (
                                 <li
                                   className={isQueued ? '' : 'list-btn'}
-                                  onClick={() =>
-                                    !isQueued && q(item.id.videoId)
-                                  }
+                                  onClick={() => {
+                                    if (isQueued) return
+                                    q(item.id.videoId)
+                                    setShowSearchResults(false)
+                                    setShowSeachInout(false)
+                                  }}
                                   key={`ytresult${item.id.videoId}`}
                                 >
                                   <div className="flex-responsive">
