@@ -25,7 +25,7 @@ function wrapText(text, fontSize) {
 
 function render(messages, startIndex, done) {
   bumper.messages = messages
-  console.log('zomg gonna start bumperz! bumper:', bumper)
+  console.log('zomg gonna start bumper::', bumper)
   bumper.canvas.classList.remove('hidden')
   const messageIndex = Number(startIndex) || 0
   const text = messages[messageIndex]
@@ -49,8 +49,8 @@ function render(messages, startIndex, done) {
   }
 
   // clear canvas
-  bumper.ctx.fillStyle = '#000000'
-  bumper.ctx.fillRect(0, 0, bumper.canvas.width, bumper.canvas.height)
+  // bumper.ctx.fillStyle = '#000000'
+  // bumper.ctx.fillRect(0, 0, bumper.canvas.width, bumper.canvas.height)
 
   const totalHeight = bumper.lines.length * bumper.fontSize * 1.2
   const baseY = (bumper.canvas.height - totalHeight) / 2 + bumper.fontSize

@@ -31,6 +31,9 @@ export interface DeQueue {
 export interface QueueSetSinger {
   QueueSetSinger: { id: string; singer: string }
 }
+export interface PlayerSetWallmessage {
+  PlayerSetWallmessage: { wallmessage: string }
+}
 export type PlayerRequest = 'PlayerPause' | 'PlayerPlay' | 'PlayerSkip'
 export type LibraryRequest = 'GetLibrary'
 type Request =
@@ -39,6 +42,7 @@ type Request =
   | QueueSetSinger
   | DeQueue
   | PlayerRequest
+  | PlayerSetWallmessage
   | LibraryRequest
 
 interface QueueItem {
@@ -48,6 +52,7 @@ interface QueueItem {
   singer: string
   status: string
   title: string
+  wallmessage: string
 }
 
 interface LibraryItem {
@@ -113,6 +118,8 @@ export default function Room(props: RoomProps) {
     () => localStorage.getItem('singer') || 'nobody'
   )
   const [editSinger, setEditSinger] = useState(false)
+  const [wallmessage, setWallmessage] = useState('')
+  const [editWallMessage, setEditWallmessage] = useState(false)
   const [searchQ, setSearchQ] = useState('')
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [searchResults, setSearchResults] = useState<LibraryItem[]>([])
@@ -177,6 +184,14 @@ export default function Room(props: RoomProps) {
       QueueSetSinger: {
         id,
         singer,
+      },
+    })
+  }
+
+  function qWallMessage(wallmessage: string) {
+    sendWsMessage({
+      PlayerSetWallmessage: {
+        wallmessage,
       },
     })
   }
@@ -462,6 +477,47 @@ export default function Room(props: RoomProps) {
                 <div className="list-btn">singer: {singer}</div>
               )}
             </li>
+
+            <li
+              tabIndex={0}
+              onClick={() => {
+                setWallmessage('')
+                setEditWallmessage(true)
+              }}
+            >
+              {editWallMessage ? (
+                <div className="flex">
+                  <input
+                    type="text"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setEditWallmessage(false)
+                        qWallMessage(wallmessage)
+                      } else if (e.key === 'Escape') {
+                        setEditWallmessage(false)
+                      }
+                    }}
+                    autoFocus
+                    onBlur={() => setEditWallmessage(false)}
+                    value={wallmessage}
+                    onChange={(e) => setWallmessage(e.target.value)}
+                    placeholder="show a message between songz"
+                  />
+                  <div
+                    className="invert-list-btn"
+                    onClick={() => {
+                      setEditWallmessage(false)
+                    }}
+                  >
+                    {' '}
+                    x{' '}
+                  </div>
+                </div>
+              ) : (
+                <div className="list-btn">bumper message</div>
+              )}
+            </li>
+
             <li>
               <div className="controls">
                 <div

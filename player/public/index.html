@@ -135,9 +135,12 @@
           bumper.fontSize += 2
         }
 
-        // clear canvas
-        bumper.ctx.fillStyle = '#000000'
-        bumper.ctx.fillRect(0, 0, bumper.canvas.width, bumper.canvas.height)
+        // clear canvas after each message
+        // but only if first message
+        if (startIndex === 0) {
+          bumper.ctx.fillStyle = '#000000'
+          bumper.ctx.fillRect(0, 0, bumper.canvas.width, bumper.canvas.height)
+        }
 
         const totalHeight = bumper.lines.length * bumper.fontSize * 1.2
         const baseY = (bumper.canvas.height - totalHeight) / 2 + bumper.fontSize
@@ -283,6 +286,7 @@
       var duration = 0
       var isPlaying = false
       var isPaused = false
+      var wallmessage = ''
       var socket = new WebSocket(`${href}?code=${code}`)
 
       bumper.setup()
@@ -348,10 +352,23 @@
             videoEl.play()
             return
           }
-          if (data === 'PlayerSkip') {
+          if (
+            !!data['PlayerSetWallmessage'] &&
+            !!data['PlayerSetWallmessage']['wallmessage']
+          ) {
+            wallmessage = `${wallmessage}\n${data['PlayerSetWallmessage']['wallmessage']}`
+            if (!isPlaying) {
+              bumper.render([wallmessage], 0, null)
+              wallmessage = ''
+            }
+            return
+          }
+
+          if (data === '') {
             destroyPlayer()
             return
           }
+
           queue = data.queue
 
           if (queue) {
@@ -417,14 +434,17 @@
               .play()
               .then(() => {
                 videoEl.pause()
-                bumper.render(
-                  [
-                    `UP NEXT: ${currentQueueItem.singer}`,
-                    currentQueueItem.title,
-                  ],
-                  0,
-                  () => videoEl.play()
+                console.log(
+                  '>>>>>>>>>>> zomg currentQueueItem:',
+                  currentQueueItem
                 )
+                let renderStrings = [
+                  `UP NEXT: ${currentQueueItem.singer}`,
+                  currentQueueItem.title,
+                ]
+                wallmessage && renderStrings.push(wallmessage)
+                bumper.render(renderStrings, 0, () => videoEl.play())
+                wallmessage = ''
               })
               .catch((err) => {
                 const autoplayHelpEl = document.getElementById('autoplay-help')

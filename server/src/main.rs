@@ -50,6 +50,7 @@ struct QueueItem {
     filepath: String,
     filename: String,
     duration: usize,
+    wallmessage: String,
     status: QueueItemStatus,
 }
 
@@ -92,6 +93,9 @@ enum Request {
     PlayerPlay,
     PlayerPause,
     PlayerSkip,
+    PlayerSetWallmessage {
+        wallmessage: String,
+    },
     GetLibrary,
     Error,
 }
@@ -399,6 +403,23 @@ async fn connection_handler(
                     _ => {}
                 }
             }
+            Request::PlayerSetWallmessage { wallmessage } => {
+                info!("PlayerSetWallmessage wallmessage:{}", &wallmessage);
+                // broadcast the player msg to everyone (but maybe only the player truely needz this?)
+                let peers = peer_map.lock().unwrap();
+                let broadcast_recipients = peers.iter().map(|(_, ws_sink)| ws_sink);
+                for recp in broadcast_recipients {
+                    let msg = serde_json::to_value(Request::PlayerSetWallmessage {
+                        wallmessage: wallmessage.clone(),
+                    })
+                    .unwrap()
+                    .to_string();
+
+                    recp.unbounded_send(Message::Text(msg)).unwrap_or_default();
+                }
+                // #TODO: could sending this back to the sender be like, a confirm? 🤔
+                // q_sender.unbounded_send(request).unwrap_or_default();
+            }
             _ => {
                 q_sender.unbounded_send(request).unwrap_or_default();
             }
@@ -428,6 +449,10 @@ async fn queue_handler(
             Request::Error | Request::PlayerPause | Request::PlayerPlay | Request::GetLibrary => {
                 false
             } // note: stop here if any of these (no queue response needed)
+            Request::PlayerSetWallmessage { wallmessage } => {
+                info!("{}", wallmessage);
+                false
+            }
             Request::PlayerSkip => {
                 if queue.len() > 0 {
                     queue.remove(0);
@@ -455,6 +480,7 @@ async fn queue_handler(
                             filepath: "".to_owned(),
                             filename: "".to_owned(),
                             title: "".to_owned(),
+                            wallmessage: "".to_owned(),
                         });
 
                         f_sender
@@ -827,6 +853,7 @@ mod tests {
             filename: "".to_owned(),
             duration: 0,
             status: QueueItemStatus::Downloading,
+            wallmessage: "".to_owned(),
         };
         let queue = vec![q_item];
 
