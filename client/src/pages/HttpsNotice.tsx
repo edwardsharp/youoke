@@ -11,14 +11,25 @@ export function HttpsNotice() {
   return (
     isHttps && (
       <div className="notice">
-        <h2>important! you're using "https://"</h2>
+        <h2>
+          important! you're using <b>https://</b>*
+        </h2>
         <h3>
-          so you need to manually type the <b>"http://"</b> part of
-          "http://youoke.party"
+          please switch to <b>http://</b>
         </h3>
+        <h4>
+          manually type the <b>"http://"</b> part of "http://youoke.party"
+        </h4>
         <p>
-          <em>...which is anoying (sorry)</em> if you're using a room with https
-          support, you can ignore this!
+          <b>*</b> your browser will not let you connect to non-https servers{' '}
+          <em>
+            ...which is anoying (sorry (but to browser's credit, security-wise,
+            is a reasonable default))
+          </em>
+        </p>
+        <p>
+          if you're using a room with https support (or <b>localhost</b>), you
+          can ignore this!{' '}
         </p>
       </div>
     )

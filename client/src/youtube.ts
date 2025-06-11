@@ -58,6 +58,11 @@ export default function youtubeSearch(
     maxResults: maxResults.toString(),
     key: YT_API_KEY,
   })
+  // NOTE: videoEmbeddable will show only videos that can be played outside youtube
+  // const params = new URLSearchParams({
+  //   type: 'video',
+  //   videoEmbeddable: 'true'
+  // });
   if (pageToken) params.set('pageToken', pageToken)
 
   return fetch(
