@@ -251,7 +251,6 @@
 
       <div id="info">
         <img id="qr-img" />
-        <div>youoke.party</div>
         <div id="code"></div>
         <div id="name"></div>
       </div>
@@ -262,15 +261,18 @@
 
       const search = window.location.search
       const params = new URLSearchParams(search)
-      const href = params.get('href') || `ws://${window.location.hostname}:9001`
-      const name = href
+      const host = params.get('host') || window.location.hostname
+      const name = host
         .replace('ws://', '')
         .replace('wss://', '')
         .replace(/:\d+/, '')
 
+      // const ws_host = `${window.location.proto === 'https' ? 'wss://' : 'ws://'}${name}:9001`
+      const player_host = `http://${host === 'youoke.party' ? host : `${host.replace(/:\d+/, '')}:3000`}`
+
       const code = params.get('code')
 
-      const client_url = `http://youoke.party?href=${href}&code=${code}`
+      const client_url = `${player_host}?host=${host}&code=${code}`
       qrcode.toDataURL(client_url, { width: 256 }, function (err, src) {
         if (err) return console.error(err)
         document.getElementById('qr-img').src = src
@@ -287,7 +289,8 @@
       var isPlaying = false
       var isPaused = false
       var wallmessage = ''
-      var socket = new WebSocket(`${href}?code=${code}`)
+      console.log('fffff :ws_hostws_host', `ws://localhost:9001?code=${code}`)
+      var socket = new WebSocket(`ws://localhost:9001?code=${code}`)
 
       bumper.setup()
 
