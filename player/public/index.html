@@ -145,13 +145,16 @@
         const totalHeight = bumper.lines.length * bumper.fontSize * 1.2
         const baseY = (bumper.canvas.height - totalHeight) / 2 + bumper.fontSize
 
-        let scanX = 0
-        let scanY = 0
-        const stepX = 25
-        const stepY = 15
+        const stepX = 15
+        let stepY = 15
         const delay = 1
 
+        let scanX = 0
+        let scanY = 0
+
         function scanFrame() {
+          stepY = Math.floor(bumper.fontSize / 4)
+
           bumper.ctx.save()
           bumper.ctx.font = `${bumper.fontSize}px 'VCR OSD Mono'`
 
