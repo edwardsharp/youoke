@@ -2,11 +2,12 @@ use std::{
     collections::HashMap,
     env,
     fs::{canonicalize, create_dir_all, read_to_string},
-    io::Error as IoError,
+    io::{self, Error as IoError},
     net::SocketAddr,
     path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::{Arc, Mutex},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use glob::glob;
@@ -15,8 +16,17 @@ use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 
 use tokio::net::{TcpListener, TcpStream};
-use tokio_tungstenite::accept_async;
+use tokio_tungstenite::accept_hdr_async;
+
+use tokio_tungstenite::tungstenite::handshake::server::{
+    ErrorResponse as HandshakeErrorResponse, Request as HandshakeRequest,
+    Response as HandshakeResponse,
+};
 use tungstenite::protocol::Message;
+
+use warp::cors;
+use warp::http::StatusCode;
+use warp::Filter;
 
 use log::*;
 use serde::{Deserialize, Serialize};
@@ -38,7 +48,9 @@ struct QueueItem {
     title: String,
     singer: String,
     filepath: String,
+    filename: String,
     duration: usize,
+    wallmessage: String,
     status: QueueItemStatus,
 }
 
@@ -74,12 +86,16 @@ enum Request {
         id: String,
         status: QueueItemStatus,
         filepath: String,
+        filename: String,
         title: String,
         duration: usize,
     },
     PlayerPlay,
     PlayerPause,
     PlayerSkip,
+    PlayerSetWallmessage {
+        wallmessage: String,
+    },
     GetLibrary,
     Error,
 }
@@ -141,10 +157,32 @@ async fn main() -> Result<(), IoError> {
         .into_string()
         .unwrap();
 
+    let player_dir = match env::var_os("PLAYER_DIR") {
+        Some(val) => val.into_string().unwrap(),
+        None => "../player/public".to_string(),
+    };
+
+    if !Path::new(&player_dir).is_dir() {
+        panic!("player dir does not exist!")
+    }
+    let player_path = PathBuf::from(&player_dir);
+    let player_path = canonicalize(&player_path)
+        .unwrap()
+        .into_os_string()
+        .into_string()
+        .unwrap();
+
     let addr = match env::var_os("WS_ADDRESS") {
         Some(val) => val.into_string().unwrap(),
         None => "127.0.0.1:9001".to_string(),
     };
+
+    let http_address = match env::var_os("HTTP_ADDRESS") {
+        Some(val) => val.into_string().unwrap(),
+        None => "127.0.0.1:9002".to_string(),
+    };
+    let http_addr: SocketAddr = http_address.parse().expect("Invalid HTTP_ADDRESS");
+
     let peer_map = PeerMap::new(Mutex::new(HashMap::new()));
     let queue: Vec<QueueItem> = vec![];
 
@@ -177,6 +215,61 @@ async fn main() -> Result<(), IoError> {
         q_sender.clone(),
     ));
 
+    println!(
+        "serving /hello and library({}) and player({}) at http://{}",
+        &library_path, &player_path, &http_addr,
+    );
+
+    // warp server setup stuff for /hello code-check and static file hosting
+    let cors = cors()
+        .allow_any_origin()
+        .allow_methods(vec!["GET", "POST", "OPTIONS"]) // Add methods you need
+        .allow_headers(vec!["Content-Type"]); // Optional: allow custom headers
+
+    let handshake_code = match env::var_os("HANDSHAKE_CODE") {
+        Some(val) => Arc::new(val.into_string().unwrap()),
+        None => Arc::new(generate_code()),
+    };
+
+    let code_filter = warp::any().map({
+        let secret_code = handshake_code.clone(); // Clone into filter
+        move || secret_code.clone()
+    });
+
+    let hello_route = warp::path("hello")
+        .and(warp::get())
+        .and(warp::query::<HashMap<String, String>>())
+        .and(code_filter)
+        .map(
+            |query: HashMap<String, String>, secret_code: Arc<String>| match query.get("code") {
+                Some(code) if code == secret_code.as_str() => {
+                    warp::reply::with_status("hello!", StatusCode::OK)
+                }
+                _ => warp::reply::with_status("unauthorized", StatusCode::UNAUTHORIZED),
+            },
+        )
+        .with(&cors);
+
+    let player_route = warp::path("player")
+        .and(warp::fs::dir(player_path))
+        .with(&cors);
+
+    let static_files = warp::fs::dir(library_path.clone()).with(&cors);
+
+    let routes = hello_route.or(static_files).or(player_route);
+
+    tokio::task::spawn(warp::serve(routes).run(http_addr));
+
+    println!("");
+    println!("- - - - - - - - - -");
+    println!("-> HANDSHAKE CODE");
+    println!("-> {}", handshake_code.as_str());
+    println!(
+        "-> http://localhost:3000?href={}&name={}&code={}",
+        "localhost%3A9001", "localdev", &handshake_code
+    );
+    println!("- - - - - - - - - -");
+    println!("");
     // spawn the handling of each connection in a separate task.
     while let Ok((stream, addr)) = listener.accept().await {
         tokio::spawn(connection_handler(
@@ -185,6 +278,7 @@ async fn main() -> Result<(), IoError> {
             addr,
             q_sender.clone(),
             library_path.clone(),
+            handshake_code.clone(),
         ));
     }
 
@@ -197,11 +291,40 @@ async fn connection_handler(
     addr: SocketAddr,
     q_sender: UnboundedSender<Request>,
     library_path: String,
+    handshake_code: Arc<String>,
 ) {
     info!("incoming TCP connection from: {}", addr);
-    let ws_stream = accept_async(raw_stream)
-        .await
-        .expect("error during the websocket handshake occurred");
+
+    // let check_handshake_code = |req: &HandshakeRequest, resp: HandshakeResponse| {
+    let check_handshake_code = move |req: &HandshakeRequest,
+                                     resp: HandshakeResponse|
+          -> Result<HandshakeResponse, HandshakeErrorResponse> {
+        info!("zomg gonna check_handshake_code");
+        if let Some(uri) = req.uri().path_and_query() {
+            if let Ok(parsed_url) = url::Url::parse(&format!("http://localhost{}", uri)) {
+                if let Some(code) = parsed_url.query_pairs().find(|(k, _)| k == "code") {
+                    info!("zomg checking code {}", code.1);
+                    if code.1 == *handshake_code {
+                        info!("zomg okay good handshake bro!");
+                        return Ok(resp);
+                    }
+                }
+            }
+        }
+
+        Err(HandshakeErrorResponse::new(Some(
+            "Unauthorized".to_string(),
+        )))
+    };
+
+    // let ws_stream = accept_hdr_async(raw_stream, check_handshake_code).await?;
+    let ws_stream = match accept_hdr_async(raw_stream, check_handshake_code).await {
+        Ok(stream) => stream,
+        Err(err) => {
+            eprintln!("Handshake failed: {}", err);
+            return; // or future::ok(()) if you’re returning a future
+        }
+    };
     info!("WebSocket connection established: {}", addr);
     let (tx, rx) = unbounded();
     // insert the write (tx) part of this peer to the peer map
@@ -280,6 +403,23 @@ async fn connection_handler(
                     _ => {}
                 }
             }
+            Request::PlayerSetWallmessage { wallmessage } => {
+                info!("PlayerSetWallmessage wallmessage:{}", &wallmessage);
+                // broadcast the player msg to everyone (but maybe only the player truely needz this?)
+                let peers = peer_map.lock().unwrap();
+                let broadcast_recipients = peers.iter().map(|(_, ws_sink)| ws_sink);
+                for recp in broadcast_recipients {
+                    let msg = serde_json::to_value(Request::PlayerSetWallmessage {
+                        wallmessage: wallmessage.clone(),
+                    })
+                    .unwrap()
+                    .to_string();
+
+                    recp.unbounded_send(Message::Text(msg)).unwrap_or_default();
+                }
+                // #TODO: could sending this back to the sender be like, a confirm? 🤔
+                // q_sender.unbounded_send(request).unwrap_or_default();
+            }
             _ => {
                 q_sender.unbounded_send(request).unwrap_or_default();
             }
@@ -309,6 +449,10 @@ async fn queue_handler(
             Request::Error | Request::PlayerPause | Request::PlayerPlay | Request::GetLibrary => {
                 false
             } // note: stop here if any of these (no queue response needed)
+            Request::PlayerSetWallmessage { wallmessage } => {
+                info!("{}", wallmessage);
+                false
+            }
             Request::PlayerSkip => {
                 if queue.len() > 0 {
                     queue.remove(0);
@@ -334,7 +478,9 @@ async fn queue_handler(
                             status: QueueItemStatus::Downloading,
                             duration: 0,
                             filepath: "".to_owned(),
+                            filename: "".to_owned(),
                             title: "".to_owned(),
+                            wallmessage: "".to_owned(),
                         });
 
                         f_sender
@@ -375,6 +521,7 @@ async fn queue_handler(
                 id,
                 status,
                 filepath,
+                filename,
                 title,
                 duration,
             } => {
@@ -389,6 +536,7 @@ async fn queue_handler(
                             queue_item.filepath = filepath;
                             queue_item.title = title;
                             queue_item.duration = duration;
+                            queue_item.filename = filename;
                         }
                         None => {}
                     },
@@ -453,7 +601,8 @@ async fn file_handler(
                     Ok(contents) => {
                         match serde_json::from_str::<YoutubeDlJSON>(&contents) {
                             Ok(parsed) => {
-                                let mut filepath = format!("{}.{}", parsed.id, parsed.ext);
+                                let filename = format!("{}.{}", parsed.id, parsed.ext);
+                                let mut filepath = filename.clone();
                                 //format!("{parsed.id}{parsed.ext}");
                                 // validate filename is really a path & file on disk
                                 if !Path::new(&filepath).is_file() {
@@ -474,6 +623,7 @@ async fn file_handler(
                                                 id: id.clone(),
                                                 status: QueueItemStatus::Ready,
                                                 filepath: filepath,
+                                                filename: filename,
                                                 title: parsed.title,
                                                 duration: parsed.duration,
                                             })
@@ -488,6 +638,7 @@ async fn file_handler(
                                             id: id.clone(),
                                             status: QueueItemStatus::Ready,
                                             filepath: filepath,
+                                            filename: filename,
                                             title: parsed.title,
                                             duration: parsed.duration,
                                         })
@@ -542,7 +693,7 @@ async fn download_handler(
                     .arg(&id) // note: this handles video IDz that start with a dash (-)
                     .output()
                 // note: sleep for debuggin.
-                // let response: Request = match Command::new("sleep").arg("1").output() 
+                // let response: Request = match Command::new("sleep").arg("1").output()
                 {
                     Ok(output) => {
                         info!("download_handler yt-dlp output: {:#?}", output);
@@ -565,7 +716,8 @@ async fn download_handler(
                                     let parsed: YoutubeDlJSON = serde_json::from_str(&contents)
                                         .expect("download_handler panic! can't parse to JSON");
                                     // let mut filepath = parsed._filename;
-                                    let mut filepath = format!("{}.{}", parsed.id, parsed.ext);
+                                    let filename = format!("{}.{}", parsed.id, parsed.ext);
+                                    let mut filepath = filename.clone();
                                     // validate filename is really a path & file on disk
                                     if !Path::new(&filepath).is_file() {
                                         info!("ugh ref file not on filesystem gonna try to find {}/{}*[!json]", &library_path, &id);
@@ -584,6 +736,7 @@ async fn download_handler(
                                         id: id,
                                         status: QueueItemStatus::Ready,
                                         filepath: filepath,
+                                        filename: filename,
                                         title: parsed.title,
                                         duration: parsed.duration,
                                     }
@@ -608,6 +761,17 @@ async fn download_handler(
         }
     }
     Ok(())
+}
+
+fn generate_code() -> String {
+    // #todo: use rand crate
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .subsec_nanos();
+
+    let code = (nanos % 1_000_000).to_string();
+    format!("{:0>6}", code) // zero-pad to 6 digits
 }
 
 #[cfg(test)]
@@ -686,8 +850,10 @@ mod tests {
             title: "".to_owned(),
             singer: "frankie frankie".to_owned(),
             filepath: "".to_owned(),
+            filename: "".to_owned(),
             duration: 0,
             status: QueueItemStatus::Downloading,
+            wallmessage: "".to_owned(),
         };
         let queue = vec![q_item];
 

@@ -1,0 +1,516 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>youoke.party player</title>
+    <link rel="stylesheet" href="player/fonts/fonts.css" />
+    <style>
+      ::-webkit-scrollbar {
+        display: none;
+      }
+      body {
+        font-family: 'VCR OSD Mono';
+        display: flex;
+        margin: 0;
+        padding: 0;
+        background-color: black;
+        color: white;
+      }
+      video {
+        width: 80vw;
+        height: 100vh;
+      }
+      #q {
+        width: 20vw;
+        height: 100vh;
+        overflow-y: scroll;
+      }
+      #queue,
+      #info {
+        overflow-wrap: break-word;
+        margin: 1em;
+        font-size: 1.75em;
+      }
+      #info {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background-color: black;
+        text-align: right;
+        margin: 0;
+        padding-bottom: 0.5em;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 20vw;
+      }
+      #info #code {
+        font-size: 2em;
+      }
+      #info #name {
+        font-size: 0.75em;
+      }
+      #disconnected {
+        position: absolute;
+        bottom: 25px;
+        font-size: 2em;
+        line-height: 1.25em;
+        z-index: 5;
+      }
+      .hidden {
+        display: none;
+      }
+      #qr-img {
+        filter: invert(1);
+      }
+      #bumper {
+        width: 80vw;
+        height: 100vh;
+        z-index: 10;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      #autoplay-help {
+        position: absolute;
+        top: 0;
+        left: 10vw;
+        right: 10vw;
+        height: 25vh;
+        width: 80vw;
+        font-size: 2em;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+    <script>
+      function hide() {
+        bumper.canvas.classList.add('hidden')
+      }
+
+      function wrapText(text, fontSize) {
+        bumper.ctx.font = `${fontSize}px 'VCR OSD Mono'`
+        const words = text.split(' ')
+        const lines = []
+        let line = ''
+
+        for (let i = 0; i < words.length; i++) {
+          let testLine = line + words[i] + ' '
+          let testWidth = bumper.ctx.measureText(testLine).width
+
+          if (testWidth > bumper.maxWidth && i > 0) {
+            lines.push(line.trim())
+            line = words[i] + ' '
+          } else {
+            line = testLine
+          }
+        }
+        lines.push(line.trim())
+        return lines
+      }
+
+      function render(messages, startIndex, done) {
+        bumper.messages = messages
+        console.log('zomg gonna start bumperz! bumper:', bumper)
+        bumper.canvas.classList.remove('hidden')
+        const messageIndex = Number(startIndex) || 0
+        const text = messages[messageIndex]
+        bumper.fontSize = 10
+
+        // calculate biggest font size
+        while (true) {
+          const testLines = wrapText(text, bumper.fontSize)
+          const totalHeight = testLines.length * bumper.fontSize * 1.2
+          const widestLine = Math.max(
+            ...testLines.map((line) => bumper.ctx.measureText(line).width)
+          )
+
+          if (widestLine > bumper.maxWidth || totalHeight > bumper.maxHeight) {
+            bumper.fontSize -= 2
+            bumper.lines = wrapText(text, bumper.fontSize)
+            break
+          }
+
+          bumper.fontSize += 2
+        }
+
+        // clear canvas after each message
+        // but only if first message
+        if (startIndex === 0) {
+          bumper.ctx.fillStyle = '#000000'
+          bumper.ctx.fillRect(0, 0, bumper.canvas.width, bumper.canvas.height)
+        }
+
+        const totalHeight = bumper.lines.length * bumper.fontSize * 1.2
+        const baseY = (bumper.canvas.height - totalHeight) / 2 + bumper.fontSize
+
+        const stepX = 15
+        let stepY = 15
+        const delay = 1
+
+        let scanX = 0
+        let scanY = 0
+
+        function scanFrame() {
+          stepY = Math.floor(bumper.fontSize / 4)
+
+          bumper.ctx.save()
+          bumper.ctx.font = `${bumper.fontSize}px 'VCR OSD Mono'`
+
+          bumper.ctx.beginPath()
+          bumper.ctx.rect(0, 0, scanX, scanY)
+          bumper.ctx.fillStyle = 'black'
+          bumper.ctx.fillRect(0, 0, scanX, scanY)
+          bumper.ctx.clip()
+          bumper.ctx.fillStyle = 'white'
+
+          bumper.lines.forEach((line, i) => {
+            const lineWidth = bumper.ctx.measureText(line).width
+            const x = (bumper.canvas.width - lineWidth) / 2
+            const y = baseY + i * bumper.fontSize * 1.2
+
+            // so like stoke outline so thick it turnz more into block 😋
+            bumper.ctx.strokeStyle = 'magenta'
+            bumper.ctx.lineWidth = bumper.fontSize
+            bumper.ctx.strokeText(line, x, y)
+            bumper.ctx.fillStyle = 'white'
+            bumper.ctx.fillText(line, x, y)
+          })
+
+          bumper.ctx.restore()
+
+          scanX += stepX
+          if (scanX > bumper.canvas.width) {
+            scanX = 0
+            scanY += stepY
+          }
+
+          if (scanY <= bumper.canvas.height) {
+            setTimeout(scanFrame, delay)
+          } else {
+            // pause before complete (or starting again)
+            if (messageIndex + 1 < messages.length) {
+              setTimeout(
+                () => bumper.render(messages, messageIndex + 1, done),
+                1000
+              )
+            } else {
+              setTimeout(() => {
+                console.log(
+                  'zee bumperz are done and done ANDAND !!done:',
+                  !!done
+                )
+                done && bumper.hide()
+                done && done()
+              }, 1000)
+            }
+          }
+        }
+
+        scanFrame()
+      }
+
+      function setup() {
+        const canvas = document.getElementById('bumper')
+        const ctx = canvas.getContext('2d')
+        const maxWidth = canvas.width * 0.9
+        const maxHeight = canvas.height * 0.9
+
+        let fontSize = 10
+        let lines = []
+
+        bumper = {
+          ...bumper,
+          canvas,
+          ctx,
+          maxWidth,
+          maxHeight,
+          fontSize,
+          lines,
+        }
+      }
+
+      const DEMO_MESSAGES = [
+        'DO: SWEET EMOTIONZ IN THE NIGHT; END;',
+        'DANCING THROUGH DIGITAL STORMZ && LOVE',
+        'THE FUTURE IN A VHS DREAM',
+      ]
+
+      let bumper = {
+        setup,
+        render,
+        hide,
+        DEMO_MESSAGES,
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="bumper" width="800" height="300" class="hidden"></canvas>
+    <video id="videoEl" poster="player/youoke.png"></video>
+    <div id="autoplay-help" class="hidden">
+      <h1>ohey!</h1>
+      <p>to start video playback, you need to <em>click</em> below</p>
+    </div>
+    <div id="q">
+      <ol id="queue"></ol>
+      <div id="disconnected" class="hidden">
+        ************ disconnected ************
+      </div>
+
+      <div id="info">
+        <img id="qr-img" />
+        <div id="code"></div>
+        <div id="name"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      import qrcode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm'
+
+      const search = window.location.search
+      const params = new URLSearchParams(search)
+      const host = params.get('host') || window.location.hostname
+      const name = host
+        .replace('ws://', '')
+        .replace('wss://', '')
+        .replace(/:\d+/, '')
+
+      // const ws_host = `${window.location.proto === 'https' ? 'wss://' : 'ws://'}${name}:9001`
+      const player_host = `http://${host.endsWith('youoke.party') ? host : `${host.replace(/:\d+/, '')}:3000`}`
+
+      const code = params.get('code')
+
+      const client_url = `${player_host}?host=${host}&code=${code}`
+      console.log('########### client_url:', client_url)
+      qrcode.toDataURL(client_url, { width: 256 }, function (err, src) {
+        if (err) return console.error(err)
+        document.getElementById('qr-img').src = src
+      })
+
+      document.getElementById('name').innerText = name
+      document.getElementById('code').innerText = code
+
+      var USE_FILE_URLS = !!params.get('use_file_urls')
+
+      var queue = []
+      var currentQueueItem
+      var duration = 0
+      var isPlaying = false
+      var isPaused = false
+      var wallmessage = ''
+      console.log('fffff :ws_hostws_host', `ws://localhost:9001?code=${code}`)
+      var socket = new WebSocket(`ws://localhost:9001?code=${code}`)
+
+      bumper.setup()
+
+      function reconnect() {
+        window.setTimeout(function () {
+          console.log('gonna reload...')
+          window.location.reload()
+          // socket = new WebSocket(`${href}?code=${code}`)
+        }, 5000)
+      }
+
+      var videoEl = document.getElementById('videoEl')
+      var setPlaying = function () {
+        isPlaying = true
+        isPaused = false
+        // make sure this is hidden
+        const autoplayHelpEl = document.getElementById('autoplay-help')
+        autoplayHelpEl.classList.add('hidden')
+      }
+      var setNotPlaying = function () {
+        isPlaying = false
+      }
+      var setPaused = function () {
+        isPaused = true
+      }
+      videoEl.addEventListener('play', setPlaying)
+      videoEl.addEventListener('playing', setPlaying)
+      videoEl.addEventListener('ended', function () {
+        console.log('DONE! gonna DeQueue currentQueueItem:', currentQueueItem)
+        setNotPlaying()
+        socket.send('{"DeQueue":{"id":"' + currentQueueItem.id + '"}}')
+      })
+      videoEl.addEventListener('pause', setPaused)
+      videoEl.addEventListener('loadedmetadata', function () {
+        console.log('videoEl.duration:', videoEl.duration)
+        duration = videoEl.duration
+      })
+      videoEl.addEventListener('complete', setNotPlaying)
+      videoEl.addEventListener('click', function (e) {
+        if (isPlaying && !isPaused) {
+          console.log('gonna try to pause')
+          videoEl.pause()
+        } else {
+          console.log('gonna try play')
+          videoEl.play()
+        }
+      })
+
+      socket.onmessage = function (event) {
+        console.log('new msg:', event.data)
+        var queueEl = document.getElementById('queue')
+
+        try {
+          var data = JSON.parse(event.data)
+          if (data === 'PlayerPause') {
+            videoEl.pause()
+            bumper.render(['PAUSED'], 0)
+            return
+          }
+          if (data === 'PlayerPlay') {
+            bumper.hide()
+            videoEl.play()
+            return
+          }
+          if (
+            !!data['PlayerSetWallmessage'] &&
+            !!data['PlayerSetWallmessage']['wallmessage']
+          ) {
+            wallmessage = `${wallmessage}\n${data['PlayerSetWallmessage']['wallmessage']}`
+            if (!isPlaying) {
+              bumper.render([wallmessage], 0, null)
+              wallmessage = ''
+            }
+            return
+          }
+
+          if (data === '') {
+            destroyPlayer()
+            return
+          }
+
+          queue = data.queue
+
+          if (queue) {
+            //first clear everything
+            queueEl.innerHTML = ''
+
+            queue.forEach(function (qItem) {
+              var item = document.createElement('li')
+              var title = document.createElement('h3')
+              title.appendChild(document.createTextNode(qItem.singer))
+              item.appendChild(title)
+              var singer = document.createElement('div')
+              singer.appendChild(
+                document.createTextNode(
+                  qItem.status === 'Downloading'
+                    ? 'Downloading'
+                    : qItem.title
+                      ? qItem.title
+                      : qItem.id
+                )
+              )
+              item.appendChild(singer)
+
+              queueEl.appendChild(item)
+            })
+          }
+
+          var firstReadyQueueItem = queue.find(function (i) {
+            return i.status === 'Ready' && i.filename
+          })
+          console.log('firstReadyQueueItem:', firstReadyQueueItem)
+
+          if (isPlaying && currentQueueItem.id === firstReadyQueueItem.id) {
+            console.log(
+              'isPlaying and currently playing queue item has not changed... gonna return early...'
+            )
+            return
+          }
+
+          if (firstReadyQueueItem) {
+            // okay! set global currentQueueItem and try to start playing it...
+            // #TODO: add a lil' animation here with singer name???!!!
+            currentQueueItem = firstReadyQueueItem
+            if (USE_FILE_URLS) {
+              var filepath = currentQueueItem.filepath
+              console.log('gonna try to play video!!! file://', filepath)
+              videoEl.setAttribute('src', 'file://' + filepath)
+            } else {
+              var filename = currentQueueItem.filename
+              console.log(
+                'gonna try to play video!!! http://localhost:9002/',
+                filename
+              )
+              videoEl.setAttribute('src', 'http://localhost:9002/' + filename)
+            }
+
+            videoEl.load()
+
+            // okay this is kind of weird, but trying to avoid where a browser will prevent a
+            // video from autoplaying until the user clicks (or interacts with) the video element
+            // so i guess if play throws, it's still blocked...
+            videoEl
+              .play()
+              .then(() => {
+                videoEl.pause()
+                console.log(
+                  '>>>>>>>>>>> zomg currentQueueItem:',
+                  currentQueueItem
+                )
+                let renderStrings = [
+                  `UP NEXT: ${currentQueueItem.singer}`,
+                  currentQueueItem.title,
+                ]
+                wallmessage && renderStrings.push(wallmessage)
+                bumper.render(renderStrings, 0, () => videoEl.play())
+                wallmessage = ''
+              })
+              .catch((err) => {
+                const autoplayHelpEl = document.getElementById('autoplay-help')
+                autoplayHelpEl.classList.remove('hidden')
+                console.warn(
+                  'autoplay blocked: user interaction required!',
+                  err
+                )
+              })
+
+            return
+          }
+
+          // otherwise nothing to do? stop the show i guess
+          destroyPlayer()
+        } catch (e) {
+          console.warn('onoz! caught error parsing JSON e:', e)
+        }
+      }
+
+      socket.onerror = function (event) {
+        console.warn('zomg socket.onerror:', event)
+      }
+      socket.onclose = function (event) {
+        console.log('zomg socket.onclose:', event)
+        document.getElementById('disconnected').classList.remove('hidden')
+        reconnect()
+      }
+      socket.onopen = function (event) {
+        console.log('zomg socket.onopen:', event)
+        document.getElementById('disconnected').classList.add('hidden')
+      }
+
+      function send(element) {
+        var input = document.getElementById(element)
+        socket.send(input.value)
+        input.value = ''
+      }
+
+      function gotoEnd() {
+        console.log('zomg, goto 10 secondz from end!!', duration - 10)
+        videoEl.currentTime = duration - 10
+      }
+
+      function destroyPlayer() {
+        videoEl.pause()
+        videoEl.removeAttribute('src') // empty source
+        videoEl.load()
+        isPlaying = false
+        isPaused = false
+
+        bumper.render(['🥳'], 0, null)
+      }
+    </script>
+  </body>
+</html>

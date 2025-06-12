@@ -24,6 +24,11 @@
   cursor: pointer;
 }
 
+.code {
+  display: flex;
+  gap: 1em;
+}
+
 @media (max-width: 500px) {
   .youoke {
     font-size: 3em;

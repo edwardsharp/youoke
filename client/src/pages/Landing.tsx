@@ -1,41 +1,111 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import useInterval from '../hooks'
 import './Landing.css'
 import { IRoom } from './Room'
+import { HttpsNotice } from './HttpsNotice'
 
 export interface LandingProps {
+  room?: IRoom
   setRoom: (room: IRoom) => void
 }
 
 type RoomList = IRoom[]
 
+const search = window.location.search
+const params = new URLSearchParams(search)
+const code = params.get('code') || ''
+
+const tryToTidyNameOrHref = (name?: string | null, href?: string | null) => {
+  if (!name && !href) return
+
+  if (!name && href) {
+    name =
+      href.replace('ws://', '').replace('wss://', '').replace(/:\d+/, '') || ''
+  }
+
+  if (!href && name) href = name
+
+  // still no href?!
+  if (!href || !name) return
+
+  if (!href.startsWith('ws://') || !href.startsWith('wss://')) {
+    href = `ws://${href}`
+  }
+  if (!href.match(/:\d+/)) {
+    href = `${href}:9001`
+  }
+
+  console.log('zomg tryToTidyNameOrHref', { name, href, code })
+
+  return { name, href, code }
+}
+
+const getWindowLocationRoom = () => {
+  const name = window.location.hostname.includes('youoke.party')
+    ? 'LOCALHOST' // all capz, cuz better
+    : window.location.hostname
+  const href = `ws://${name.toLowerCase()}:9001`
+  return { name, href, code }
+}
+
+const getQueryParamsRoom = () =>
+  tryToTidyNameOrHref(params.get('name'), params.get('href'))
+
+const getSpecialRooms = () => {
+  const queryParamsRoom = getQueryParamsRoom()
+  if (!queryParamsRoom) {
+    return [getWindowLocationRoom()]
+  } else {
+    return [getWindowLocationRoom(), queryParamsRoom]
+  }
+}
+
 const KNOWN_ROOMS: RoomList = [
-  { name: 'LOCALHOST', href: 'ws://localhost:9001' },
-  // { name: 'FOLK', href: 'ws://10.246.17.194:9001' },
-  { name: 'PARTYLINE', href: 'wss://f8da-68-161-154-113.ngrok-free.app' },
+  ...getSpecialRooms(),
+  // { name: 'PIZZAPARTY', href: 'wss://youoke.ngrok.pizza', code },
 ]
 
-function testWS(href: string): Promise<boolean> {
-  const ws = new WebSocket(href)
+function testRoom(href: string): Promise<boolean> {
+  // simple ping to see if server is alive
+  return fetch(
+    `${href.replace('ws://', 'http://').replace('wss://', 'https://').replace('9001', '9002')}/hello`
+  )
+    .then((response) => response.status === 200 || response.status === 401)
+    .catch(() => false)
+}
 
-  return new Promise((resolve, reject) => {
-    ws.onerror = () => reject(false)
-    ws.onopen = () => {
-      ws.close()
-      resolve(true)
-    }
-  })
+function testCode(href: string, code: string): Promise<boolean> {
+  // simple ping to see if server is alive
+  const fixed_href = href
+    .replace('ws://', 'http://')
+    .replace('wss://', 'https://')
+    .replace('9001', '9002')
+  return fetch(`${fixed_href}/hello?code=${code}`)
+    .then((response) => response.status === 200)
+    .catch(() => false)
 }
 
 export default function Landing(props: LandingProps) {
-  const { setRoom } = props
+  const { room, setRoom } = props
 
+  const [code, setCode] = useState('')
+  const [needsCode, setNeedsCode] = useState<Record<string, boolean>>({})
   const [addNewRoom, setAddNewRoom] = useState(false)
-  const [newRoom, setNewRoom] = useState<IRoom>(KNOWN_ROOMS[0])
+  const [newRoom, setNewRoom] = useState<IRoom>({
+    name: '',
+    href: '',
+    code: '',
+  })
   const [roomsToFind, setRoomsToFind] = useState(KNOWN_ROOMS)
   const [roomList, setRoomList] = useState<RoomList>()
   const [delay, setDelay] = useState<number | null>(1000)
+
+  useEffect(() => {
+    if (!room) return
+    console.log('zomg add props room!', room)
+    setRoomsToFind((prev) => [...prev, room])
+  }, [room])
 
   useInterval(
     () => {
@@ -44,8 +114,9 @@ export default function Landing(props: LandingProps) {
         return
       }
       roomsToFind.forEach((room) => {
-        testWS(room.href)
-          .then(() => {
+        testRoom(room.href)
+          .then((success) => {
+            if (!success) return
             console.log('zomg FOUND room!', room)
             setRoomList((prev) => [...(prev ? prev : []), room])
             const roomsToFindClone = [...roomsToFind]
@@ -56,7 +127,8 @@ export default function Landing(props: LandingProps) {
             }
           })
           .catch(() => {
-            console.warn('onoz, bad room!', room)
+            // console.warn('onoz, bad room!', room, ' error:', e)
+            // 🤷‍♀️
           })
       })
 
@@ -70,8 +142,10 @@ export default function Landing(props: LandingProps) {
   return (
     <div className="box">
       <h1 className="youoke">YOUOKE</h1>
+      <HttpsNotice />
       <div className="list">
         <h2>- - - JOIN ROOM - - -</h2>
+
         <ol>
           <li
             className={addNewRoom ? undefined : 'list-btn'}
@@ -94,7 +168,7 @@ export default function Landing(props: LandingProps) {
                     placeholder="name"
                   />
                 </label>
-                <label>
+                {/* <label>
                   href
                   <input
                     type="text"
@@ -107,22 +181,27 @@ export default function Landing(props: LandingProps) {
                     value={newRoom.href}
                     placeholder="href"
                   />
-                </label>
+                </label> */}
 
                 <div className="btn-row">
                   <div
                     className="btn"
                     onClick={() => {
                       setRoomsToFind((prev) => {
-                        if (prev.find((r) => r.name === newRoom.name && r.href === newRoom.href)) {
+                        const fixedNewRoom = tryToTidyNameOrHref(
+                          newRoom.name,
+                          newRoom.href
+                        )
+                        if (!fixedNewRoom || !fixedNewRoom.href) return prev
+                        if (prev.find((r) => r.href === fixedNewRoom.href)) {
                           return prev
                         }
-
-                        return [...prev, newRoom]
+                        return [...prev, fixedNewRoom]
                       })
                       // reset inputz?
                       // setNewRoom(KNOWN_ROOMS[0])
                       setAddNewRoom(false)
+                      setDelay(1000)
                     }}
                   >
                     add new room
@@ -151,11 +230,52 @@ export default function Landing(props: LandingProps) {
                   key={`${room}${idx}`}
                   tabIndex={idx}
                   onClick={() => {
-                    setRoom(room)
-                    setDelay(null)
+                    setNeedsCode((prev) => ({
+                      ...prev,
+                      [`${room}${idx}`]: true,
+                    }))
                   }}
                 >
-                  {room.name}
+                  {needsCode[`${room}${idx}`] ? (
+                    <label className="code">
+                      code
+                      <input
+                        autoFocus
+                        type="text"
+                        onChange={(e) => {
+                          const c = e.target.value
+                          setCode(c)
+                          if (c.length > 5) {
+                            testCode(room.href, c).then((success) => {
+                              if (!success) return
+                              setRoom({ ...room, code: c })
+                              setDelay(null)
+                            })
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            testCode(room.href, code).then((success) => {
+                              if (!success) return
+                              setRoom({ ...room, code })
+                              setDelay(null)
+                            })
+                          } else if (e.key === 'Escape') {
+                            setNeedsCode((prev) => ({
+                              ...prev,
+                              [`${room}${idx}`]: false,
+                            }))
+                          }
+                        }}
+                        value={code}
+                        placeholder="6 digit number"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                      />
+                    </label>
+                  ) : (
+                    room.name
+                  )}
                 </li>
               ))}
         </ol>
